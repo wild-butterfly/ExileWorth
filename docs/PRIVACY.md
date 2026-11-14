@@ -31,14 +31,15 @@ image fetch.
 
 ## Clipboard
 
-- Vaaluation reads the clipboard only immediately after you press the
-  price-check shortcut, and only to obtain the item text the game just copied.
+- Vaaluation reads the clipboard when you use the price-check shortcut or
+  explicitly ask it to check copied text.
 - Text that does not look like a Path of Exile item is discarded immediately.
-- Your previous clipboard contents are restored where reasonably safe.
+- On macOS, previous clipboard contents are restored where reasonably safe.
+  On Windows, the game’s copied item text stays on the clipboard.
 - Clipboard contents are never stored, never logged (unless you explicitly
   enable debug logging, which is local-only), and never uploaded.
 
-## Trade whispers (optional, off by default)
+## Trade whispers (macOS, optional and off by default)
 
 The Trades feature watches the Path of Exile client log for incoming trade
 whispers. It is **disabled until you turn it on**, because that log also
@@ -62,7 +63,8 @@ own, never chains commands together, and never replies automatically.
 
 Settings (league, shortcuts, overlay position) are stored locally in
 `~/Library` under the app's own container. Logs are local, rotated, and never
-contain full item text unless debug logging is explicitly enabled.
+contain full item text unless debug logging is explicitly enabled. On Windows,
+only the selected league is stored in `%LOCALAPPDATA%\Vaaluation\league.txt`.
 
 ## Credentials
 

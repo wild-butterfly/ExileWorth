@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { resolveLeagueId } from '@vaaluation/shared-types';
 import type { CopyModifiers, HotkeyAction, KeyCombo } from '@vaaluation/shared-types';
 import { colors, radii, spacing, typography } from '@vaaluation/ui';
 import { Section } from '../components/Section';
@@ -53,7 +54,7 @@ const HOTKEY_LABELS: Record<HotkeyAction, { title: string; detail: string }> = {
   },
   toggleOverlay: {
     title: 'Show or hide the panel',
-    detail: 'Brings the last result back without checking the item again.',
+    detail: 'Brings the last result back while Path of Exile is in front.',
   },
 };
 
@@ -283,7 +284,8 @@ export function SettingsScreen() {
         ) : (
           <View style={styles.leagueList}>
             {leagues.leagues.map((entry) => {
-              const active = settings.leagueId === entry.id;
+              const active =
+                resolveLeagueId(leagues.leagues, settings.leagueId) === entry.id;
               return (
                 <Pressable
                   key={entry.id}

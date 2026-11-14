@@ -1,0 +1,13 @@
+{
+  "name": "vaaluation-windows",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/worker.ts --bundle --platform=node --target=node22 --outfile=dist/worker.cjs"
+  },
+  "dependencies": {
+    "@vaaluation/item-parser": "*",
+    "@vaaluation/shared-types": "*",
+    "@vaaluation/trade-client": "*"
+  }
+}

@@ -1,6 +1,27 @@
 import XCTest
 
 final class HotkeySettingsParsingTests: XCTestCase {
+  func testShortcutsOnlyEnabledForTheForegroundGame() {
+    XCTAssertTrue(HotkeyCenter.shouldEnableShortcuts(frontmostPID: 123, gamePID: 123))
+    XCTAssertFalse(
+      HotkeyCenter.shouldEnableShortcuts(frontmostPID: 456, gamePID: 123),
+      "A running background game must not intercept typing in another app"
+    )
+    XCTAssertFalse(HotkeyCenter.shouldEnableShortcuts(frontmostPID: 456, gamePID: nil))
+    XCTAssertFalse(HotkeyCenter.shouldEnableShortcuts(frontmostPID: nil, gamePID: 123))
+    XCTAssertFalse(HotkeyCenter.shouldEnableShortcuts(frontmostPID: nil, gamePID: nil))
+  }
+
+  func testApplyingSettingsOutsideGameLeavesNoGlobalRegistrations() {
+    let center = HotkeyCenter.shared
+    center.setShortcutsEnabled(false)
+    center.applyFromSettings()
+    XCTAssertTrue(
+      center.currentRegistrations.isEmpty,
+      "Ignoring callbacks is insufficient: Carbon would still swallow typing"
+    )
+  }
+
   func testParsesDefaultSettingsShape() {
     let json = """
       {

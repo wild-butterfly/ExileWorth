@@ -37,13 +37,3 @@ export function useLeagues(): LeaguesState {
 
   return { leagues, loading, error, reload };
 }
-
-/**
- * The default league is the first non-Standard entry the API returns, which
- * is the current challenge league. Never hard-coded to a league name.
- */
-export function defaultLeagueId(leagues: readonly League[]): string | null {
-  const permanent = new Set(['Standard', 'Hardcore', 'Ruthless', 'Hardcore Ruthless']);
-  const challenge = leagues.find((league) => !permanent.has(league.id));
-  return challenge?.id ?? leagues[0]?.id ?? null;
-}

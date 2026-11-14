@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusItemController: StatusItemController?
   private var settingsWindowController: SettingsWindowController?
   private var overlayController: OverlayWindowController?
+  private var activationObserver: NSObjectProtocol?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     // Menu-bar app: no Dock icon, no app switcher entry (LSUIElement is also
@@ -29,6 +30,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     HotkeyCenter.shared.onHotkey = { [weak self] action in
       self?.handleHotkey(action: action)
     }
+    // Shift+Space is easy to press during normal typing. Register shortcuts
+    // only while the game is frontmost; ignoring callbacks alone would still
+    // swallow the user's keystrokes in other apps.
+    activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+      forName: NSWorkspace.didActivateApplicationNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.syncShortcutContext()
+    }
+    syncShortcutContext()
     let hotkeyErrors = HotkeyCenter.shared.applyFromSettings()
     for (action, error) in hotkeyErrors {
       LogStore.shared.append(
@@ -90,7 +102,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   private var lastLoggedAccessibility: PermissionService.Status?
 
+  private func syncShortcutContext() {
+    HotkeyCenter.shared.setShortcutsEnabled(
+      HotkeyCenter.shouldEnableShortcuts(
+        frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier,
+        gamePID: GameLocator.runningGame()?.processIdentifier
+      )
+    )
+  }
+
   private func handleHotkey(action: String) {
+    // Re-check at dispatch time in case focus changed after Carbon queued it.
+    syncShortcutContext()
+    guard HotkeyCenter.shared.shortcutsEnabled else { return }
     VLEventsModule.emitHotkey(action: action)
     switch action {
     case "priceCheck", "priceCheckPersistent":
@@ -103,6 +127,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             scope: "price-check",
             message: "Item copied from game (\(text.count) chars)"
           )
+          // Copying is asynchronous: do not raise a result over an app the
+          // user switched to while we waited for the game's clipboard update.
+          self.syncShortcutContext()
+          guard HotkeyCenter.shared.shortcutsEnabled else { return }
           VLEventsModule.emitItemCopied(text: text, persistent: persistent)
           self.showOverlay(pinned: persistent)
         case .failure(let error):
@@ -152,6 +180,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationWillTerminate(_ notification: Notification) {
+    if let activationObserver {
+      NSWorkspace.shared.notificationCenter.removeObserver(activationObserver)
+    }
+    HotkeyCenter.shared.unregisterAll()
     LogStore.shared.append(level: "info", scope: "app", message: "Vaaluation terminating")
   }
 

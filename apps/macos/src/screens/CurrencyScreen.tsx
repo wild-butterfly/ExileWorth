@@ -28,7 +28,8 @@ import {
 } from '@vaaluation/ui';
 import type { Theme } from '@vaaluation/ui';
 import { useSettings } from '../state/SettingsContext';
-import { defaultLeagueId, useLeagues } from '../hooks/useLeagues';
+import { resolveLeagueId } from '@vaaluation/shared-types';
+import { useLeagues } from '../hooks/useLeagues';
 import { getTradeClient } from '../services/trade';
 
 interface RateRow {
@@ -53,7 +54,7 @@ export function CurrencyScreen() {
   const styles = useMemo(() => makeStyles(theme), [theme]);
   const { settings } = useSettings();
   const { leagues } = useLeagues();
-  const league = settings.leagueId ?? defaultLeagueId(leagues);
+  const league = resolveLeagueId(leagues, settings.leagueId);
 
   const [denomination, setDenomination] = useState('chaos');
   const [pickerOpen, setPickerOpen] = useState(false);

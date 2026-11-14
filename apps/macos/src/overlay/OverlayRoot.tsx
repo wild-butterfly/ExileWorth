@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { resolveLeagueId } from '@vaaluation/shared-types';
+import { useLeagues } from '../hooks/useLeagues';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   ThemeProvider,
@@ -33,6 +35,8 @@ function Shell() {
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
   const { settings, update } = useSettings();
+  const { leagues, error: leagueError } = useLeagues();
+  const league = resolveLeagueId(leagues, settings.leagueId);
   const [tab, setTab] = useState<Tab>('price');
   const [seenCount, setSeenCount] = useState(0);
   /**
@@ -110,7 +114,7 @@ function Shell() {
           ) : null}
         </Pressable>
         <Text style={styles.league} numberOfLines={1}>
-          {settings.leagueId ?? '—'}
+          {league ?? '—'}
         </Text>
         <Pressable
           style={[styles.close, pinned && styles.pinOn]}
@@ -131,7 +135,11 @@ function Shell() {
 
       <View style={styles.body}>
         {tab === 'price' ? (
-          <PriceCheckOverlay onContentHeight={reportHeight} />
+          <PriceCheckOverlay
+            onContentHeight={reportHeight}
+            league={league}
+            leagueError={leagueError}
+          />
         ) : (
           <TradeOverlay
             requests={trades.requests}

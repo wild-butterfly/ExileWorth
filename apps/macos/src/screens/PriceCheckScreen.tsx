@@ -27,7 +27,8 @@ import {
 import { borders, colors, radii, spacing, surfaces, typography } from '@vaaluation/ui';
 import { useTheme } from '@vaaluation/ui';
 import { useSettings } from '../state/SettingsContext';
-import { useLeagues, defaultLeagueId } from '../hooks/useLeagues';
+import { resolveLeagueId } from '@vaaluation/shared-types';
+import { useLeagues } from '../hooks/useLeagues';
 import { getTradeClient } from '../services/trade';
 import { onItemCopied } from '../native/VLEvents';
 import { readClipboardText } from '../native/VLClipboard';
@@ -70,7 +71,7 @@ function itemTitle(item: ParsedItem): string {
 
 export function PriceCheckScreen() {
   const theme = useTheme();
-  const { settings, update } = useSettings();
+  const { settings } = useSettings();
   const { leagues } = useLeagues();
   const [text, setText] = useState('');
   const [filters, setFilters] = useState<SelectableFilter[]>([]);
@@ -79,15 +80,7 @@ export function PriceCheckScreen() {
   const parsed = useMemo(() => parseItemText(text), [text]);
   const item = parsed.ok ? parsed.item : null;
 
-  const league = settings.leagueId ?? defaultLeagueId(leagues);
-
-  // Persist a sensible league the first time the list arrives.
-  useEffect(() => {
-    if (settings.leagueId === null && leagues.length > 0) {
-      const fallback = defaultLeagueId(leagues);
-      if (fallback !== null) update({ leagueId: fallback });
-    }
-  }, [leagues, settings.leagueId, update]);
+  const league = resolveLeagueId(leagues, settings.leagueId);
 
   // A price-check hotkey fills this screen with the copied item.
   useEffect(

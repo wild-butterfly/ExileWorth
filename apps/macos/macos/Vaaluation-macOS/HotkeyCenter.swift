@@ -3,7 +3,8 @@ import Foundation
 
 /// Global shortcut engine built on Carbon's RegisterEventHotKey — a public,
 /// still-supported API that needs no privacy permission and swallows the
-/// keystroke so it never reaches the game.
+/// keystroke so it never reaches the game. Registrations are suspended while
+/// another app is in front, so ordinary typing is never intercepted there.
 final class HotkeyCenter {
   static let shared = HotkeyCenter()
 
@@ -41,6 +42,25 @@ final class HotkeyCenter {
   /// Called on the main thread when a registered hotkey fires.
   var onHotkey: ((_ action: String) -> Void)?
 
+  private(set) var shortcutsEnabled = false
+
+  /// Match the actual foreground process, not merely whether the game is running.
+  /// Optional PIDs must both exist: nil == nil must never enable shortcuts.
+  static func shouldEnableShortcuts(frontmostPID: Int32?, gamePID: Int32?) -> Bool {
+    guard let frontmostPID, let gamePID else { return false }
+    return frontmostPID == gamePID
+  }
+
+  func setShortcutsEnabled(_ enabled: Bool) {
+    guard shortcutsEnabled != enabled else { return }
+    shortcutsEnabled = enabled
+    if enabled {
+      applyFromSettings()
+    } else {
+      unregisterAll()
+    }
+  }
+
   private var registrations: [String: Registration] = [:]
   private var eventHandler: EventHandlerRef?
   private var nextID: UInt32 = 1
@@ -69,6 +89,7 @@ final class HotkeyCenter {
       )
       if status == noErr {
         let center = Unmanaged<HotkeyCenter>.fromOpaque(userData).takeUnretainedValue()
+        guard hotKeyID.signature == center.signature else { return noErr }
         center.handlePress(id: hotKeyID.id)
       }
       return noErr
@@ -84,10 +105,11 @@ final class HotkeyCenter {
   }
 
   private func handlePress(id: UInt32) {
-    guard let action = idToAction[id] else { return }
+    guard shortcutsEnabled, let action = idToAction[id] else { return }
     LogStore.shared.append(level: "debug", scope: "hotkeys", message: "Hotkey fired: \(action)")
     DispatchQueue.main.async { [weak self] in
-      self?.onHotkey?(action)
+      guard let self, self.shortcutsEnabled else { return }
+      self.onHotkey?(action)
     }
   }
 
@@ -151,6 +173,11 @@ final class HotkeyCenter {
   /// Returns per-action errors for anything that could not be registered.
   @discardableResult
   func applyFromSettings() -> [String: RegistrationError] {
+    // Validate saved combinations even in Settings, but release the Carbon
+    // registrations before returning if the game is not in front.
+    defer {
+      if !shortcutsEnabled { unregisterAll() }
+    }
     var errors: [String: RegistrationError] = [:]
     let hotkeys = Self.hotkeysFromSettingsJSON(SettingsStore.shared.settingsJSON)
     let knownActions = ["priceCheck", "priceCheckPersistent", "toggleOverlay"]

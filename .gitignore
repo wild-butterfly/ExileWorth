@@ -37,3 +37,10 @@ npm-debug.log*
 
 # Release artefacts: built, signed and uploaded, never committed.
 /dist/
+
+# Windows native build
+/apps/windows/native/bin/
+/apps/windows/native/obj/
+
+/apps/windows/test/desktop/bin/
+/apps/windows/test/desktop/obj/

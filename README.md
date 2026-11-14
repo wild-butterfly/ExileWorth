@@ -49,6 +49,16 @@ Developer ID certificate and notarized by Apple.
 - [Check Path of Exile item prices](https://wild-butterfly.github.io/Vaaluation/guides/price-check/)
 - [Troubleshoot shortcuts, permissions and searches](https://wild-butterfly.github.io/Vaaluation/guides/troubleshooting/)
 
+## Covens of Umbra and Windows
+
+Vaaluation gets leagues from the live Path of Exile 1 trade service. Select
+**Covens** for the new challenge league. An expired league choice falls back to
+the current PC challenge league; valid choices such as Standard are preserved.
+
+The [Windows x64 preview](apps/windows/README.md) includes item price checks,
+modifier filters, and a game-scoped shortcut. See its build instructions to
+create a portable ZIP.
+
 ## See it in action
 
 ### Price check

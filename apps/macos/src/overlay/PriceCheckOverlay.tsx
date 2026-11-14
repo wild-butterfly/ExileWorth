@@ -40,8 +40,6 @@ import {
   useTheme,
 } from '@vaaluation/ui';
 import type { Theme } from '@vaaluation/ui';
-import { useSettings } from '../state/SettingsContext';
-import { defaultLeagueId, useLeagues } from '../hooks/useLeagues';
 import { getTradeClient } from '../services/trade';
 import { onItemCopied } from '../native/VLEvents';
 
@@ -120,13 +118,15 @@ function subtitleOf(item: ParsedItem): string {
 
 export function PriceCheckOverlay({
   onContentHeight,
+  league,
+  leagueError,
 }: {
+  league: string | null;
+  leagueError: string | null;
   onContentHeight: (height: number) => void;
 }) {
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
-  const { settings, update } = useSettings();
-  const { leagues } = useLeagues();
   const [item, setItem] = useState<ParsedItem | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const [filters, setFilters] = useState<SelectableFilter[]>([]);
@@ -142,15 +142,6 @@ export function PriceCheckOverlay({
       onContentHeight(scrollContentHeight + footerHeight);
     }
   }, [footerHeight, onContentHeight, scrollContentHeight]);
-
-  const league = settings.leagueId ?? defaultLeagueId(leagues);
-
-  useEffect(() => {
-    if (settings.leagueId === null && leagues.length > 0) {
-      const fallback = defaultLeagueId(leagues);
-      if (fallback !== null) update({ leagueId: fallback });
-    }
-  }, [leagues, settings.leagueId, update]);
 
   useEffect(
     () =>
@@ -177,7 +168,7 @@ export function PriceCheckOverlay({
 
   useEffect(() => {
     let cancelled = false;
-    if (item === null) {
+    if (item === null || league === null) {
       setFilters([]);
       return;
     }
@@ -199,7 +190,7 @@ export function PriceCheckOverlay({
     return () => {
       cancelled = true;
     };
-  }, [item]);
+  }, [item, league]);
 
   const runSearch = useCallback(
     async (withFilters: SelectableFilter[] = filters) => {
@@ -444,6 +435,9 @@ export function PriceCheckOverlay({
                 </View>
               ))}
 
+              {leagueError !== null ? (
+                <Text style={styles.error}>{leagueError}</Text>
+              ) : null}
               {state.status === 'error' ? (
                 <Text style={styles.error}>{state.message}</Text>
               ) : null}
@@ -538,7 +532,7 @@ export function PriceCheckOverlay({
           onPress={() => {
             void runSearch();
           }}
-          disabled={item === null || state.status === 'searching'}
+          disabled={item === null || league === null || state.status === 'searching'}
         >
           {state.status === 'searching' ? (
             <ActivityIndicator size="small" color={theme.actionText} />
