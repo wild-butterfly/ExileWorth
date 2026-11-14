@@ -240,9 +240,17 @@ internal sealed class PriceWindow : Form
     {
         status.Text = "Copying item from Path of Exile…";
         currentListings = [];
-        overlay.Open(game, preferences.NearCursor);
-        UpdateOverlay();
-        string? text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key);
+        string? text;
+        try { text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key); }
+        finally
+        {
+            if (!IsDisposed && GameHotkey.ForegroundGame() == game)
+            {
+                overlay.Open(game, preferences.NearCursor);
+                UpdateOverlay();
+            }
+        }
+        if (IsDisposed) return;
         if (text is null)
         {
             status.Text = "Item copy cancelled. Release the shortcut keys and try again.";

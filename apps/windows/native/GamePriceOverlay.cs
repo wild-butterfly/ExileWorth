@@ -23,6 +23,16 @@ internal sealed class GamePriceOverlay : Form
 
     protected override bool ShowWithoutActivation => true;
 
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            var parameters = base.CreateParams;
+            parameters.ExStyle |= 0x08000000; // WS_EX_NOACTIVATE
+            return parameters;
+        }
+    }
+
     public GamePriceOverlay(Action<string?> selectCurrency)
     {
         Text = "ExileWorth Price Overlay";
