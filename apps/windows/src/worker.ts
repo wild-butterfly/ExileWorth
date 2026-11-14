@@ -3,6 +3,7 @@ import {
   currencyBatches,
   TRACKED_CURRENCIES,
   TradeClient,
+  type CurrencyRate,
 } from '@vaaluation/trade-client';
 import { PriceCheckEngine } from './engine';
 
@@ -17,7 +18,7 @@ const engine = new PriceCheckEngine(client);
 async function currency(preferred: string | null) {
   const { selected } = await engine.leagues(preferred);
   if (!selected) throw new Error('No PC trade league is available.');
-  const rows = [];
+  const rows: { id: string; rate: CurrencyRate | null; error: string | null }[] = [];
   for (const batch of currencyBatches()) {
     try {
       const rates = await client.currencyRates(selected, batch, 'chaos', {
