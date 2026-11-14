@@ -4,8 +4,8 @@ namespace ExileWorth.Windows;
 
 /// <summary>What the compact overlay shows for the current price check.</summary>
 internal sealed record PriceView(
-    string Title, string Meta, IReadOnlyList<Listing> Listings, TypicalPrice? Typical,
-    int Total, string? Currency, bool Busy, Uri? TradeUrl);
+    string Title, string Meta, IReadOnlyList<Listing> Listings, IReadOnlyList<Modifier> Filters,
+    TypicalPrice? Typical, int Total, string? Currency, bool Busy, bool HasItem, Uri? TradeUrl);
 
 /// <summary>
 /// The compact in-game panel. It never takes focus: every control is painted
@@ -15,10 +15,14 @@ internal sealed record PriceView(
 internal sealed class GamePriceOverlay : Form
 {
     public static readonly (string Label, string? Id, string Short)[] CurrencyFilters =
-        [("All currencies", null, "All"), ("Orb of Alchemy", "alch", "Alch"), ("Chaos Orb", "chaos", "Chaos"),
-         ("Divine Orb", "divine", "Divine")];
+    [
+        ("All currencies", null, "All"), ("Orb of Alchemy", "alch", "Alch"), ("Chaos Orb", "chaos", "Chaos"),
+        ("Exalted Orb", "exalted", "Exalted"), ("Divine Orb", "divine", "Divine"),
+    ];
 
-    private readonly Func<string> thanks;
+    private const int MaxModifierRows = 4;
+
+    private readonly Func<DesktopPreferences> preferences;
     private readonly Worker tradeWorker = new();
     private readonly FlatButton priceTab = new(ButtonKind.Tab, "Price") { TabStop = false };
     private readonly FlatButton tradeTab = new(ButtonKind.Tab, "Trades") { TabStop = false };
@@ -28,12 +32,15 @@ internal sealed class GamePriceOverlay : Form
         Anchor = AnchorStyles.Right, UseMnemonic = false, Margin = new Padding(0, 0, 6, 0),
     };
     private readonly PriceHeader header = new(compact: true) { Dock = DockStyle.Fill, BackColor = WindowTheme.Overlay };
+    private readonly ModifierView modifiers = new(compact: true) { Dock = DockStyle.Fill, BackColor = WindowTheme.Overlay };
     private readonly ListingView listings = new(compact: true)
     {
         Dock = DockStyle.Fill, BackColor = WindowTheme.Overlay, ShowLevel = false,
         Placeholder = "Hover an item in Path of Exile and press the shortcut.",
     };
-    private readonly List<FlatButton> currencyChips = [];
+    private readonly FlatButton currency = new(ButtonKind.Chip, "All  ▾") { TabStop = false, AccessibleName = "Listing currency" };
+    private readonly CurrencyPicker picker = new();
+    private readonly FlatButton search = new(ButtonKind.Accent, "Search") { TabStop = false, Enabled = false };
     private readonly FlatButton tradeSite = new(ButtonKind.Chip, "Trade site ↗") { TabStop = false, Enabled = false };
     private readonly Label status = new()
     {
@@ -52,9 +59,12 @@ internal sealed class GamePriceOverlay : Form
     };
     private readonly Panel pricePage = new() { Dock = DockStyle.Fill };
     private readonly Panel tradePage = new() { Dock = DockStyle.Fill };
+    private readonly TableLayoutPanel priceLayout = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, Margin = Padding.Empty };
+    private IReadOnlyList<Modifier>? shownFilters;
+    private string? selectedCurrency;
     private nint game;
     private Uri? tradeUrl;
-    private bool loadingTrades, sending;
+    private bool loadingTrades, sending, busy, hasItem;
     private Point? drag;
 
     protected override bool ShowWithoutActivation => true;
@@ -70,9 +80,9 @@ internal sealed class GamePriceOverlay : Form
         }
     }
 
-    public GamePriceOverlay(Action<string?> selectCurrency, Func<string> thanks)
+    public GamePriceOverlay(Action<string?> selectCurrency, Action<string[]> runSearch, Func<DesktopPreferences> preferences)
     {
-        this.thanks = thanks;
+        this.preferences = preferences;
         Text = "ExileWorth Price Overlay";
         AccessibleName = Text;
         FormBorderStyle = FormBorderStyle.None;
@@ -118,82 +128,76 @@ internal sealed class GamePriceOverlay : Form
             await LoadTradesAsync();
         };
 
-        // Price page: header, small currency icons, listings, status line.
-        var filters = new FlowLayoutPanel
+        // Toolbar: currency dropdown and Search on the left, trade site on the right.
+        var toolbar = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill, WrapContents = false, Padding = new Padding(S(10), S(2), S(8), 0),
+            Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 1, Padding = new Padding(S(10), S(3), S(10), 0),
             Margin = Padding.Empty,
         };
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        currency.Anchor = search.Anchor = AnchorStyles.Left;
+        tradeSite.Anchor = AnchorStyles.Right;
+        toolbar.Controls.Add(currency, 0, 0);
+        toolbar.Controls.Add(search, 1, 0);
+        toolbar.Controls.Add(tradeSite, 3, 0);
         var tip = new ToolTip { InitialDelay = 250, ShowAlways = true };
-        foreach (var (label, id, _) in CurrencyFilters)
+        tip.SetToolTip(currency, "Only show listings priced in one currency");
+        tip.SetToolTip(search, "Search again with the ticked modifiers");
+        tip.SetToolTip(tradeSite, "Open this search on pathofexile.com");
+        currency.Click += (_, _) =>
         {
-            var chip = new FlatButton(ButtonKind.Chip, id is null ? "All" : "")
-            {
-                TabStop = false, Tag = id, AccessibleName = id is null ? "All currencies" : $"Only {label} listings",
-            };
-            tip.SetToolTip(chip, id is null ? "Listings in any currency" : $"Only listings priced in {label}");
-            chip.Click += (_, _) => selectCurrency(id);
-            currencyChips.Add(chip);
-            filters.Controls.Add(chip);
-        }
-        var spacer = new Panel { Width = S(8), Height = 1, Margin = Padding.Empty };
-        filters.Controls.Add(spacer);
+            var below = PointToClient(currency.Parent!.PointToScreen(new Point(currency.Left, currency.Bottom + S(4))));
+            picker.Toggle(below, selectedCurrency);
+        };
+        picker.Chosen += id => selectCurrency(id);
+        search.Click += (_, _) => runSearch(modifiers.Selected);
+        modifiers.Changed += UpdateSearch;
         tradeSite.Click += (_, _) =>
         {
             if (tradeUrl is not null) Process.Start(new ProcessStartInfo(tradeUrl.AbsoluteUri) { UseShellExecute = true });
         };
-        filters.Controls.Add(tradeSite);
-        tip.SetToolTip(tradeSite, "Open this search on pathofexile.com");
 
-        var listHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(S(8), S(4), S(4), 0) };
+        var modifierHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(S(10), S(4), S(6), 0), Margin = Padding.Empty };
+        modifierHost.Controls.Add(modifiers);
+        var listHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(S(8), S(4), S(4), 0), Margin = Padding.Empty };
         listHost.Controls.Add(listings);
-        listings.RowClicked += (index, _) =>
-        {
-            var listing = listings.Listings[index];
-            if (listing.Whisper is null) return;
-            try
-            {
-                Clipboard.SetText(listing.Whisper);
-                status.Text = $"Whisper to {listing.AccountName} copied. In game: Enter, Ctrl+V.";
-                status.ForeColor = WindowTheme.UpText;
-            }
-            catch (System.Runtime.InteropServices.ExternalException)
-            {
-                status.Text = "The clipboard is busy. Try again.";
-            }
-        };
+        listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
 
-        var priceLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty };
         priceLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(56)));
+        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(54)));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(30)));
+        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(26)));
+        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(24)));
         priceLayout.Controls.Add(header, 0, 0);
-        priceLayout.Controls.Add(filters, 0, 1);
-        priceLayout.Controls.Add(listHost, 0, 2);
-        priceLayout.Controls.Add(Footer(status), 0, 3);
+        priceLayout.Controls.Add(toolbar, 0, 1);
+        priceLayout.Controls.Add(modifierHost, 0, 2);
+        priceLayout.Controls.Add(listHost, 0, 3);
+        priceLayout.Controls.Add(Footer(status), 0, 4);
         EnableDrag(header);
         pricePage.Controls.Add(priceLayout);
 
-        // Trades page: whispers with one-press commands.
-        var tradeHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(S(8), S(6), S(4), 0) };
+        // Trades page: whispers with the macOS actions and prepared replies.
+        var tradeHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(S(8), S(4), S(4), 0) };
         tradeHost.Controls.Add(trades);
         var refresh = new FlatButton(ButtonKind.Chip, "↻ Refresh") { TabStop = false };
-        var hideout = new FlatButton(ButtonKind.Chip, "Hideout") { TabStop = false };
+        var hideout = new FlatButton(ButtonKind.Chip, "Go to hideout") { TabStop = false };
         refresh.Click += async (_, _) => await LoadTradesAsync();
-        hideout.Click += async (_, _) => await SendAsync("/hideout", "Hideout");
-        trades.CommandChosen += async (trade, command, label) => await SendAsync(command, $"{label} {trade.Character}");
+        hideout.Click += async (_, _) => await SendAsync("/hideout", "Go to hideout");
+        trades.CommandChosen += async (_, command, description) => await SendAsync(command, description);
         var tradeBar = new FlowLayoutPanel
         {
-            Dock = DockStyle.Fill, WrapContents = false, Padding = new Padding(S(10), S(4), S(8), 0), Margin = Padding.Empty,
+            Dock = DockStyle.Fill, WrapContents = false, Padding = new Padding(S(10), S(3), S(8), 0), Margin = Padding.Empty,
         };
         tradeBar.Controls.AddRange([refresh, hideout]);
         var tradeLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty };
         tradeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        tradeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(32)));
+        tradeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(30)));
         tradeLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        tradeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(26)));
+        tradeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(24)));
         tradeLayout.Controls.Add(tradeBar, 0, 0);
         tradeLayout.Controls.Add(tradeHost, 0, 1);
         tradeLayout.Controls.Add(Footer(tradeStatus), 0, 2);
@@ -207,11 +211,17 @@ internal sealed class GamePriceOverlay : Form
         body.Controls.AddRange([pricePage, tradePage]);
         root.Controls.Add(strip, 0, 0);
         root.Controls.Add(body, 0, 1);
+        Controls.Add(picker);
         Controls.Add(root);
-        ClientSize = new Size(S(420), S(372));
+        picker.BringToFront();
+        // Any click outside the dropdown closes it.
+        foreach (var control in new Control[] { strip, header, toolbar, modifiers, listings, trades, status })
+            control.MouseDown += (_, _) => picker.Visible = false;
+        ClientSize = new Size(S(430), S(430));
         ShowTrades(false);
-        CurrencyIcons.Changed += RefreshIcons;
-        RefreshIcons();
+        CurrencyIcons.Changed += ShowCurrency;
+        WindowTheme.ThemeChanged += OnThemeChanged;
+        ShowCurrency();
     }
 
     private Control Footer(Label text)
@@ -227,15 +237,21 @@ internal sealed class GamePriceOverlay : Form
         return footer;
     }
 
-    private void RefreshIcons()
+    /// <summary>The dropdown chip shows the chosen currency's icon and short name.</summary>
+    private void ShowCurrency()
     {
-        // Icon-only once the art arrives; a short name until then (or if offline).
-        foreach (var chip in currencyChips)
-        {
-            if (chip.Tag is not string id) continue;
-            chip.Icon = CurrencyIcons.Get(id) ?? chip.Icon;
-            chip.Text = chip.Icon is not null ? "" : CurrencyFilters.First(entry => entry.Id == id).Short;
-        }
+        var entry = CurrencyFilters.First(option => option.Id == selectedCurrency);
+        currency.Icon = entry.Id is null ? null : CurrencyIcons.Get(entry.Id);
+        currency.Text = $"{entry.Short}  ▾";
+        currency.Selected = entry.Id is not null;
+    }
+
+    private void UpdateSearch() => search.Enabled = hasItem && !busy && modifiers.ItemCount > 0;
+
+    private void OnThemeChanged()
+    {
+        if (IsHandleCreated) WindowTheme.ApplyPopupFrame(Handle);
+        WindowTheme.Repaint(this);
     }
 
     protected override void OnHandleCreated(EventArgs e)
@@ -255,6 +271,7 @@ internal sealed class GamePriceOverlay : Form
     {
         game = target;
         ShowTrades(false);
+        picker.Visible = false;
         if (Visible) return;
         Point cursor = Cursor.Position;
         Rectangle area = Screen.FromHandle(target).WorkingArea;
@@ -270,18 +287,43 @@ internal sealed class GamePriceOverlay : Form
 
     public void Present(PriceView view, string message, string? leagueName)
     {
+        busy = view.Busy;
+        hasItem = view.HasItem;
         header.Show(view.Title, view.Meta, view.Typical, view.Total);
         league.Text = leagueName ?? "";
         if (!ReferenceEquals(listings.Listings, view.Listings)) listings.Listings = view.Listings;
         listings.Placeholder = view.Busy ? "Searching…" : message;
+        // Keep unsearched ticks until a new result replaces the modifiers.
+        if (!ReferenceEquals(shownFilters, view.Filters))
+        {
+            shownFilters = view.Filters;
+            modifiers.SetItems(view.Filters);
+            int rows = Math.Min(view.Filters.Count, MaxModifierRows);
+            priceLayout.RowStyles[2].Height = rows == 0 ? 0 : rows * this.Px(24) + this.Px(6);
+        }
         status.Text = message;
         status.ForeColor = WindowTheme.Dim;
         tradeUrl = view.TradeUrl;
         tradeSite.Enabled = tradeUrl is not null && !view.Busy;
-        foreach (var chip in currencyChips)
+        search.Text = view.Busy && view.HasItem ? "Searching…" : "Search";
+        UpdateSearch();
+        currency.Enabled = !view.Busy;
+        selectedCurrency = view.Currency;
+        ShowCurrency();
+    }
+
+    private void CopyWhisper(Listing listing)
+    {
+        if (listing.Whisper is null) return;
+        try
         {
-            chip.Selected = Equals(chip.Tag, view.Currency);
-            chip.Enabled = !view.Busy;
+            Clipboard.SetText(listing.Whisper);
+            status.Text = $"Whisper to {listing.AccountName} copied. In game: Enter, Ctrl+V.";
+            status.ForeColor = WindowTheme.UpText;
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            status.Text = "The clipboard is busy. Try again.";
         }
     }
 
@@ -301,6 +343,7 @@ internal sealed class GamePriceOverlay : Form
         tradeTab.Selected = show;
         pricePage.Visible = !show;
         tradePage.Visible = show;
+        picker.Visible = false;
     }
 
     private async Task SendAsync(string command, string description)
@@ -332,7 +375,8 @@ internal sealed class GamePriceOverlay : Form
         SetTradeStatus("Reading recent trade whispers…", WindowTheme.Dim);
         try
         {
-            var result = await TradeLog.ReadAsync(tradeWorker, GameHotkey.ClientLog(game), thanks());
+            var settings = preferences();
+            var result = await TradeLog.ReadAsync(tradeWorker, GameHotkey.ClientLog(game), settings.Thanks, settings.Replies);
             if (IsDisposed) return;
             trades.Trades = result;
             int incoming = result.Count(trade => trade.Direction == "incoming");
@@ -351,7 +395,8 @@ internal sealed class GamePriceOverlay : Form
     {
         if (disposing)
         {
-            CurrencyIcons.Changed -= RefreshIcons;
+            CurrencyIcons.Changed -= ShowCurrency;
+            WindowTheme.ThemeChanged -= OnThemeChanged;
             tradeWorker.Dispose();
         }
         base.Dispose(disposing);

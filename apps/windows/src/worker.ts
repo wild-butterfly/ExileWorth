@@ -12,6 +12,7 @@ import {
   parseTradeWhisper,
   thanksCommand,
   tradeCommand,
+  whisperCommand,
 } from '@vaaluation/trade-whispers';
 import { PriceCheckEngine } from './engine';
 
@@ -19,7 +20,7 @@ import { PriceCheckEngine } from './engine';
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.11 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.12 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
 
@@ -60,6 +61,7 @@ async function run() {
         currency?: string;
         lines?: string[];
         thanks?: string;
+        replies?: string[];
       };
       if (request.action === 'icons') {
         const icons = await client.getCurrencyIcons();
@@ -70,6 +72,10 @@ async function run() {
       }
       if (request.action === 'trades') {
         const requestThanks = request.thanks?.trim() || null;
+        const requestReplies = (request.replies ?? [])
+          .map((reply) => reply.trim())
+          .filter((reply) => reply.length > 0)
+          .slice(0, 8);
         const result = (request.lines ?? [])
           .flatMap((line) => {
             const request = parseTradeWhisper(line);
@@ -85,6 +91,9 @@ async function run() {
                 invite: inviteCommand(request).text,
                 trade: tradeCommand(request).text,
                 kick: kickCommand(request).text,
+                replies: requestReplies.map(
+                  (reply) => whisperCommand(request, reply).text,
+                ),
               },
             ];
           })
