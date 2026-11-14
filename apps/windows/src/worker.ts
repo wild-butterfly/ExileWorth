@@ -1,16 +1,43 @@
 import { createInterface } from 'node:readline';
-import { TradeClient } from '@vaaluation/trade-client';
+import {
+  currencyBatches,
+  TRACKED_CURRENCIES,
+  TradeClient,
+} from '@vaaluation/trade-client';
 import { PriceCheckEngine } from './engine';
 
-const engine = new PriceCheckEngine(
-  // Node's native fetch allows setting the identifying User-Agent.
-  // Keep requests bounded so a stalled connection does not freeze the UI.
-  new TradeClient({
-    fetch: (url, options) =>
-      fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-    userAgent: 'ExileWorth/0.1.3 (+https://github.com/wild-butterfly/ExileWorth)',
-  }),
-);
+// Keep requests bounded so a stalled connection does not freeze the UI.
+const client = new TradeClient({
+  fetch: (url, options) =>
+    fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
+  userAgent: 'ExileWorth/0.1.7 (+https://github.com/wild-butterfly/ExileWorth)',
+});
+const engine = new PriceCheckEngine(client);
+
+async function currency(preferred: string | null) {
+  const { selected } = await engine.leagues(preferred);
+  if (!selected) throw new Error('No PC trade league is available.');
+  const rows = [];
+  for (const batch of currencyBatches()) {
+    try {
+      const rates = await client.currencyRates(selected, batch, 'chaos', {
+        waitForCapacity: true,
+      });
+      for (const id of batch) rows.push({ id, rate: rates.get(id) ?? null, error: null });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Exchange request failed.';
+      for (const id of batch) rows.push({ id, rate: null, error: message });
+    }
+  }
+  return {
+    selected,
+    rows: TRACKED_CURRENCIES.filter(({ id }) => id !== 'chaos').map(({ id, label }) => ({
+      label,
+      ...rows.find((row) => row.id === id),
+    })),
+  };
+}
+
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
 
 async function run() {
@@ -22,6 +49,12 @@ async function run() {
         text?: string;
         enabled?: string[];
       };
+      if (request.action === 'currency') {
+        process.stdout.write(
+          JSON.stringify({ result: await currency(request.preferred) }) + '\n',
+        );
+        continue;
+      }
       const result =
         request.action === 'leagues'
           ? await engine.leagues(request.preferred)

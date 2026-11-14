@@ -13,11 +13,13 @@ internal sealed class GameHotkey : IDisposable
     private readonly Action<bool> focusChanged;
     private readonly System.Windows.Forms.Timer focusCheck;
     private bool registered;
+    private Shortcut shortcut;
     private bool gameActive;
 
-    public GameHotkey(nint window, Action<bool> focusChanged)
+    public GameHotkey(nint window, Shortcut shortcut, Action<bool> focusChanged)
     {
         this.window = window;
+        this.shortcut = shortcut;
         this.focusChanged = focusChanged;
         callback = (_, _, _, _, _, _, _) => Sync();
         hook = SetWinEventHook(3, 3, 0, callback, 0, 0, 0);
@@ -37,12 +39,22 @@ internal sealed class GameHotkey : IDisposable
             focusChanged(eligible);
         }
         if (eligible && !registered)
-            registered = RegisterHotKey(window, Id, 0x4003, (uint)Keys.D); // Ctrl + Alt + D
+        {
+            registered = RegisterHotKey(window, Id, 0x4000 | shortcut.Modifiers, (uint)shortcut.Key);
+        }
         else if (!eligible && registered)
         {
             UnregisterHotKey(window, Id);
             registered = false;
         }
+    }
+
+    public void SetShortcut(Shortcut value)
+    {
+        if (registered) UnregisterHotKey(window, Id);
+        registered = false;
+        shortcut = value;
+        Sync();
     }
 
     public static nint ForegroundGame()
@@ -63,17 +75,17 @@ internal sealed class GameHotkey : IDisposable
         }
     }
 
-    public static async Task<string?> CopyItemAsync(nint game)
+    public static async Task<string?> CopyItemAsync(nint game, Keys trigger)
     {
         // Never forward a copy command if the game lost focus after WM_HOTKEY.
         if (game == 0 || ForegroundGame() != game) return null;
         // Wait for the shortcut modifiers to be released before sending the
         // game's own Ctrl+Alt+C copy command. This avoids releasing held keys.
         for (int i = 0; i < 25 && (Down(Keys.ControlKey) || Down(Keys.Menu) ||
-            Down(Keys.ShiftKey) || Down(Keys.LWin) || Down(Keys.RWin) || Down(Keys.D)); i++)
+            Down(Keys.ShiftKey) || Down(Keys.LWin) || Down(Keys.RWin) || Down(trigger)); i++)
             await Task.Delay(20);
         if (ForegroundGame() != game || Down(Keys.ControlKey) || Down(Keys.Menu) ||
-            Down(Keys.ShiftKey) || Down(Keys.LWin) || Down(Keys.RWin) || Down(Keys.D)) return null;
+            Down(Keys.ShiftKey) || Down(Keys.LWin) || Down(Keys.RWin) || Down(trigger)) return null;
         uint start = GetClipboardSequenceNumber();
         Input[] input = [
             Key(Keys.ControlKey, false), Key(Keys.Menu, false), Key(Keys.C, false),

@@ -21,6 +21,10 @@ internal sealed class PriceWindow : Form
     private readonly string settingsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Vaaluation", "league.txt");
+    private DesktopPreferences preferences;
+    private readonly DesktopPages pages;
+    private readonly Panel pageHost = new() { Dock = DockStyle.Fill };
+    private readonly FlowLayoutPanel navigation = new() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(12, 8, 12, 0) };
     private GameHotkey? hotkey;
     private string? preferred;
     private Uri? tradeUrl;
@@ -33,6 +37,7 @@ internal sealed class PriceWindow : Form
         try { if (File.Exists(settingsPath)) preferred = File.ReadAllText(settingsPath).Trim(); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
 
+        preferences = DesktopPreferences.Load();
         Text = "ExileWorth — Path of Exile";
         StartPosition = FormStartPosition.CenterScreen;
         ClientSize = new Size(560, 665);
@@ -110,7 +115,18 @@ internal sealed class PriceWindow : Form
         };
         toolbar.Controls.AddRange([search, open, paste]);
         layout.Controls.Add(toolbar);
+        pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague);
+        var price = new GlassButton(true) { Text = "Price Check", AutoSize = true };
+        var currency = new GlassButton { Text = "Currency", AutoSize = true };
+        var settings = new GlassButton { Text = "Settings", AutoSize = true };
+        price.Click += (_, _) => ShowPage(null);
+        currency.Click += (_, _) => ShowPage(pages.Currency);
+        settings.Click += (_, _) => ShowPage(pages.Settings);
+        navigation.Controls.AddRange([price, currency, settings]);
         Controls.Add(layout);
+        Controls.Add(pageHost);
+        Controls.Add(navigation);
+        ShowPage(null);
         Shown += async (_, _) => await RunAsync(LoadLeaguesAsync);
 
         menu.Items.Add("Open ExileWorth", null, (_, _) => Reveal());
@@ -136,6 +152,26 @@ internal sealed class PriceWindow : Form
         };
     }
 
+    private void ShowPage(Control? page)
+    {
+        pageHost.Controls.Clear();
+        if (page is not null) pageHost.Controls.Add(page);
+        pageHost.Visible = page is not null;
+        if (page is not null) pageHost.BringToFront();
+        navigation.BringToFront();
+    }
+
+    private void SavePreferences(DesktopPreferences updated)
+    {
+        updated.Save();
+        preferences = updated;
+        hotkey?.SetShortcut(updated.Shortcut);
+        if (!hasItem && !busy) ShowShortcutHint();
+    }
+
+    private void ShowShortcutHint() =>
+        status.Text = $"Hover an item in Path of Exile and press {preferences.Shortcut}, or check the clipboard.";
+
     private static Control ResultPanel(string title, Control content)
     {
         var panel = new GlassPanel { Dock = DockStyle.Fill };
@@ -160,7 +196,7 @@ internal sealed class PriceWindow : Form
     {
         base.OnHandleCreated(e);
         WindowTheme.ApplyTitleBar(Handle);
-        hotkey = new GameHotkey(Handle, active =>
+        hotkey = new GameHotkey(Handle, preferences.Shortcut, active =>
         {
             if (!active) ClearOverlayZOrder();
         });
@@ -187,7 +223,7 @@ internal sealed class PriceWindow : Form
     {
         status.Text = "Copying item from Path of Exile…";
         ShowGameOverlay(game);
-        string? text = await GameHotkey.CopyItemAsync(game);
+        string? text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key);
         if (text is null)
         {
             status.Text = "Item copy cancelled. Release the shortcut keys and try again.";
@@ -226,6 +262,8 @@ internal sealed class PriceWindow : Form
     private void ShowGameOverlay(nint game)
     {
         if (GameHotkey.ForegroundGame() != game) return;
+        ShowPage(null);
+        navigation.Hide();
         passive = true;
         try
         {
@@ -238,9 +276,11 @@ internal sealed class PriceWindow : Form
                 Point cursor = Cursor.Position;
                 Rectangle bounds = Screen.FromPoint(cursor).WorkingArea;
                 StartPosition = FormStartPosition.Manual;
-                Location = new Point(
-                    Math.Clamp(cursor.X + 18, bounds.Left, Math.Max(bounds.Left, bounds.Right - Width)),
-                    Math.Clamp(cursor.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - Height)));
+                Location = preferences.NearCursor
+                    ? new Point(
+                        Math.Clamp(cursor.X + 18, bounds.Left, Math.Max(bounds.Left, bounds.Right - Width)),
+                        Math.Clamp(cursor.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - Height)))
+                    : new Point(bounds.Right - Math.Min(Width, bounds.Width), bounds.Top);
                 Show();
             }
             SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x0013); // TOPMOST, NOACTIVATE, NOMOVE, NOSIZE
@@ -254,7 +294,7 @@ internal sealed class PriceWindow : Form
         var data = await worker.SendAsync<LeagueResult>(new { action = "leagues", preferred });
         if (IsDisposed) return;
         SetLeagues(data.Leagues, data.Selected);
-        status.Text = "Hover an item in Path of Exile and press Ctrl + Alt + D, or check the clipboard.";
+        ShowShortcutHint();
     }
 
     private async Task CheckAsync(string? text, string[]? enabled)
@@ -295,31 +335,37 @@ internal sealed class PriceWindow : Form
 
     private void SetLeagues(League[] available, string? selected)
     {
+        pages.SetLeagues(available, selected);
         var current = available.FirstOrDefault(entry => entry.Id == selected);
         league.Text = current is null ? "League ▾" : $"{current.Text} ▾";
         while (leagueMenu.Items.Count > 0) leagueMenu.Items[0].Dispose();
         foreach (var entry in available)
         {
             var option = new ToolStripMenuItem(entry.Text) { Checked = entry.Id == selected };
-            option.Click += async (_, _) =>
-            {
-                if (busy) return;
-                preferred = entry.Id;
-                try
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-                    File.WriteAllText(settingsPath, entry.Id);
-                }
-                catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
-                if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
-                else SetLeagues(available, entry.Id);
-            };
+            option.Click += async (_, _) => await SelectLeague(entry);
             leagueMenu.Items.Add(option);
         }
     }
 
-    private void ClearOverlayZOrder() =>
+    private async Task SelectLeague(League entry)
+    {
+        if (busy) return;
+        preferred = entry.Id;
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+            File.WriteAllText(settingsPath, entry.Id);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+        SetLeagues(pages.Available, entry.Id);
+        if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
+    }
+
+    private void ClearOverlayZOrder()
+    {
         SetWindowPos(Handle, -2, 0, 0, 0, 0, 0x0013); // NOTOPMOST, NOACTIVATE, NOMOVE, NOSIZE
+        navigation.Show();
+    }
 
     [DllImport("user32.dll")]
     private static extern bool IsIconic(nint window);
@@ -355,6 +401,7 @@ internal sealed class PriceWindow : Form
             tray?.Dispose();
             menu.Dispose();
             leagueMenu.Dispose();
+            pages?.Dispose();
             worker.Dispose();
         }
         base.Dispose(disposing);

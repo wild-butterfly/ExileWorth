@@ -19,9 +19,12 @@ click **Check clipboard** in ExileWorth. Keep both apps at the same privilege
 level, preferably with neither running as administrator. Closing the window
 hides it to the notification area; use the tray menu to reopen it or quit.
 
-The Windows preview includes item price checking, league selection, and
-modifier filters. Currency rates, incoming trade requests, and trade history
-are currently macOS features.
+Open **Settings** in the desktop window to change the shortcut, trade league, or
+where the overlay opens. Select **Save settings** to apply shortcut and placement
+changes. Open **Currency** and select **Refresh rates** to see median bulk asking
+prices in Chaos Orbs for the selected league.
+
+Incoming trade requests and trade history are currently macOS features.
 
 ## Build from source
 

@@ -9,13 +9,13 @@ internal sealed class Worker : IDisposable
     private Process? process;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public async Task<T> SendAsync<T>(object request)
+    public async Task<T> SendAsync<T>(object request, TimeSpan? timeout = null)
     {
         process ??= Start();
         try
         {
             await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(request, Json));
-            string line = await process.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(100))
+            string line = await process.StandardOutput.ReadLineAsync().WaitAsync(timeout ?? TimeSpan.FromSeconds(100))
                 ?? throw new IOException("The trade engine stopped.");
             using var response = JsonDocument.Parse(line);
             if (response.RootElement.TryGetProperty("error", out var error))
@@ -68,3 +68,7 @@ internal record Modifier(string Key, string Label, bool Enabled)
 {
     public override string ToString() => Label;
 }
+
+internal record CurrencyResult(string Selected, CurrencyRow[] Rows);
+internal record CurrencyRow(string Label, CurrencyQuote? Rate, string? Error);
+internal record CurrencyQuote(double Median, int SampleSize);
