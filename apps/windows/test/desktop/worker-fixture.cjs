@@ -19,7 +19,12 @@ lines.on('line', (line) => {
           listings: [
             { amount: 42, currency: 'chaos', accountName: 'Fixture', presence: 'online' },
             { amount: 43, currency: 'chaos', accountName: 'FixtureTwo', presence: 'afk' },
-            { amount: 44, currency: 'chaos', accountName: 'FixtureThree', presence: 'online' },
+            {
+              amount: 44,
+              currency: 'chaos',
+              accountName: 'FixtureThree',
+              presence: 'online',
+            },
           ],
           filters: [],
           tradeUrl: 'https://www.pathofexile.com/trade/search/Covens/fixture',

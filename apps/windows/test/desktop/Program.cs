@@ -49,6 +49,18 @@ internal static class Program
                 Assert(GetForegroundWindow() == game.Handle, "Overlay stole game focus.");
                 Assert(Clipboard.GetText() == item, "Clipboard did not contain the captured item.");
 
+                Foreground(overlay);
+                await Until(() => GetForegroundWindow() == overlay, "overlay focus before minimizing");
+                ShowWindow(overlay, 6); // SW_MINIMIZE, as from the title bar.
+                await Until(() => IsIconic(overlay), "minimized overlay");
+                Foreground(game.Handle);
+                await Until(() => GetForegroundWindow() == game.Handle, "game focus after minimizing");
+                await Task.Delay(750);
+                SendChord(Keys.D);
+                await Until(() => copies == 2, "copy after minimizing");
+                await Until(() => !IsIconic(overlay) && IsTopmost(overlay), "restored overlay");
+                Assert(GetForegroundWindow() == game.Handle, "Restoring the overlay stole game focus.");
+
                 if (args.Length > 1)
                 {
                     await Task.Delay(350);
@@ -59,7 +71,7 @@ internal static class Program
                 await Until(() => GetForegroundWindow() == overlay && !IsTopmost(overlay), "overlay no longer topmost after switch");
                 SendChord(Keys.D);
                 await Task.Delay(750);
-                Assert(copies == 1, "Shortcut fired outside the game.");
+                Assert(copies == 2, "Shortcut fired outside the game.");
                 Console.WriteLine("PASS: game-only shortcut, one copy, visible topmost overlay, game focus retained, topmost cleared off-game.");
             }
             catch (Exception error)
@@ -161,6 +173,8 @@ internal static class Program
     private delegate bool WindowCallback(nint window, nint data);
     [DllImport("user32.dll")] private static extern bool EnumWindows(WindowCallback callback, nint data);
     [DllImport("user32.dll")] private static extern bool PostMessageW(nint window, uint message, nint wParam, nint lParam);
+    [DllImport("user32.dll")] private static extern bool ShowWindow(nint window, int command);
+    [DllImport("user32.dll")] private static extern bool IsIconic(nint window);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);

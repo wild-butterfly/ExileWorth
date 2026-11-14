@@ -6,7 +6,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>0.1.5</Version>
+    <Version>0.1.6</Version>
     <ApplicationIcon>ExileWorth.ico</ApplicationIcon>
     <AssemblyName>ExileWorth</AssemblyName>
   </PropertyGroup>

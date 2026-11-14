@@ -185,8 +185,14 @@ internal sealed class PriceWindow : Form
 
     private Task CaptureAsync(nint game) => RunAsync(async () =>
     {
+        status.Text = "Copying item from Path of Exile…";
+        ShowGameOverlay(game);
         string? text = await GameHotkey.CopyItemAsync(game);
-        if (text is null) return;
+        if (text is null)
+        {
+            status.Text = "Item copy cancelled. Release the shortcut keys and try again.";
+            return;
+        }
         await CheckAsync(text, null);
     }, game);
 
@@ -212,27 +218,32 @@ internal sealed class PriceWindow : Form
                 league.Enabled = paste.Enabled = true;
                 search.Enabled = hasItem;
                 open.Enabled = tradeUrl is not null;
-                if (game != 0 && GameHotkey.ForegroundGame() == game)
-                {
-                    passive = true;
-                    try
-                    {
-                        if (!Visible)
-                        {
-                            Point cursor = Cursor.Position;
-                            Rectangle bounds = Screen.FromPoint(cursor).WorkingArea;
-                            StartPosition = FormStartPosition.Manual;
-                            Location = new Point(
-                                Math.Clamp(cursor.X + 18, bounds.Left, Math.Max(bounds.Left, bounds.Right - Width)),
-                                Math.Clamp(cursor.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - Height)));
-                            Show();
-                        }
-                        SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x0013); // TOPMOST, NOACTIVATE, NOMOVE, NOSIZE
-                    }
-                    finally { passive = false; }
-                }
+                if (game != 0) ShowGameOverlay(game);
             }
         }
+    }
+
+    private void ShowGameOverlay(nint game)
+    {
+        if (GameHotkey.ForegroundGame() != game) return;
+        passive = true;
+        try
+        {
+            if (!Visible || WindowState == FormWindowState.Minimized)
+            {
+                if (WindowState == FormWindowState.Minimized) Hide();
+                WindowState = FormWindowState.Normal;
+                Point cursor = Cursor.Position;
+                Rectangle bounds = Screen.FromPoint(cursor).WorkingArea;
+                StartPosition = FormStartPosition.Manual;
+                Location = new Point(
+                    Math.Clamp(cursor.X + 18, bounds.Left, Math.Max(bounds.Left, bounds.Right - Width)),
+                    Math.Clamp(cursor.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - Height)));
+                Show();
+            }
+            SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x0013); // TOPMOST, NOACTIVATE, NOMOVE, NOSIZE
+        }
+        finally { passive = false; }
     }
 
     private async Task LoadLeaguesAsync()
