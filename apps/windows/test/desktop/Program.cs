@@ -32,7 +32,7 @@ internal static class Program
                 await Task.Delay(750);
                 Assert(copies == 0 && !IsTopmost(overlay), "Shortcut ran outside the game.");
 
-                PostMessageW(overlay, 0x0010, 0, 0); // Close-to-tray must keep the shortcut registered.
+                PostMessageW(overlay, 0x0112, 0xF060, 0); // Close-to-tray must keep the shortcut registered.
                 await Until(() => !IsWindowVisible(overlay), "hide to tray");
                 Foreground(game.Handle);
                 await Until(() => GetForegroundWindow() == game.Handle, "game focus");
@@ -53,7 +53,7 @@ internal static class Program
             }
             catch (Exception error)
             {
-                Console.Error.WriteLine($"copies={copies}; foreground={GetForegroundWindow()}; game={game.Handle}; app={app?.Id}; exited={app?.HasExited}");
+                Console.Error.WriteLine($"copies={copies}; foreground={GetForegroundWindow()}; game={game.Handle}; app={app?.Id}; exited={app?.HasExited}; exitCode={(app?.HasExited == true ? app.ExitCode : null)}");
                 Console.Error.WriteLine(error);
                 Environment.ExitCode = 1;
             }
