@@ -7,6 +7,10 @@ internal sealed class PriceWindow : Form
 {
     private readonly GlassButton league = new() { Text = "League ▾", AutoSize = true };
     private readonly ContextMenuStrip leagueMenu = new();
+    private readonly GlassButton currencyFilter = new() { Text = "Currency: All ▾", AutoSize = true };
+    private readonly ContextMenuStrip currencyMenu = new();
+    private string? listingCurrency;
+    private string currencyLabel = "All";
     private readonly Label status = new() { AutoSize = true, Dock = DockStyle.Fill };
     private readonly DataGridView listings = new() { Dock = DockStyle.Fill };
     private readonly Label itemTitle = new() { Text = "Price Check", AutoSize = true };
@@ -52,6 +56,28 @@ internal sealed class PriceWindow : Form
         leagueMenu.BackColor = WindowTheme.Surface;
         leagueMenu.ForeColor = WindowTheme.Foreground;
         league.Click += (_, _) => leagueMenu.Show(league, new Point(0, league.Height));
+        currencyFilter.AccessibleName = "Listing currency";
+        currencyMenu.BackColor = WindowTheme.Surface;
+        currencyMenu.ForeColor = WindowTheme.Foreground;
+        foreach (var (label, id) in new (string, string?)[]
+        {
+            ("All", null), ("Alchemy", "alch"), ("Chaos", "chaos"), ("Divine", "divine"),
+        })
+        {
+            var option = new ToolStripMenuItem(label) { Checked = id is null };
+            option.Click += async (_, _) =>
+            {
+                if (busy || listingCurrency == id) return;
+                listingCurrency = id;
+                currencyLabel = label;
+                currencyFilter.Text = $"Currency: {label} ▾";
+                foreach (ToolStripMenuItem entry in currencyMenu.Items)
+                    entry.Checked = entry == option;
+                if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
+            };
+            currencyMenu.Items.Add(option);
+        }
+        currencyFilter.Click += (_, _) => currencyMenu.Show(currencyFilter, new Point(0, currencyFilter.Height));
         listings.AccessibleName = "Trade listings";
         WindowTheme.StyleListings(listings);
         filters.AccessibleName = "Item modifiers";
@@ -113,7 +139,7 @@ internal sealed class PriceWindow : Form
             Dock = DockStyle.Fill, AutoSize = true, WrapContents = true,
             Padding = new Padding(0, 4, 0, 0),
         };
-        toolbar.Controls.AddRange([search, open, paste]);
+        toolbar.Controls.AddRange([search, open, paste, currencyFilter]);
         layout.Controls.Add(toolbar);
         pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague);
         var price = new GlassButton(true) { Text = "Price Check", AutoSize = true };
@@ -236,7 +262,7 @@ internal sealed class PriceWindow : Form
     {
         if (busy) return;
         busy = true;
-        league.Enabled = paste.Enabled = search.Enabled = open.Enabled = false;
+        league.Enabled = currencyFilter.Enabled = paste.Enabled = search.Enabled = open.Enabled = false;
         try
         {
             await operation();
@@ -251,7 +277,7 @@ internal sealed class PriceWindow : Form
             busy = false;
             if (!IsDisposed)
             {
-                league.Enabled = paste.Enabled = true;
+                league.Enabled = currencyFilter.Enabled = paste.Enabled = true;
                 search.Enabled = hasItem;
                 open.Enabled = tradeUrl is not null;
                 if (game != 0) ShowGameOverlay(game);
@@ -309,7 +335,7 @@ internal sealed class PriceWindow : Form
         estimate.Text = "";
         listings.Rows.Clear();
         status.Text = "Looking up trade listings…";
-        var result = await worker.SendAsync<PriceResult>(new { action = "check", preferred, text, enabled });
+        var result = await worker.SendAsync<PriceResult>(new { action = "check", preferred, text, enabled, currency = listingCurrency });
         if (IsDisposed) return;
         SetLeagues(result.Leagues, result.Selected);
         hasItem = true;
@@ -326,9 +352,10 @@ internal sealed class PriceWindow : Form
         if (Uri.TryCreate(result.TradeUrl, UriKind.Absolute, out var url) &&
             url.Scheme == Uri.UriSchemeHttps && url.Host == "www.pathofexile.com")
             tradeUrl = url;
+        string scope = listingCurrency is null ? result.Selected : $"{result.Selected} · {currencyLabel}";
         status.Text = result.Total == 0
-            ? $"No matches in {result.Selected}. Try fewer filters."
-            : $"{result.Selected}: {result.Total:N0} matches. Showing {result.Listings.Length} asking prices.";
+            ? $"No matches in {scope}. Try All currencies or fewer modifiers."
+            : $"{scope}: {result.Total:N0} matches. Showing {result.Listings.Length} asking prices.";
     }
 
     private string[] SelectedFilters() => filters.CheckedItems.Cast<Modifier>().Select(f => f.Key).ToArray();
@@ -401,6 +428,7 @@ internal sealed class PriceWindow : Form
             tray?.Dispose();
             menu.Dispose();
             leagueMenu.Dispose();
+            currencyMenu.Dispose();
             pages?.Dispose();
             worker.Dispose();
         }

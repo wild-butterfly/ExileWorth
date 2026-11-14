@@ -22,8 +22,36 @@ describe('Windows price check', () => {
       } else if (path.endsWith('/data/items')) {
         body = { result: [{ entries: [{ type: 'Divine Orb' }] }] };
       } else if (path.endsWith('/search/Covens')) {
-        expect(init?.body).toContain('Divine Orb');
-        body = { result: ['listing'], total: 1, id: 'test-query' };
+        const query = JSON.parse(init?.body ?? '{}');
+        expect(query.query.type).toBe('Divine Orb');
+        expect(query.sort).toEqual({ price: 'asc' });
+        if (query.query.filters) {
+          expect(query.query.filters.trade_filters.filters.price.option).toBe('chaos');
+          body = { result: ['cheap', 'dear'], total: 2, id: 'filtered-query' };
+        } else {
+          body = { result: ['listing'], total: 1, id: 'test-query' };
+        }
+      } else if (path.endsWith('/fetch/cheap,dear')) {
+        body = {
+          result: [
+            {
+              id: 'dear',
+              item: {},
+              listing: {
+                account: { name: 'B' },
+                price: { amount: 44, currency: 'chaos' },
+              },
+            },
+            {
+              id: 'cheap',
+              item: {},
+              listing: {
+                account: { name: 'A' },
+                price: { amount: 42, currency: 'chaos' },
+              },
+            },
+          ],
+        };
       } else if (path.endsWith('/fetch/listing')) {
         body = {
           result: [
@@ -60,5 +88,8 @@ describe('Windows price check', () => {
       'https://www.pathofexile.com/trade/search/Covens/test-query',
     );
     expect(calls).toContain('/api/trade/search/Covens');
+    const filtered = await engine.check(null, 'Covens', [], 'chaos');
+    expect(filtered.listings.map(({ amount }) => amount)).toEqual([42, 44]);
+    expect(filtered.tradeUrl).toContain('/Covens/filtered-query');
   });
 });

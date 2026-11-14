@@ -11,7 +11,7 @@ import { PriceCheckEngine } from './engine';
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.7 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.8 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
 
@@ -49,6 +49,7 @@ async function run() {
         preferred: string | null;
         text?: string;
         enabled?: string[];
+        currency?: string;
       };
       if (request.action === 'currency') {
         process.stdout.write(
@@ -63,6 +64,7 @@ async function run() {
               request.text ?? null,
               request.preferred,
               request.enabled ?? null,
+              request.currency,
             );
       process.stdout.write(JSON.stringify({ result }) + '\n');
     } catch (error) {

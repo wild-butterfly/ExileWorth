@@ -25,6 +25,7 @@ export class PriceCheckEngine {
     text: string | null,
     preferred: string | null,
     enabled: readonly string[] | null,
+    currency?: string,
   ) {
     if (text !== null) {
       this.item = parseItemText(text);
@@ -46,10 +47,23 @@ export class PriceCheckEngine {
             ...filter,
             selected: requested.has(filter.key),
           }));
-    let search = await this.client.search(
-      selected,
-      buildQuery(item, filters, { baseTypes }),
-    );
+    const searchListings = () => {
+      const query = buildQuery(item, filters, { baseTypes });
+      if (currency === 'alch' || currency === 'chaos' || currency === 'divine') {
+        return this.client.search(selected, {
+          ...query,
+          query: {
+            ...query.query,
+            filters: {
+              ...query.query.filters,
+              trade_filters: { filters: { price: { option: currency } } },
+            },
+          },
+        });
+      }
+      return this.client.search(selected, query);
+    };
+    let search = await searchListings();
     // Relax only automatic searches; honor a manually chosen filter set exactly.
     for (
       let attempt = 0;
@@ -59,14 +73,16 @@ export class PriceCheckEngine {
       const next = relaxWeakest(filters);
       if (next === null) break;
       filters = next;
-      search = await this.client.search(
-        selected,
-        buildQuery(item, filters, { baseTypes }),
-      );
+      search = await searchListings();
     }
     this.filters = filters;
+    const fetched = await this.client.fetchListings(search.result, search.id);
+    const byId = new Map(fetched.map((entry) => [entry.id, entry]));
     const listings = toPricedListings(
-      await this.client.fetchListings(search.result, search.id),
+      search.result.slice(0, 10).flatMap((id) => {
+        const entry = byId.get(id);
+        return entry === undefined ? [] : [entry];
+      }),
     );
     return {
       leagues,
