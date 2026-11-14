@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Vaaluation.Windows;
+namespace ExileWorth.Windows;
 
 internal sealed class PriceWindow : Form
 {
@@ -30,7 +30,7 @@ internal sealed class PriceWindow : Form
         try { if (File.Exists(settingsPath)) preferred = File.ReadAllText(settingsPath).Trim(); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
 
-        Text = "Vaaluation — Path of Exile";
+        Text = "ExileWorth — Path of Exile";
         StartPosition = FormStartPosition.CenterScreen;
         ClientSize = new Size(760, 490);
         MinimumSize = new Size(670, 390);
@@ -72,9 +72,9 @@ internal sealed class PriceWindow : Form
             await RunAsync(LoadLeaguesAsync);
         };
 
-        menu.Items.Add("Open Vaaluation", null, (_, _) => Reveal());
+        menu.Items.Add("Open ExileWorth", null, (_, _) => Reveal());
         menu.Items.Add("Quit", null, (_, _) => { quitting = true; Close(); });
-        tray = new() { Text = "Vaaluation", Icon = SystemIcons.Application, Visible = true, ContextMenuStrip = menu };
+        tray = new() { Text = "ExileWorth", Icon = SystemIcons.Application, Visible = true, ContextMenuStrip = menu };
         tray.DoubleClick += (_, _) => Reveal();
 
         paste.Click += async (_, _) => await RunAsync(async () =>

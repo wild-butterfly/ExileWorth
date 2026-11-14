@@ -3,17 +3,17 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { colors, spacing, typography } from '@vaaluation/ui';
 import { Section } from '../components/Section';
 
-const REPO_URL = 'https://github.com/wild-butterfly/Vaaluation';
+const REPO_URL = 'https://github.com/wild-butterfly/ExileWorth';
 
 export function AboutScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.appName}>Vaaluation</Text>
+      <Text style={styles.appName}>ExileWorth</Text>
       <Text style={styles.tagline}>Item price checking for Path of Exile on macOS.</Text>
 
       <Section title="Project">
         <Text style={styles.body}>
-          Vaaluation is free and open source under the MIT license. No accounts, no
+          ExileWorth is free and open source under the MIT license. No accounts, no
           telemetry, no paid features.
         </Text>
         <Pressable onPress={() => Linking.openURL(REPO_URL)}>
@@ -27,7 +27,7 @@ export function AboutScreen() {
           way.
         </Text>
         <Text style={[styles.body, styles.spacer]}>
-          Vaaluation is an independent community project and is not affiliated with or
+          ExileWorth is an independent community project and is not affiliated with or
           endorsed by Grinding Gear Games.
         </Text>
       </Section>

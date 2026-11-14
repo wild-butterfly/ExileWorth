@@ -8,7 +8,7 @@ const engine = new PriceCheckEngine(
   new TradeClient({
     fetch: (url, options) =>
       fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-    userAgent: 'Vaaluation/0.1.2 (+https://github.com/wild-butterfly/Vaaluation)',
+    userAgent: 'ExileWorth/0.1.3 (+https://github.com/wild-butterfly/ExileWorth)',
   }),
 );
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });

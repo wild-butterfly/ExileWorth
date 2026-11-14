@@ -1,7 +1,7 @@
 {
   "name": "@vaaluation/shared-types",
   "version": "0.1.0",
-  "description": "Shared domain types for Vaaluation.",
+  "description": "Shared domain types for ExileWorth.",
   "license": "MIT",
   "type": "commonjs",
   "main": "src/index.ts",

@@ -22,7 +22,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function fail(what: string): never {
   throw new TradeError(
     'unexpected_response',
-    `The trade API returned an unexpected ${what}. Vaaluation may need an update.`,
+    `The trade API returned an unexpected ${what}. ExileWorth may need an update.`,
   );
 }
 

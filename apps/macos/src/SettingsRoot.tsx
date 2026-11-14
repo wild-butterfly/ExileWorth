@@ -75,7 +75,7 @@ function Shell({ initialRoute }: { initialRoute: AppRoute }) {
         <View style={styles.brandRow}>
           <Mark size={28} on={surfaces.rail} />
           <View>
-            <Text style={styles.brand}>Vaaluation</Text>
+            <Text style={styles.brand}>ExileWorth</Text>
             <Text style={styles.brandSub}>PRICE CHECK</Text>
           </View>
         </View>

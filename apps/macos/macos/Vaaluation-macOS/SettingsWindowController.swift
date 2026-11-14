@@ -10,7 +10,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
       backing: .buffered,
       defer: false
     )
-    window.title = "Vaaluation"
+    window.title = "ExileWorth"
     window.minSize = NSSize(width: 860, height: 520)
     // Match the overlay: content runs under a transparent titlebar so the
     // blur reaches the top edge instead of stopping at a grey bar.
@@ -25,7 +25,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     window.setFrameAutosaveName("VaaluationSettingsWindow")
 
     let rootView = reactHost.makeRootView(
-      moduleName: "VaaluationSettings",
+      moduleName: "ExileWorthSettings",
       initialProps: ["initialRoute": initialRoute]
     )
     rootView.wantsLayer = true

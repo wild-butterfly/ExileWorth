@@ -85,7 +85,7 @@ export function TradeOverlay({
           buyer.
         </Text>
         <Text style={styles.fineprint}>
-          Vaaluation reads the game's chat log from the moment you switch this on, keeps
+          ExileWorth reads the game's chat log from the moment you switch this on, keeps
           only lines matching its trade-whisper wording, and discards the rest. Nothing is
           uploaded, and the game's own options need no change.
         </Text>

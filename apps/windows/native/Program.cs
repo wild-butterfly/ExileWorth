@@ -1,4 +1,4 @@
-namespace Vaaluation.Windows;
+namespace ExileWorth.Windows;
 
 internal static class Program
 {
@@ -8,7 +8,7 @@ internal static class Program
         using var singleInstance = new Mutex(true, "Local\\Vaaluation.Windows", out bool first);
         if (!first)
         {
-            MessageBox.Show("Vaaluation is already running. Open it from the system tray.", "Vaaluation");
+            MessageBox.Show("ExileWorth is already running. Open it from the system tray.", "ExileWorth");
             return;
         }
         ApplicationConfiguration.Initialize();

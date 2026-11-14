@@ -15,7 +15,7 @@ const nodeVersion = '22.23.4';
 const nodeArchive = `node-v${nodeVersion}-win-x64`;
 const checksum = 'cbc74b5e0982c9dbb41525fd8fb5dcd32fbee237863f7829072f4639a1ce5f20';
 const scratch = await mkdtemp(join(tmpdir(), 'vaaluation-windows-'));
-const folder = 'Vaaluation-Windows-x64';
+const folder = 'ExileWorth-Windows-x64';
 const bundle = join(scratch, folder);
 
 function run(command, args, cwd = root) {

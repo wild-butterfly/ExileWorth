@@ -8,7 +8,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Vaaluation version
+      label: ExileWorth version
       placeholder: e.g. 0.1.0
     validations:
       required: true

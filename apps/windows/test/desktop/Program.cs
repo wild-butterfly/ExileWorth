@@ -7,7 +7,7 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-        using var game = new GameFixture { Text = "Vaaluation game fixture", Width = 400, Height = 240, KeyPreview = true };
+        using var game = new GameFixture { Text = "ExileWorth game fixture", Width = 400, Height = 240, KeyPreview = true };
         const string item = "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
         int copies = 0;
         game.ItemCopied += () =>

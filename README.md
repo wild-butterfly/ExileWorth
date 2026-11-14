@@ -1,25 +1,27 @@
 <div align="center">
 
-# Vaaluation
+# ExileWorth
 
-**[Visit the Vaaluation website](https://wild-butterfly.github.io/Vaaluation/)**
+_Formerly Vaaluation._
+
+**[Visit the ExileWorth website](https://wild-butterfly.github.io/ExileWorth/)**
 
 **A Path of Exile price checker and trade overlay purpose-built for macOS**
 
 Hover an item. Press <kbd>Ctrl</kbd>+<kbd>D</kbd>. See comparable listings
 without leaving the game.
 
-[![CI](https://github.com/wild-butterfly/Vaaluation/actions/workflows/ci.yml/badge.svg)](https://github.com/wild-butterfly/Vaaluation/actions/workflows/ci.yml)
+[![CI](https://github.com/wild-butterfly/ExileWorth/actions/workflows/ci.yml/badge.svg)](https://github.com/wild-butterfly/ExileWorth/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black?logo=apple)
 
-### [Download Vaaluation for macOS](https://github.com/wild-butterfly/Vaaluation/releases/latest)
+### [Download ExileWorth for macOS](https://github.com/wild-butterfly/ExileWorth/releases/latest)
 
-[Installation](#install) · [Features](#features) · [Shortcuts](#shortcuts) · [Privacy](docs/PRIVACY.md) · [Report an issue](https://github.com/wild-butterfly/Vaaluation/issues/new/choose)
+[Installation](#install) · [Features](#features) · [Shortcuts](#shortcuts) · [Privacy](docs/PRIVACY.md) · [Report an issue](https://github.com/wild-butterfly/ExileWorth/issues/new/choose)
 
 </div>
 
-Vaaluation is a free, open-source **Path of Exile price checker for macOS**.
+ExileWorth is a free, open-source **Path of Exile price checker for macOS**.
 It combines fast item valuation, official trade listings, currency rates and
 incoming trade-request tools in a native menu-bar app.
 
@@ -30,57 +32,57 @@ incoming trade-request tools in a native menu-bar app.
 
 ## Download
 
-### [Download the latest signed and notarized release →](https://github.com/wild-butterfly/Vaaluation/releases/latest)
+### [Download the latest signed and notarized release →](https://github.com/wild-butterfly/ExileWorth/releases/latest)
 
-Vaaluation supports **macOS 14 Sonoma or later**. Releases are signed with a
+ExileWorth supports **macOS 14 Sonoma or later**. Releases are signed with a
 Developer ID certificate and notarized by Apple.
 
 ### Install
 
 1. Download the ZIP from the latest GitHub release.
-2. Unzip it and drag `Vaaluation.app` into **Applications**.
-3. Launch Vaaluation and [grant Accessibility permission](#grant-accessibility).
+2. Unzip it and drag `ExileWorth.app` into **Applications**.
+3. Launch ExileWorth and [grant Accessibility permission](#grant-accessibility).
 4. Open Path of Exile in **Windowed** or **Windowed Fullscreen** mode.
 5. Hover an inventory item and press <kbd>Ctrl</kbd>+<kbd>D</kbd>.
 
 ## Mac guides
 
-- [Install Vaaluation](https://wild-butterfly.github.io/Vaaluation/guides/install/)
-- [Check Path of Exile item prices](https://wild-butterfly.github.io/Vaaluation/guides/price-check/)
-- [Troubleshoot shortcuts, permissions and searches](https://wild-butterfly.github.io/Vaaluation/guides/troubleshooting/)
+- [Install ExileWorth](https://wild-butterfly.github.io/ExileWorth/guides/install/)
+- [Check Path of Exile item prices](https://wild-butterfly.github.io/ExileWorth/guides/price-check/)
+- [Troubleshoot shortcuts, permissions and searches](https://wild-butterfly.github.io/ExileWorth/guides/troubleshooting/)
 
 ## Covens of Umbra and Windows
 
-Vaaluation gets leagues from the live Path of Exile 1 trade service. Select
+ExileWorth gets leagues from the live Path of Exile 1 trade service. Select
 **Covens** for the new challenge league. An expired league choice falls back to
 the current PC challenge league; valid choices such as Standard are preserved.
 
 The [Windows x64 preview](apps/windows/README.md) includes item price checks,
 modifier filters, and a game-scoped shortcut. See its build instructions to
-create a portable ZIP, or [download the Windows preview](https://wild-butterfly.github.io/Vaaluation/#install).
+create a portable ZIP, or [download the Windows preview](https://wild-butterfly.github.io/ExileWorth/#install).
 
 ## See it in action
 
 ### Price check
 
-![Vaaluation showing comparable listings for an item in Path of Exile](./docs/screenshots/price-check.png)
+![ExileWorth showing comparable listings for an item in Path of Exile](./docs/screenshots/price-check.png)
 
-_Vaaluation 0.1.1 running in Path of Exile on macOS._
+_Path of Exile price check on macOS, captured before the ExileWorth rename._
 
 ### Trade requests
 
-<img src="./docs/screenshots/trades.png" alt="Vaaluation showing an incoming Path of Exile trade request" width="876">
+<img src="./docs/screenshots/trades.png" alt="ExileWorth showing an incoming Path of Exile trade request" width="876">
 
 ## Why this exists
 
 The established price-check tools target Windows and Linux; macOS support tends
-to be partial, with global shortcuts that never fire. Vaaluation is built
+to be partial, with global shortcuts that never fire. ExileWorth is built
 natively for macOS — a menu-bar app with an AppKit shell, a real non-activating
 overlay panel, and Carbon global hotkeys that work.
 
 ## Features
 
-- **Price check** — hover an item, press <kbd>Ctrl</kbd>+<kbd>D</kbd>. Vaaluation
+- **Price check** — hover an item, press <kbd>Ctrl</kbd>+<kbd>D</kbd>. ExileWorth
   copies the item, parses it, and searches the official trade site without
   waiting to be told: the panel opens with the answer, not with a form.
 - **Modifiers that matter** — the item's strongest few are ticked for you, gem
@@ -113,8 +115,8 @@ overlay panel, and Carbon global hotkeys that work.
 **Build and install**
 
 ```bash
-git clone https://github.com/wild-butterfly/Vaaluation.git
-cd Vaaluation
+git clone https://github.com/wild-butterfly/ExileWorth.git
+cd ExileWorth
 npm install
 pod install --project-directory=apps/macos/macos
 npm run app:install
@@ -126,20 +128,20 @@ signing otherwise.
 
 ### Grant Accessibility
 
-Vaaluation needs one macOS permission, to send the item-copy keystroke to the
+ExileWorth needs one macOS permission, to send the item-copy keystroke to the
 game.
 
-1. Launch Vaaluation
+1. Launch ExileWorth
 2. Open **System Settings → Privacy & Security → Accessibility**
-3. Add `/Applications/Vaaluation.app` and switch it on
-4. Quit and reopen Vaaluation so it re-reads the permission
+3. Add `/Applications/ExileWorth.app` and switch it on
+4. Quit and reopen ExileWorth so it re-reads the permission
 
 If you built with ad-hoc signing, macOS treats every rebuild as a new program
 and the grant needs repeating. A development certificate keeps it stable.
 
 ### Where is the window?
 
-Vaaluation is a **menu-bar app** — no Dock icon, and no window on launch. Look
+ExileWorth is a **menu-bar app** — no Dock icon, and no window on launch. Look
 for the mark in the menu bar. Clicking the app in Finder or Spotlight opens the
 main window.
 
@@ -157,13 +159,13 @@ until you dismiss it, which is what you want when you mean to adjust the
 filters or open the trade site.
 
 All rebindable in Settings. Shortcuts are active only while Path of Exile is
-the foreground app, so typing in other apps does not open Vaaluation.
+the foreground app, so typing in other apps does not open ExileWorth.
 
 ## How it works, and what it never does
 
 Pressing the price-check shortcut sends a **single** keystroke to Path of
 Exile — <kbd>Ctrl</kbd>+<kbd>Option</kbd>+<kbd>C</kbd>, the same combination you
-would press yourself to copy an item's advanced description. Vaaluation reads
+would press yourself to copy an item's advanced description. ExileWorth reads
 the text the game places on the clipboard, restores whatever was there before,
 parses the item locally, and queries the official trade API.
 

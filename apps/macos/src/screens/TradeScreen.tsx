@@ -63,7 +63,7 @@ export function TradeScreen() {
       </View>
 
       <Text style={styles.privacy}>
-        Vaaluation reads the game's log only from the moment you switch this on, keeps
+        ExileWorth reads the game's log only from the moment you switch this on, keeps
         only messages matching the game's trade-whisper format, and discards all other
         chat immediately. Nothing is uploaded, and each button below sends exactly one
         chat command — the same one you would type yourself.

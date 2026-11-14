@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Builds, signs, notarizes and packages Vaaluation for public download.
+# Builds, signs, notarizes and packages ExileWorth for public download.
 #
 # The result is a zip anyone can download and open by double-clicking. That
 # needs three things the local build does not:
@@ -12,7 +12,7 @@
 #   3. Notarization itself — Apple scans the upload and issues a ticket, which
 #      is then stapled into the bundle so Gatekeeper can verify it offline.
 #
-# Without all three, a downloader sees "Vaaluation is damaged and can't be
+# Without all three, a downloader sees "ExileWorth is damaged and can't be
 # opened" — the app is fine, that is simply what macOS says about an
 # unnotarized download.
 #
@@ -36,7 +36,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MACOS_DIR="$REPO_ROOT/apps/macos/macos"
 BUILD_DIR="${TMPDIR:-/tmp}/vaaluation-dist"
 DIST_DIR="$REPO_ROOT/dist"
-APP_NAME="Vaaluation.app"
+APP_NAME="ExileWorth.app"
 NOTARY_PROFILE="${VAALUATION_NOTARY_PROFILE:-vaaluation}"
 VERSION="${1:-$(date +%Y.%m.%d)}"
 
@@ -106,7 +106,7 @@ codesign --force --deep --options runtime --timestamp \
 codesign --verify --deep --strict --verbose=2 "$APP"
 
 mkdir -p "$DIST_DIR"
-ZIP="$DIST_DIR/Vaaluation-$VERSION.zip"
+ZIP="$DIST_DIR/ExileWorth-$VERSION.zip"
 rm -f "$ZIP"
 
 echo "==> Packaging"
@@ -131,4 +131,4 @@ echo
 echo "Done: $ZIP"
 echo
 echo "Upload it to a GitHub release:"
-echo "  gh release create v$VERSION \"$ZIP\" --title \"Vaaluation $VERSION\" --notes-file docs/RELEASE_NOTES.md"
+echo "  gh release create v$VERSION \"$ZIP\" --title \"ExileWorth $VERSION\" --notes-file docs/RELEASE_NOTES.md"

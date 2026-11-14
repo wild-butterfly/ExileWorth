@@ -33,7 +33,7 @@ final class VLHotkeysModule: NSObject {
 
   /// Captures the next key press in this app (used by the shortcut recorder in
   /// Settings). Resolves with a KeyCombo dictionary, or null if the user
-  /// cancels with Escape. Never observes keys outside Vaaluation.
+  /// cancels with Escape. Never observes keys outside ExileWorth.
   @objc(captureNextKeyCombo:rejecter:)
   func captureNextKeyCombo(
     _ resolve: @escaping RCTPromiseResolveBlock,

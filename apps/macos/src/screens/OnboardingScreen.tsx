@@ -11,16 +11,16 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
 
   const steps = [
     {
-      title: 'Vaaluation lives in your menu bar',
+      title: 'ExileWorth lives in your menu bar',
       body: 'There is no Dock icon. Click the scales icon in the menu bar to open settings, test parsing, or view logs.',
     },
     {
       title: 'Price check with a shortcut',
-      body: 'Hover an item in Path of Exile and press ⌃D. Vaaluation copies the item (a single keystroke, exactly as if you pressed the game’s copy binding), parses it, and shows comparable listings.',
+      body: 'Hover an item in Path of Exile and press ⌃D. ExileWorth copies the item (a single keystroke, exactly as if you pressed the game’s copy binding), parses it, and shows comparable listings.',
     },
     {
       title: 'One permission, explained',
-      body: 'Sending that single keystroke requires the macOS Accessibility permission. Vaaluation never requests Screen Recording or Input Monitoring.',
+      body: 'Sending that single keystroke requires the macOS Accessibility permission. ExileWorth never requests Screen Recording or Input Monitoring.',
     },
     {
       title: 'Private by design',
@@ -30,7 +30,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.heading}>Welcome to Vaaluation</Text>
+      <Text style={styles.heading}>Welcome to ExileWorth</Text>
       {steps.map((step) => (
         <View key={step.title} style={styles.step}>
           <Text style={styles.stepTitle}>{step.title}</Text>
@@ -42,12 +42,12 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         <Text style={styles.stepTitle}>Accessibility permission</Text>
         {status?.accessibility === 'granted' ? (
           <Text style={styles.grantedText}>
-            Granted — Vaaluation is ready to send the item-copy keystroke.
+            Granted — ExileWorth is ready to send the item-copy keystroke.
           </Text>
         ) : (
           <View>
             <Text style={styles.stepBody}>
-              Grant it now, or later from Settings. macOS will show Vaaluation in System
+              Grant it now, or later from Settings. macOS will show ExileWorth in System
               Settings → Privacy &amp; Security → Accessibility; this screen updates
               automatically once you return.
             </Text>

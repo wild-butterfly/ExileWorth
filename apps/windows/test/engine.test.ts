@@ -47,7 +47,7 @@ describe('Windows price check', () => {
       };
     };
     const engine = new PriceCheckEngine(
-      new TradeClient({ fetch, userAgent: 'Vaaluation/test' }),
+      new TradeClient({ fetch, userAgent: 'ExileWorth/test' }),
     );
     const result = await engine.check(
       'Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb',

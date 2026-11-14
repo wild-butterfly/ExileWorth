@@ -68,7 +68,7 @@ final class OverlayWindowController: NSWindowController, NSWindowDelegate {
     ).cgColor
 
     let rootView = reactHost.makeRootView(
-      moduleName: "VaaluationOverlay",
+      moduleName: "ExileWorthOverlay",
       initialProps: [:]
     )
     rootView.frame = effect.bounds

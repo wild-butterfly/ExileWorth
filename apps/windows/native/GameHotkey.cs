@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Vaaluation.Windows;
+namespace ExileWorth.Windows;
 
 internal sealed class GameHotkey : IDisposable
 {
@@ -80,7 +80,7 @@ internal sealed class GameHotkey : IDisposable
             Key(Keys.C, true), Key(Keys.Menu, true), Key(Keys.ControlKey, true)
         ];
         if (SendInput((uint)input.Length, input, Marshal.SizeOf<Input>()) != (uint)input.Length)
-            throw new InvalidOperationException("Windows blocked the copy command. Run the game and Vaaluation at the same privilege level.");
+            throw new InvalidOperationException("Windows blocked the copy command. Run the game and ExileWorth at the same privilege level.");
         for (int i = 0; i < 20; i++)
         {
             await Task.Delay(25);

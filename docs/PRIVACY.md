@@ -1,24 +1,24 @@
-# Vaaluation Privacy Statement
+# ExileWorth Privacy Statement
 
-Vaaluation is designed so that there is almost nothing to have a privacy policy
+ExileWorth is designed so that there is almost nothing to have a privacy policy
 about.
 
-## What Vaaluation collects
+## What ExileWorth collects
 
-Nothing. Vaaluation has **no telemetry, no analytics, no crash reporting, and
-no accounts**. No data about you or your usage is transmitted to the Vaaluation
+Nothing. ExileWorth has **no telemetry, no analytics, no crash reporting, and
+no accounts**. No data about you or your usage is transmitted to the ExileWorth
 project.
 
 ## Network requests
 
-Vaaluation talks only to official Path of Exile services:
+ExileWorth talks only to official Path of Exile services:
 
 | Request      | When                                   | What is sent                                                                           |
 | ------------ | -------------------------------------- | -------------------------------------------------------------------------------------- |
 | League list  | On launch and on manual refresh        | Nothing personal — a plain GET request.                                                |
 | Trade search | Only when you run a price check search | The item filters you confirmed (base type, modifiers, ranges) and the selected league. |
 
-Every request carries a descriptive `User-Agent` identifying Vaaluation, as
+Every request carries a descriptive `User-Agent` identifying ExileWorth, as
 required by Grinding Gear Games' developer policy.
 
 ## Currency icons
@@ -26,12 +26,12 @@ required by Grinding Gear Games' developer policy.
 The Currency page shows Path of Exile's own orb art, loaded on demand from
 Grinding Gear Games' content network (`web.poecdn.com`) using the image paths
 their trade API publishes. The art is theirs and is never redistributed with
-Vaaluation. These requests carry no identifying information beyond a normal
+ExileWorth. These requests carry no identifying information beyond a normal
 image fetch.
 
 ## Clipboard
 
-- Vaaluation reads the clipboard when you use the price-check shortcut or
+- ExileWorth reads the clipboard when you use the price-check shortcut or
   explicitly ask it to check copied text.
 - Text that does not look like a Path of Exile item is discarded immediately.
 - On macOS, previous clipboard contents are restored where reasonably safe.
@@ -56,7 +56,7 @@ When enabled:
 
 Chat commands (invite, trade, kick, whisper, hideout) are sent only when you
 press the corresponding button, and each press sends exactly one command —
-the same one you would have typed. Vaaluation never sends a command on its
+the same one you would have typed. ExileWorth never sends a command on its
 own, never chains commands together, and never replies automatically.
 
 ## Local data
@@ -68,7 +68,7 @@ only the selected league is stored in `%LOCALAPPDATA%\Vaaluation\league.txt`.
 
 ## Credentials
 
-The MVP requires no authentication at all. Vaaluation will never ask for your
+The MVP requires no authentication at all. ExileWorth will never ask for your
 Path of Exile password or your `POESESSID` cookie. If account features are ever
 added, they will use the official OAuth flow, and tokens will be stored in the
 macOS Keychain.
@@ -79,5 +79,5 @@ macOS Keychain.
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Accessibility | Send the single item-copy keystroke when you press the price-check shortcut, and send a single chat command when you press a trade button. |
 
-Vaaluation does not request Screen Recording, Input Monitoring, camera,
+ExileWorth does not request Screen Recording, Input Monitoring, camera,
 microphone, location, or contacts access.

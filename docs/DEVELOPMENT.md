@@ -10,7 +10,7 @@
 ## Getting started
 
 ```bash
-git clone https://github.com/wild-butterfly/Vaaluation.git
+git clone https://github.com/wild-butterfly/ExileWorth.git
 cd vaaluation
 npm install
 cd apps/macos/macos && pod install && cd -
@@ -40,7 +40,7 @@ npm run app:install
 ```
 
 This builds Release (bundling the JavaScript into the app), signs it ad-hoc for
-local use, and installs it. Note that Vaaluation is a menu-bar app — no Dock
+local use, and installs it. Note that ExileWorth is a menu-bar app — no Dock
 icon, no window on launch; look for the scales icon in the menu bar.
 
 The resulting app is **not notarized** and is for your own machine only.

@@ -63,7 +63,7 @@
 		4366BFF47442E947BE623552 /* VLPermissionsModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VLPermissionsModule.swift; sourceTree = "<group>"; };
 		44DFEF41B75EFB2E10F1435B /* KeyCombo.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeyCombo.swift; sourceTree = "<group>"; };
 		4E3C8A5737C772C499E27447 /* GameLogWatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GameLogWatcher.swift; sourceTree = "<group>"; };
-		514201492437B4B30078DB4F /* Vaaluation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vaaluation.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		514201492437B4B30078DB4F /* ExileWorth.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExileWorth.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		514201512437B4B40078DB4F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		514201562437B4B40078DB4F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		514201592437B4B40078DB4F /* Vaaluation.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Vaaluation.entitlements; sourceTree = "<group>"; };
@@ -251,8 +251,8 @@
 			dependencies = (
 			);
 			name = "Vaaluation-macOS";
-			productName = Vaaluation;
-			productReference = 514201492437B4B30078DB4F /* Vaaluation.app */;
+			productName = ExileWorth;
+			productReference = 514201492437B4B30078DB4F /* ExileWorth.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -272,7 +272,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Vaaluation" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ExileWorth" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -500,7 +500,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.vaaluation.app;
-				PRODUCT_NAME = Vaaluation;
+				PRODUCT_NAME = ExileWorth;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "Vaaluation-macOS/Vaaluation-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -528,7 +528,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.vaaluation.app;
-				PRODUCT_NAME = Vaaluation;
+				PRODUCT_NAME = ExileWorth;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "Vaaluation-macOS/Vaaluation-Bridging-Header.h";
 				SWIFT_VERSION = 5.9;
@@ -674,7 +674,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Vaaluation" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ExileWorth" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

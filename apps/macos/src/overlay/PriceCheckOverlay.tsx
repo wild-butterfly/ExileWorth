@@ -344,7 +344,7 @@ export function PriceCheckOverlay({
           <View style={styles.bloom} pointerEvents="none" />
           <View style={styles.headerText}>
             <Text style={styles.itemName} numberOfLines={1}>
-              {item === null ? 'Vaaluation' : nameOf(item)}
+              {item === null ? 'ExileWorth' : nameOf(item)}
             </Text>
             {item !== null ? (
               <Text style={styles.itemMeta} numberOfLines={1}>

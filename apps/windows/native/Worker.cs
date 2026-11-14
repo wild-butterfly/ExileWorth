@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 
-namespace Vaaluation.Windows;
+namespace ExileWorth.Windows;
 
 internal sealed class Worker : IDisposable
 {

@@ -3,7 +3,7 @@ import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { useTheme } from '@vaaluation/ui';
 
 /**
- * The Vaaluation mark: a Vaal-orb silhouette with knocked-out eyes and a
+ * The ExileWorth mark: a Vaal-orb silhouette with knocked-out eyes and a
  * V-shaped mouth that doubles as the V of the name. Original geometry, not a
  * trace of the game's own art.
  *
@@ -33,7 +33,7 @@ export function Mark({ size = 26, on }: { size?: number; on: string }) {
       <Path d="M15.5 21.5 L29.5 26 L26 36 L13.5 30.5 Z" fill={on} />
       <Path d="M48.5 21.5 L34.5 26 L38 36 L50.5 30.5 Z" fill={on} />
 
-      {/* Mouth — also the V of "Vaaluation". */}
+      {/* Mouth — also the V of "ExileWorth". */}
       <Path
         d="M25 42 L32 53 L39 42"
         stroke={on}

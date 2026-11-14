@@ -62,17 +62,17 @@ jobs:
       - name: Smoke test the packaged app and worker
         shell: pwsh
         run: |
-          Expand-Archive -Path dist/Vaaluation-Windows-x64.zip -DestinationPath dist/smoke
-          $appDir = Resolve-Path dist/smoke/Vaaluation-Windows-x64
+          Expand-Archive -Path dist/ExileWorth-Windows-x64.zip -DestinationPath dist/smoke
+          $appDir = Resolve-Path dist/smoke/ExileWorth-Windows-x64
           $reply = '{"action":"check","preferred":null,"text":"invalid item"}' |
             & "$appDir/node.exe" "$appDir/worker.cjs" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0 -or -not $reply.error) { throw 'Worker did not respond' }
           # Use deterministic trade results in the isolated desktop test only.
           Copy-Item apps/windows/test/desktop/worker-fixture.cjs "$appDir/worker.cjs"
-          dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -- "$appDir/Vaaluation.exe"
+          dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -- "$appDir/ExileWorth.exe"
           if ($LASTEXITCODE -ne 0) { throw 'Windows shortcut or overlay test failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: Vaaluation-Windows-x64
-          path: dist/Vaaluation-Windows-x64.zip
+          name: ExileWorth-Windows-x64
+          path: dist/ExileWorth-Windows-x64.zip
           if-no-files-found: error

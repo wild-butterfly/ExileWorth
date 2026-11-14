@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     reactHost = host
     statusItemController = StatusItemController(actions: self)
 
-    LogStore.shared.append(level: "info", scope: "app", message: "Vaaluation launched")
+    LogStore.shared.append(level: "info", scope: "app", message: "ExileWorth launched")
     // Recorded at every launch: without it, diagnosing a failed chat command
     // means guessing whether macOS actually trusts this build.
     LogStore.shared.append(
@@ -184,7 +184,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       NSWorkspace.shared.notificationCenter.removeObserver(activationObserver)
     }
     HotkeyCenter.shared.unregisterAll()
-    LogStore.shared.append(level: "info", scope: "app", message: "Vaaluation terminating")
+    LogStore.shared.append(level: "info", scope: "app", message: "ExileWorth terminating")
   }
 
   /// - Parameter aboveGame: when true the window floats over Path of Exile

@@ -19,11 +19,11 @@ final class StatusItemController: NSObject {
     if let button = statusItem.button {
       let image = NSImage(
         systemSymbolName: "scalemass.fill",
-        accessibilityDescription: "Vaaluation"
+        accessibilityDescription: "ExileWorth"
       )
       image?.isTemplate = true
       button.image = image
-      button.toolTip = "Vaaluation — Path of Exile price check"
+      button.toolTip = "ExileWorth — Path of Exile price check"
     }
 
     statusItem.menu = buildMenu()
@@ -51,7 +51,7 @@ final class StatusItemController: NSObject {
     menu.addItem(.separator())
 
     let aboutItem = NSMenuItem(
-      title: "About Vaaluation",
+      title: "About ExileWorth",
       action: #selector(openAbout),
       keyEquivalent: ""
     )
@@ -61,7 +61,7 @@ final class StatusItemController: NSObject {
     menu.addItem(.separator())
 
     let quitItem = NSMenuItem(
-      title: "Quit Vaaluation",
+      title: "Quit ExileWorth",
       action: #selector(quit),
       keyEquivalent: "q"
     )

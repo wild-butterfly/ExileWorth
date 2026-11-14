@@ -41,7 +41,7 @@ export interface BulkTradeRequest {
 export type TradeRequest = ItemTradeRequest | BulkTradeRequest;
 
 /**
- * A chat command Vaaluation can send on the user's behalf. Each value maps to
+ * A chat command ExileWorth can send on the user's behalf. Each value maps to
  * exactly one in-game action, which is what GGG's third-party rules require:
  * one user action produces at most one game action. There is deliberately no
  * compound command that chains several of these together.

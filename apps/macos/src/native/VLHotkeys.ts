@@ -32,7 +32,7 @@ export function getHotkeyRegistrations(): Promise<
 }
 
 /**
- * Records the next key press inside Vaaluation (Escape cancels → null).
+ * Records the next key press inside ExileWorth (Escape cancels → null).
  * Never observes keystrokes in other applications.
  */
 export function captureNextKeyCombo(): Promise<KeyCombo | null> {

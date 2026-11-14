@@ -56,7 +56,7 @@ function stubFetch(
   return { fetch, calls };
 }
 
-const UA = 'Vaaluation/test (contact: test@example.com)';
+const UA = 'ExileWorth/test (contact: test@example.com)';
 
 describe('rate limit header parsing', () => {
   it('parses the rule and state formats GGG sends', () => {

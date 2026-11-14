@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import Foundation
 
-/// Reports macOS privacy-permission state. Vaaluation's design needs only
+/// Reports macOS privacy-permission state. ExileWorth's design needs only
 /// Accessibility (to post the single item-copy keystroke, Milestone 4).
 /// Global hotkeys use Carbon and need no permission at all, so Input
 /// Monitoring is reported as "notRequired" — the UI explains rather than asks.

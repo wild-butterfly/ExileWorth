@@ -300,7 +300,7 @@ export function SettingsScreen() {
         )}
         <Text style={styles.hint}>
           Private leagues are not listed: the trade search only exposes public leagues
-          without an account sign-in, which Vaaluation deliberately does not require.
+          without an account sign-in, which ExileWorth deliberately does not require.
         </Text>
       </Section>
 

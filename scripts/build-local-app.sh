@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Builds a standalone Vaaluation.app and installs it to /Applications.
+# Builds a standalone ExileWorth.app and installs it to /Applications.
 #
 # Unlike the Debug build, this bundles the JavaScript into the app, so it runs
 # on its own with no Metro server and no terminal.
@@ -14,7 +14,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MACOS_DIR="$REPO_ROOT/apps/macos/macos"
 BUILD_DIR="${TMPDIR:-/tmp}/vaaluation-release"
-APP_NAME="Vaaluation.app"
+APP_NAME="ExileWorth.app"
 DEST="${1:-/Applications}"
 
 echo "==> Building Release (this bundles the JavaScript, and takes a few minutes)"
@@ -72,11 +72,11 @@ cat <<EOF
 
 Installed: $DEST/$APP_NAME
 
-Vaaluation is a menu-bar app: it has no Dock icon and opens no window on
+ExileWorth is a menu-bar app: it has no Dock icon and opens no window on
 launch. After starting it, look for the scales icon in the menu bar.
 
 If this is the first install signed with a development certificate, re-grant
 Accessibility once in System Settings > Privacy & Security > Accessibility
-(remove any older Vaaluation entry first). Later installs keep the same
+(remove any older ExileWorth entry first). Later installs keep the same
 signing identity, so the grant should persist.
 EOF

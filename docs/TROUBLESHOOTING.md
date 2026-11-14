@@ -18,22 +18,22 @@ Metro is configured with the repo root in `watchFolders`
 Metro probably isn't running. Start it with `cd apps/macos && npm start`, then
 relaunch the app.
 
-## Using Vaaluation
+## Using ExileWorth
 
 ### The price-check shortcut does nothing
 
 1. Check that Accessibility permission is granted in
    System Settings → Privacy & Security → Accessibility.
-2. If you updated Vaaluation and the permission shows as granted but doesn't
-   work, remove Vaaluation from the Accessibility list and re-add it — macOS
+2. If you updated ExileWorth and the permission shows as granted but doesn't
+   work, remove ExileWorth from the Accessibility list and re-add it — macOS
    ties the grant to the app's code signature.
-3. Check the shortcut isn't disabled or conflicting in Vaaluation Settings.
+3. Check the shortcut isn't disabled or conflicting in ExileWorth Settings.
 
 ### "No item found on clipboard"
 
 - The game only copies items under the cursor. Hover the item, then press the
   shortcut.
-- Vaaluation requires the **English** game client for parsing.
+- ExileWorth requires the **English** game client for parsing.
 
 ### The overlay appears on the wrong screen or position
 
@@ -44,6 +44,6 @@ relaunch the app.
 
 ### macOS says the app is damaged or can't be opened
 
-Only install Vaaluation from the official GitHub Releases page. Releases are
+Only install ExileWorth from the official GitHub Releases page. Releases are
 signed and notarized; you should never need to remove quarantine attributes.
 If Gatekeeper complains about an official download, please open an issue.

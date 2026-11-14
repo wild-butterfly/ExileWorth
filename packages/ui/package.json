@@ -1,7 +1,7 @@
 {
   "name": "@vaaluation/ui",
   "version": "0.1.0",
-  "description": "Shared UI theme tokens and presentational components for Vaaluation.",
+  "description": "Shared UI theme tokens and presentational components for ExileWorth.",
   "license": "MIT",
   "type": "commonjs",
   "main": "src/index.ts",

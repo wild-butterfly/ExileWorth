@@ -1,8 +1,8 @@
-# Vaaluation Architecture
+# ExileWorth Architecture
 
 ## Overview
 
-Vaaluation is a React Native macOS application with an AppKit-owned shell.
+ExileWorth is a React Native macOS application with an AppKit-owned shell.
 AppKit (Swift) owns the application lifecycle — the status item, windows,
 hotkeys, clipboard, and permissions — and hosts React Native views for all
 non-trivial UI. Domain logic lives in plain TypeScript packages with no React
@@ -25,15 +25,15 @@ vaaluation/
 
 ## Why AppKit owns the lifecycle
 
-React Native macOS assumes a single document-style main window. Vaaluation is a
+React Native macOS assumes a single document-style main window. ExileWorth is a
 menu-bar (`LSUIElement`) app with multiple special windows (settings, overlay).
 So the Swift `AppDelegate`:
 
 1. Creates one shared `RCTReactNativeFactory`/bridge at launch.
 2. Creates the `NSStatusItem` and its menu.
 3. Creates windows on demand (settings window, borderless overlay panel), each
-   hosting an `RCTRootView` with a distinct `moduleName` (`VaaluationSettings`,
-   `VaaluationOverlay`), all served by the same bridge.
+   hosting an `RCTRootView` with a distinct `moduleName` (`ExileWorthSettings`,
+   `ExileWorthOverlay`), all served by the same bridge.
 
 React Native never opens or closes windows itself; it asks the native side via
 typed module calls, and the native side emits lifecycle events back.

@@ -9,8 +9,8 @@ no routing fallback or additional build step.
 ## Publishing and Search Console
 
 1. Deploy the website changes through the existing GitHub Pages workflow.
-2. In the Search Console property for `https://wild-butterfly.github.io/Vaaluation/`,
-   submit `https://wild-butterfly.github.io/Vaaluation/sitemap.xml` under Sitemaps.
+2. In the Search Console property for `https://wild-butterfly.github.io/ExileWorth/`,
+   submit `https://wild-butterfly.github.io/ExileWorth/sitemap.xml` under Sitemaps.
 3. Use URL Inspection on the homepage and the new guide URLs. Test the live URL
    and request indexing where available after a successful deployment.
 4. Review Page indexing for exclusions and Performance over a longer period
@@ -26,7 +26,7 @@ reflects a substantial content change.
 
 Crawlers look for robots.txt at the host root:
 `https://wild-butterfly.github.io/robots.txt`. The file deployed at
-`/Vaaluation/robots.txt` cannot set crawler rules for this project. It is retained
+`/ExileWorth/robots.txt` cannot set crawler rules for this project. It is retained
 for compatibility, but sitemap discovery must not depend on it. Submit the
 sitemap directly in Search Console. If the host-root repository is managed
 separately, its robots.txt can also advertise this project's sitemap.

@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest release of Vaaluation is supported with security updates.
+Only the latest release of ExileWorth is supported with security updates.
 
 ## Reporting a vulnerability
 
@@ -14,9 +14,9 @@ the Security tab) on this repository. You can expect an acknowledgement within
 
 ## Scope notes
 
-- Vaaluation ships no backend; the attack surface is the local app and its
+- ExileWorth ships no backend; the attack surface is the local app and its
   requests to official Path of Exile services.
 - Reports about clipboard handling, keystroke synthesis, permission scope, or
   the update mechanism are especially valuable.
-- Vaaluation stores no credentials in the MVP. If OAuth support is added,
+- ExileWorth stores no credentials in the MVP. If OAuth support is added,
   tokens will live in the macOS Keychain — anything contrary is a bug.

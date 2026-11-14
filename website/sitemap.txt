@@ -1,6 +1,6 @@
-https://wild-butterfly.github.io/Vaaluation/
-https://wild-butterfly.github.io/Vaaluation/guides/
-https://wild-butterfly.github.io/Vaaluation/guides/install/
-https://wild-butterfly.github.io/Vaaluation/guides/price-check/
-https://wild-butterfly.github.io/Vaaluation/guides/troubleshooting/
-https://wild-butterfly.github.io/Vaaluation/guides/windows/
+https://wild-butterfly.github.io/ExileWorth/
+https://wild-butterfly.github.io/ExileWorth/guides/
+https://wild-butterfly.github.io/ExileWorth/guides/install/
+https://wild-butterfly.github.io/ExileWorth/guides/price-check/
+https://wild-butterfly.github.io/ExileWorth/guides/troubleshooting/
+https://wild-butterfly.github.io/ExileWorth/guides/windows/

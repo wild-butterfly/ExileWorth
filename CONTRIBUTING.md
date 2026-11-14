@@ -1,11 +1,11 @@
-# Contributing to Vaaluation
+# Contributing to ExileWorth
 
 Thanks for your interest! Contributions of all kinds are welcome: bug reports,
 parser fixtures, code, documentation, and design feedback.
 
 ## Ground rules
 
-- Vaaluation must stay compliant with Grinding Gear Games' third-party policy:
+- ExileWorth must stay compliant with Grinding Gear Games' third-party policy:
   one user action → at most one game action → no automatic server actions.
   PRs that add automation, memory reading, or scraping will be declined.
 - No telemetry, no accounts, no dark patterns.
