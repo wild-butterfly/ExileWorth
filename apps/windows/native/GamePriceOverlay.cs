@@ -20,6 +20,7 @@ internal sealed class GamePriceOverlay : Form
     private readonly FlowLayoutPanel tradeActions = new() { Dock = DockStyle.Fill };
     private bool showingTrades;
     private bool loadingTrades;
+    private bool sendingReply;
 
     protected override bool ShowWithoutActivation => true;
 
@@ -67,8 +68,8 @@ internal sealed class GamePriceOverlay : Form
         dismiss.Click += (_, _) => Hide();
         tabs.Controls.AddRange([priceTab, tradeTab, dismiss]);
         var reload = new GlassButton { Text = "Refresh", AutoSize = true };
-        var copy = new GlassButton { Text = "Copy reply", AutoSize = true, Enabled = false };
-        tradeActions.Controls.AddRange([reload, copy]);
+        var send = new GlassButton { Text = "Send reply in game", AutoSize = true, Enabled = false };
+        tradeActions.Controls.AddRange([reload, send]);
         priceTab.Click += (_, _) => ShowTrades(false);
         tradeTab.Click += async (_, _) =>
         {
@@ -76,16 +77,26 @@ internal sealed class GamePriceOverlay : Form
             await LoadTradesAsync();
         };
         reload.Click += async (_, _) => await LoadTradesAsync();
-        trades.SelectedIndexChanged += (_, _) => copy.Enabled = trades.SelectedItem is TradeWhisper;
-        copy.Click += (_, _) =>
+        trades.SelectedIndexChanged += (_, _) => send.Enabled = !sendingReply && trades.SelectedItem is TradeWhisper;
+        send.Click += async (_, _) =>
         {
-            if (trades.SelectedItem is not TradeWhisper trade) return;
+            if (sendingReply || trades.SelectedItem is not TradeWhisper trade) return;
+            sendingReply = true;
+            send.Enabled = false;
             try
             {
-                Clipboard.SetText(trade.Reply);
-                tradeStatus.Text = "Reply copied. Paste it into game chat.";
+                await GameHotkey.SendReplyAsync(game, trade.Reply);
+                if (!IsDisposed) tradeStatus.Text = $"Reply entered for {trade.Character}.";
             }
-            catch (ExternalException) { tradeStatus.Text = "Clipboard busy. Try copying again."; }
+            catch (InvalidOperationException error)
+            {
+                if (!IsDisposed) tradeStatus.Text = error.Message;
+            }
+            finally
+            {
+                sendingReply = false;
+                if (!IsDisposed) send.Enabled = trades.SelectedItem is TradeWhisper;
+            }
         };
 
         var card = new GlassPanel(accent: true) { Dock = DockStyle.Fill, Margin = Padding.Empty };
@@ -191,7 +202,7 @@ internal sealed class GamePriceOverlay : Form
             var result = await tradeWorker.SendAsync<TradeWhisper[]>(new { action = "trades", lines });
             if (IsDisposed) return;
             trades.Items.AddRange(result);
-            tradeStatus.Text = result.Length == 0 ? "No recent trade whispers." : "Select a whisper to copy a reply.";
+            tradeStatus.Text = result.Length == 0 ? "No recent trade whispers." : "Close game chat, then select a whisper and send a reply.";
         }
         catch (Exception error)
         {

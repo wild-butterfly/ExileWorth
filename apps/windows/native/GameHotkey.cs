@@ -115,6 +115,39 @@ internal sealed class GameHotkey : IDisposable
         throw new InvalidOperationException("No item was copied. Hover an item in the English game client or copy it manually.");
     }
 
+    public static async Task SendReplyAsync(nint game, string reply)
+    {
+        if (reply.Length < 3 || reply.Length > 240 || reply[0] != '@' || reply.Any(char.IsControl))
+            throw new InvalidOperationException("The trade reply is invalid.");
+
+        void SendToGame(Input[] keys)
+        {
+            if (game == 0 || ForegroundGame() != game)
+                throw new InvalidOperationException("Focus Path of Exile before sending a reply.");
+            if (SendInput((uint)keys.Length, keys, Marshal.SizeOf<Input>()) != (uint)keys.Length)
+                throw new InvalidOperationException("Windows blocked game input. Run both apps at the same privilege level.");
+        }
+
+        if (Down(Keys.ControlKey) || Down(Keys.Menu) || Down(Keys.ShiftKey) ||
+            Down(Keys.LWin) || Down(Keys.RWin))
+            throw new InvalidOperationException("Release the modifier keys before sending a reply.");
+
+        var enter = new[] { Key(Keys.Enter, false), Key(Keys.Enter, true) };
+        SendToGame(enter);
+        // Let the game open chat before typing. Submit only if the original
+        // window is still in focus, and never retry a partial send.
+        await Task.Delay(90);
+        SendToGame(reply.SelectMany(character => new[] { Unicode(character, false), Unicode(character, true) }).ToArray());
+        await Task.Delay(50);
+        SendToGame(enter);
+    }
+
+    private static Input Unicode(char character, bool up) => new()
+    {
+        Type = 1,
+        Data = new InputData { Keyboard = new KeyboardInput { Scan = character, Flags = up ? 6u : 4u } }
+    };
+
     private static bool Down(Keys key) => GetAsyncKeyState((int)key) < 0;
 
     private static Input Key(Keys key, bool up) => new()
