@@ -1,164 +1,597 @@
+using System.Diagnostics;
+using Microsoft.Win32;
+
 namespace ExileWorth.Windows;
 
 internal sealed class DesktopPages : IDisposable
 {
-    private readonly Worker worker = new();
-    private readonly ComboBox leagues = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-    private readonly Label currencyStatus = new() { AutoSize = true, Text = "Refresh to load rates for the selected league." };
-    private readonly DataGridView rates = new() { Dock = DockStyle.Fill };
-    private bool updatingLeagues;
-    private string? selectedLeague;
+    private const string RepositoryUrl = "https://github.com/wild-butterfly/ExileWorth";
+    private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    private static readonly (string Id, string Label)[] Denominations =
+        [("chaos", "Chaos"), ("divine", "Divine"), ("exalted", "Exalted")];
+
+    private readonly Worker tradeWorker = new();
+    private readonly Func<string?> preferred;
+    private readonly Func<string> thanks;
+    private readonly Func<League, Task> selectLeague;
+    private readonly Action<DesktopPreferences> save;
+    private DesktopPreferences current;
+
+    // Currency.
+    private readonly CurrencyView rates = new() { Dock = DockStyle.Fill };
+    private Label currencyLabel = null!;
+    private readonly FlatButton refresh = new(ButtonKind.Primary, "Refresh");
+    private readonly FlatButton denomination = new(ButtonKind.Secondary, "In Chaos  ▾");
+    private readonly ContextMenuStrip denominationMenu = WindowTheme.Menu();
+    private CurrencyResult? lastRates;
+    private DateTime? ratesAt;
+    private string? ratesLeague;
+    private bool loadingRates;
     private int leagueRevision;
 
+    // Trades.
+    private readonly TradeView trades = new(compact: false) { Dock = DockStyle.Fill };
+    private readonly Label tradeStatus = Ui.Label("", WindowTheme.Sans(9f), WindowTheme.Dim);
+    private bool loadingTrades;
+
+    // Settings.
+    private readonly FlowLayoutPanel leagueChips = Ui.Row();
+    private readonly Label feedback = Ui.Label("", WindowTheme.Sans(9f), WindowTheme.UpText);
+    private string? selectedLeague;
+
+    public Worker Worker { get; } = new();
     public Control Settings { get; }
     public Control Currency { get; }
+    public Control Trades { get; }
+    public Control About { get; }
     public League[] Available { get; private set; } = [];
 
     public DesktopPages(DesktopPreferences preferences, Action<DesktopPreferences> save,
-        Func<string?> preferred, Func<League, Task> selectLeague)
+        Func<string?> preferred, Func<League, Task> selectLeague, Func<string> thanks)
     {
-        var modifier = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 175 };
-        modifier.Items.AddRange(Shortcut.ModifierOptions.Select(Shortcut.FormatModifiers).ToArray());
-        modifier.SelectedIndex = Array.IndexOf(Shortcut.ModifierOptions, preferences.Shortcut.Modifiers);
-        var key = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 85 };
-        key.Items.AddRange(Shortcut.KeyOptions.Cast<object>().ToArray());
-        key.SelectedItem = preferences.Shortcut.Key;
-        var placement = new CheckBox { Text = "Open near the cursor", AutoSize = true, Checked = preferences.NearCursor };
-        var feedback = new Label { AutoSize = true, ForeColor = WindowTheme.Muted };
-        var apply = new GlassButton(true) { Text = "Save settings", AutoSize = true };
-        var reset = new GlassButton { Text = "Reset shortcut", AutoSize = true };
-        var shortcut = new FlowLayoutPanel { AutoSize = true };
-        shortcut.Controls.AddRange([modifier, key]);
-        var actions = new FlowLayoutPanel { AutoSize = true };
-        actions.Controls.AddRange([apply, reset]);
-        var settingsLayout = Page("Settings");
-        Add(settingsLayout, new Label { Text = "Price-check shortcut", AutoSize = true });
-        Add(settingsLayout, shortcut);
-        Add(settingsLayout, new Label { Text = "Trade league", AutoSize = true });
-        Add(settingsLayout, leagues);
-        Add(settingsLayout, new Label { Text = "Overlay placement", AutoSize = true });
-        Add(settingsLayout, placement);
-        Add(settingsLayout, actions);
-        Add(settingsLayout, feedback);
-        Settings = settingsLayout;
-
-        leagues.SelectedIndexChanged += async (_, _) =>
-        {
-            if (!updatingLeagues && leagues.SelectedItem is League entry) await selectLeague(entry);
-        };
-        reset.Click += (_, _) =>
-        {
-            modifier.SelectedIndex = Array.IndexOf(Shortcut.ModifierOptions, Shortcut.Default.Modifiers);
-            key.SelectedItem = Shortcut.Default.Key;
-            feedback.Text = "Select Save settings to apply.";
-        };
-        apply.Click += (_, _) =>
-        {
-            try
-            {
-                var value = new Shortcut(Shortcut.ModifierOptions[modifier.SelectedIndex], (Keys)key.SelectedItem!);
-                save(new DesktopPreferences(value, placement.Checked));
-                feedback.Text = $"Saved. Press {value} while Path of Exile is in focus.";
-            }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-            {
-                feedback.Text = "Could not save your settings.";
-            }
-        };
-
-        WindowTheme.StyleListings(rates);
-        rates.Columns.Clear();
-        rates.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Currency", FillWeight = 55 });
-        rates.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Per 1 Divine Orb", FillWeight = 28 });
-        rates.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Offers", FillWeight = 17 });
-        var refresh = new GlassButton(true) { Text = "Refresh rates", AutoSize = true };
-        var currencyLayout = Page("Currency");
-        Add(currencyLayout, currencyStatus);
-        Add(currencyLayout, refresh);
-        currencyLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        currencyLayout.Controls.Add(rates);
-        Currency = currencyLayout;
-
-        refresh.Click += async (_, _) =>
-        {
-            refresh.Enabled = false;
-            rates.Rows.Clear();
-            currencyStatus.Text = "Loading bulk exchange rates…";
-            int requested = leagueRevision;
-            try
-            {
-                var result = await worker.SendAsync<CurrencyResult>(new { action = "currency", preferred = preferred() },
-                    TimeSpan.FromMinutes(3));
-                if (Currency.IsDisposed || leagueRevision != requested) return;
-                double? divine = result.Rows.FirstOrDefault(row => row.Id == "divine")?.Rate?.Median;
-                bool hasDivineRate = divine is > 0 && double.IsFinite(divine.Value);
-                rates.Rows.Add("Chaos Orb", hasDivineRate ? FormatRate(divine!.Value) : "Unavailable", "—");
-                foreach (var row in result.Rows.Where(row => row.Id != "divine"))
-                {
-                    int index = rates.Rows.Add(row.Label,
-                        hasDivineRate && row.Rate is { Median: > 0 } quote && double.IsFinite(quote.Median)
-                            ? FormatRate(divine!.Value / quote.Median)
-                            : row.Rate is null && row.Error is null ? "No offers" : "Unavailable",
-                        row.Rate?.SampleSize.ToString() ?? "—");
-                    if (row.Error is not null) rates.Rows[index].Cells[1].ToolTipText = row.Error;
-                }
-                rates.ClearSelection();
-                currencyStatus.Text = hasDivineRate
-                    ? $"{result.Selected} · Estimated from bulk asking rates · {DateTime.Now:t}"
-                    : $"{result.Selected} · Divine Orb rate unavailable. Try refreshing.";
-            }
-            catch (Exception error)
-            {
-                if (!Currency.IsDisposed && leagueRevision == requested) currencyStatus.Text = error.Message;
-            }
-            finally
-            {
-                if (!Currency.IsDisposed) refresh.Enabled = true;
-            }
-        };
+        current = preferences;
+        this.save = save;
+        this.preferred = preferred;
+        this.selectLeague = selectLeague;
+        this.thanks = thanks;
+        Currency = BuildCurrency();
+        Trades = BuildTrades();
+        Settings = BuildSettings();
+        About = BuildAbout();
     }
 
-    private static string FormatRate(double amount) =>
-        amount >= 0.01 ? amount.ToString("#,0.##") : amount.ToString("G3");
+    // ── Shared page frame ────────────────────────────────────────────────
+
+    private static TableLayoutPanel Page(string title, string subtitle, out Label subtitleLabel, params Control[] actions)
+    {
+        var page = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill, ColumnCount = 1, BackColor = WindowTheme.Background,
+            Padding = new Padding(24, 20, 24, 20),
+        };
+        page.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        var top = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2, Margin = new Padding(0, 0, 0, 14) };
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        var titles = Ui.Stack();
+        titles.Add(Ui.Label(title, WindowTheme.Display(18f), WindowTheme.Foreground)).Margin = Padding.Empty;
+        subtitleLabel = titles.Add(Ui.Label(subtitle, WindowTheme.Sans(9f), WindowTheme.Muted));
+        top.Controls.Add(titles, 0, 0);
+        var row = Ui.Row(actions);
+        row.Anchor = AnchorStyles.Right;
+        top.Controls.Add(row, 1, 0);
+        page.Add(top);
+        return page;
+    }
+
+    private static Card Fill(Control content, Padding? padding = null)
+    {
+        var card = new Card { Dock = DockStyle.Fill, Padding = padding ?? new Padding(12), Margin = new Padding(0, 0, 0, 10) };
+        card.Controls.Add(content);
+        return card;
+    }
+
+    // ── Currency ─────────────────────────────────────────────────────────
+
+    private Control BuildCurrency()
+    {
+        var page = Page("Currency", "Refresh to load rates for the selected league.", out currencyLabel, denomination, refresh);
+        var disclaimer = Ui.Label("Median of the cheapest live bulk offers: what sellers are asking, not what items sold for. " +
+            "A low offer count means the median is soft.", WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true);
+        disclaimer.MaximumSize = new Size(720, 0);
+        disclaimer.Margin = new Padding(0, 0, 0, 12);
+        page.Add(disclaimer);
+        page.Add(Fill(rates, new Padding(10, 6, 6, 6)), SizeType.Percent, 100);
+
+        foreach (var (id, label) in Denominations)
+        {
+            var option = new ToolStripMenuItem(label) { Checked = id == "chaos", Tag = id };
+            option.Click += (_, _) =>
+            {
+                foreach (ToolStripMenuItem item in denominationMenu.Items) item.Checked = item == option;
+                denomination.Text = $"In {label}  ▾";
+                rates.Denomination = id;
+                ShowRates();
+            };
+            denominationMenu.Items.Add(option);
+        }
+        denomination.Click += (_, _) => denominationMenu.Show(denomination, new Point(0, denomination.Height + 4));
+        refresh.Click += async (_, _) => await RefreshRatesAsync();
+        rates.Placeholder = "Refresh to load rates.";
+        return page;
+    }
+
+    public void CurrencyShown()
+    {
+        if (ratesLeague != selectedLeague && selectedLeague is not null && !loadingRates) _ = RefreshRatesAsync();
+    }
+
+    private async Task RefreshRatesAsync()
+    {
+        if (loadingRates) return;
+        loadingRates = true;
+        refresh.Enabled = false;
+        refresh.Text = "Loading…";
+        currencyLabel.Text = "Loading bulk exchange rates… this takes about a minute to respect GGG's rate limits.";
+        rates.Placeholder = "Loading rates…";
+        int requested = leagueRevision;
+        try
+        {
+            var result = await Worker.SendAsync<CurrencyResult>(new { action = "currency", preferred = preferred() },
+                TimeSpan.FromMinutes(3));
+            if (Currency.IsDisposed || leagueRevision != requested) return;
+            lastRates = result;
+            ratesAt = DateTime.Now;
+            ratesLeague = selectedLeague;
+            _ = CurrencyIcons.LoadAsync(Worker, result.Rows.Select(row => row.Id).Append("chaos"));
+            ShowRates();
+        }
+        catch (Exception error)
+        {
+            if (!Currency.IsDisposed && leagueRevision == requested) currencyLabel.Text = error.Message;
+        }
+        finally
+        {
+            loadingRates = false;
+            if (!Currency.IsDisposed)
+            {
+                refresh.Enabled = true;
+                refresh.Text = "Refresh";
+                rates.Placeholder = "No rates loaded.";
+            }
+        }
+    }
+
+    private void ShowRates()
+    {
+        if (lastRates is null) return;
+        rates.SetRows(lastRates.Rows);
+        string unit = Denominations.First(entry => entry.Id == rates.Denomination).Label;
+        bool missing = rates.Denomination != "chaos" && lastRates.Rows.FirstOrDefault(row => row.Id == rates.Denomination)?.Rate is null;
+        currencyLabel.Text = missing
+            ? $"{lastRates.Selected} · the {unit} rate is unavailable. Try refreshing."
+            : $"{lastRates.Selected} · priced in {unit} · updated {ratesAt:t}";
+    }
+
+    // ── Trades ───────────────────────────────────────────────────────────
+
+    private Control BuildTrades()
+    {
+        var reload = new FlatButton(ButtonKind.Primary, "Refresh");
+        var page = Page("Trades", "Recent trade whispers from Path of Exile's chat log.", out _, reload);
+        page.Add(Fill(trades, new Padding(10, 6, 6, 6)), SizeType.Percent, 100);
+        tradeStatus.Text = "Buttons here copy the chat command. The in-game overlay's Trades tab types it for you.";
+        page.Add(tradeStatus);
+        trades.Placeholder = "No recent trade whispers. Start Path of Exile and refresh.";
+        reload.Click += async (_, _) => await LoadTradesAsync();
+        trades.CommandChosen += (trade, command, label) =>
+        {
+            try
+            {
+                Clipboard.SetText(command);
+                SetTradeStatus($"Copied “{command}”. In game: Enter, Ctrl+V, Enter.", WindowTheme.UpText);
+            }
+            catch (System.Runtime.InteropServices.ExternalException)
+            {
+                SetTradeStatus("The clipboard is busy. Try again.", WindowTheme.Down);
+            }
+        };
+        return page;
+    }
+
+    public void TradesShown() => _ = LoadTradesAsync();
+
+    private void SetTradeStatus(string text, Color color)
+    {
+        tradeStatus.Text = text;
+        tradeStatus.ForeColor = color;
+    }
+
+    private async Task LoadTradesAsync()
+    {
+        if (loadingTrades) return;
+        loadingTrades = true;
+        try
+        {
+            var result = await TradeLog.ReadAsync(tradeWorker, GameHotkey.FindClientLog(), thanks());
+            if (Trades.IsDisposed) return;
+            trades.Trades = result;
+            SetTradeStatus(result.Length == 0 ? "No recent trade whispers."
+                : "Buttons here copy the chat command. The in-game overlay's Trades tab types it for you.", WindowTheme.Dim);
+        }
+        catch (Exception error)
+        {
+            if (!Trades.IsDisposed) SetTradeStatus(error.Message, WindowTheme.Muted);
+        }
+        finally { loadingTrades = false; }
+    }
+
+    // ── Settings ─────────────────────────────────────────────────────────
+
+    private Control BuildSettings()
+    {
+        var page = Page("Settings", "Changes apply immediately.", out _);
+        var scroller = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Margin = Padding.Empty };
+        var stack = Ui.Stack();
+        stack.Dock = DockStyle.Top;
+        stack.MaximumSize = new Size(760, 0);
+        stack.Padding = new Padding(0, 0, 12, 0);
+
+        // Shortcut.
+        var modifier = new FlatButton(ButtonKind.Secondary);
+        var key = new FlatButton(ButtonKind.Secondary);
+        var modifierMenu = WindowTheme.Menu();
+        var keyMenu = WindowTheme.Menu();
+        keyMenu.MaximumSize = new Size(0, 420);
+        var reset = new FlatButton(ButtonKind.Ghost, "Reset to default");
+        void ShowShortcut()
+        {
+            modifier.Text = $"{Shortcut.FormatModifiers(current.Shortcut.Modifiers)}  ▾";
+            key.Text = $"{current.Shortcut.Key}  ▾";
+            foreach (ToolStripMenuItem item in modifierMenu.Items) item.Checked = Equals(item.Tag, current.Shortcut.Modifiers);
+            foreach (ToolStripMenuItem item in keyMenu.Items) item.Checked = Equals(item.Tag, current.Shortcut.Key);
+            reset.Enabled = current.Shortcut != Shortcut.Default;
+        }
+        foreach (uint option in Shortcut.ModifierOptions)
+            modifierMenu.Items.Add(new ToolStripMenuItem(Shortcut.FormatModifiers(option), null,
+                (_, _) => Apply(current with { Shortcut = current.Shortcut with { Modifiers = option } }, ShowShortcut)) { Tag = option });
+        foreach (Keys option in Shortcut.KeyOptions)
+            keyMenu.Items.Add(new ToolStripMenuItem(option.ToString(), null,
+                (_, _) => Apply(current with { Shortcut = current.Shortcut with { Key = option } }, ShowShortcut)) { Tag = option });
+        modifier.Click += (_, _) => modifierMenu.Show(modifier, new Point(0, modifier.Height + 4));
+        key.Click += (_, _) => keyMenu.Show(key, new Point(0, key.Height + 4));
+        reset.Click += (_, _) => Apply(current with { Shortcut = Shortcut.Default }, ShowShortcut);
+        ShowShortcut();
+        var plus = Ui.Label("+", WindowTheme.Sans(10f), WindowTheme.Faint);
+        plus.Anchor = AnchorStyles.None;
+        plus.Margin = new Padding(0, 0, 8, 0);
+        stack.Add(Ui.Section("Price-check shortcut",
+            "Press it while hovering an item in Path of Exile. It only works while the game is in front, " +
+            "and ExileWorth then sends the game's own Ctrl + Alt + C once to copy the item.",
+            Ui.Row(modifier, plus, key, reset)));
+
+        // League.
+        stack.Add(Ui.Section("Trade league",
+            "Prices come from this league's public trade listings. Private leagues need a sign-in, which ExileWorth deliberately does not ask for.",
+            leagueChips));
+        leagueChips.WrapContents = true;
+        leagueChips.MaximumSize = new Size(700, 0);
+
+        // Overlay.
+        var nearCursor = new Toggle { Checked = current.NearCursor, AccessibleName = "Open the overlay next to the cursor" };
+        nearCursor.CheckedChanged += (_, _) => Apply(current with { NearCursor = nearCursor.Checked });
+        stack.Add(Ui.Section("In-game overlay", null,
+            SwitchRow(nearCursor, "Open next to the cursor", "Otherwise the panel opens in the top-right corner of the game's screen."),
+            Ui.Label("The overlay never takes focus from the game, and hides itself when you switch to another app. " +
+                "Drag its top bar to move it.", WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true)));
+
+        // Startup.
+        var startup = new Toggle { Checked = StartsWithWindows(), AccessibleName = "Start with Windows" };
+        startup.CheckedChanged += (_, _) =>
+        {
+            try
+            {
+                SetStartsWithWindows(startup.Checked);
+                ShowFeedback(startup.Checked ? "ExileWorth will start in the tray when you sign in." : "Start with Windows turned off.");
+            }
+            catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+            {
+                ShowFeedback("Windows did not allow changing the startup setting.", error: true);
+            }
+        };
+        stack.Add(Ui.Section("Startup", null,
+            SwitchRow(startup, "Start with Windows", "Opens quietly in the notification area, ready for the shortcut.")));
+
+        // Trade replies.
+        var thanksField = new TextField(DesktopPreferences.DefaultThanks) { Width = 420 };
+        thanksField.Input.Text = current.ThanksMessage ?? "";
+        thanksField.Input.MaxLength = 120;
+        var debounce = new System.Windows.Forms.Timer { Interval = 600 };
+        debounce.Tick += (_, _) =>
+        {
+            debounce.Stop();
+            Apply(current with { ThanksMessage = thanksField.Input.Text.Trim() is { Length: > 0 } text ? text : null });
+        };
+        thanksField.Input.TextChanged += (_, _) => { debounce.Stop(); debounce.Start(); };
+        stack.Add(Ui.Section("Trade replies",
+            "Sent by the Thanks button on a trade whisper, one message per press.",
+            thanksField));
+
+        // Item copy.
+        stack.Add(Ui.Section("Item copy",
+            "Path of Exile copies the advanced item description with Ctrl + Alt + C. If you rebound Highlight (Alt) " +
+            "in the game's options, set it back for the shortcut to work. You can also copy an item yourself and use " +
+            "Check clipboard on the Price Check page."));
+
+        // Data.
+        var folder = new FlatButton(ButtonKind.Secondary, "Open settings folder");
+        folder.Click += (_, _) =>
+        {
+            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Vaaluation");
+            Directory.CreateDirectory(path);
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        };
+        stack.Add(Ui.Section("Data",
+            "Settings are stored on this PC only. ExileWorth reads the public trade API and your game's chat log; nothing is uploaded.",
+            folder));
+        feedback.Margin = new Padding(2, 4, 0, 0);
+        stack.Add(feedback);
+
+        scroller.Controls.Add(stack);
+        page.Add(scroller, SizeType.Percent, 100);
+        return page;
+    }
+
+    private static Control SwitchRow(Toggle toggle, string title, string detail)
+    {
+        var row = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, Margin = new Padding(0, 0, 0, 6), Dock = DockStyle.Top };
+        row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        toggle.Margin = new Padding(0, 2, 12, 0);
+        row.Controls.Add(toggle, 0, 0);
+        row.SetRowSpan(toggle, 2);
+        var label = Ui.Label(title, WindowTheme.Sans(9.5f), WindowTheme.Body);
+        label.Margin = Padding.Empty;
+        label.Cursor = Cursors.Hand;
+        label.Click += (_, _) => toggle.Checked = !toggle.Checked;
+        row.Controls.Add(label, 1, 0);
+        row.Controls.Add(Ui.Label(detail, WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true), 1, 1);
+        return row;
+    }
+
+    private void Apply(DesktopPreferences next, Action? then = null)
+    {
+        if (next == current) { then?.Invoke(); return; }
+        try
+        {
+            save(next);
+            current = next;
+            ShowFeedback($"Saved. Price check: {next.Shortcut} while Path of Exile is in front.");
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            ShowFeedback("Could not save your settings.", error: true);
+        }
+        then?.Invoke();
+    }
+
+    private void ShowFeedback(string text, bool error = false)
+    {
+        feedback.Text = text;
+        feedback.ForeColor = error ? WindowTheme.Down : WindowTheme.UpText;
+    }
+
+    private static bool StartsWithWindows()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
+            return key?.GetValue("ExileWorth") is string;
+        }
+        catch (Exception error) when (error is System.Security.SecurityException or UnauthorizedAccessException) { return false; }
+    }
+
+    private static void SetStartsWithWindows(bool enabled)
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(RunKey);
+        if (enabled) key.SetValue("ExileWorth", $"\"{Application.ExecutablePath}\" --tray");
+        else key.DeleteValue("ExileWorth", throwOnMissingValue: false);
+    }
+
+    // ── About ────────────────────────────────────────────────────────────
+
+    private static Control BuildAbout()
+    {
+        var page = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill, ColumnCount = 1, BackColor = WindowTheme.Background,
+            Padding = new Padding(24, 28, 24, 20), AutoScroll = true,
+        };
+        page.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        var mark = page.Add(new BrandMark(64));
+        mark.Margin = new Padding(0, 0, 0, 12);
+        page.Add(Ui.Label("ExileWorth", WindowTheme.Display(20f), WindowTheme.Foreground)).Margin = Padding.Empty;
+        string version = Application.ProductVersion.Split('+')[0];
+        page.Add(Ui.Label($"Version {version} · Item price checking for Path of Exile on Windows.",
+            WindowTheme.Sans(9.5f), WindowTheme.Muted)).Margin = new Padding(0, 2, 0, 16);
+        page.Add(Ui.Section("How prices are found",
+            "ExileWorth searches the official trade site for items like yours and shows what sellers are asking, " +
+            "cheapest first. The typical price is the median of those asks. It is a guide, not a sale price."));
+        page.Add(Ui.Section("Privacy",
+            "No account, no sign-in, no telemetry. Requests go only to pathofexile.com and its image CDN, " +
+            "throttled to stay inside GGG's published rate limits. One key press sends at most one game action."));
+        var github = new FlatButton(ButtonKind.Secondary, "GitHub ↗");
+        var issue = new FlatButton(ButtonKind.Ghost, "Report an issue ↗");
+        github.Click += (_, _) => Process.Start(new ProcessStartInfo(RepositoryUrl) { UseShellExecute = true });
+        issue.Click += (_, _) => Process.Start(new ProcessStartInfo($"{RepositoryUrl}/issues/new/choose") { UseShellExecute = true });
+        page.Add(Ui.Row(github, issue)).Margin = new Padding(0, 4, 0, 16);
+        page.Add(Ui.Label("This product isn't affiliated with or endorsed by Grinding Gear Games in any way.",
+            WindowTheme.Sans(8f), WindowTheme.Faint, wrap: true));
+        return page;
+    }
+
+    // ── League ───────────────────────────────────────────────────────────
 
     public void SetLeagues(League[] available, string? selected)
     {
         Available = available;
-        updatingLeagues = true;
-        try
+        // Rebuild only when the leagues change: a chip's own click lands here,
+        // and disposing the button inside its Click handler is unsafe.
+        var existing = leagueChips.Controls.OfType<FlatButton>().ToArray();
+        if (!existing.Select(chip => (chip.Tag as League)?.Id).SequenceEqual(available.Select(entry => (string?)entry.Id)))
         {
-            leagues.Items.Clear();
-            leagues.Items.AddRange(available);
-            leagues.SelectedIndex = Array.FindIndex(available, entry => entry.Id == selected);
+            leagueChips.SuspendLayout();
+            while (leagueChips.Controls.Count > 0) leagueChips.Controls[0].Dispose();
+            foreach (var entry in available)
+            {
+                var chip = new FlatButton(ButtonKind.Chip, entry.Text) { Tag = entry, Margin = new Padding(0, 0, 6, 6) };
+                chip.Click += async (_, _) => await selectLeague(entry);
+                leagueChips.Controls.Add(chip);
+            }
+            leagueChips.ResumeLayout();
+            existing = leagueChips.Controls.OfType<FlatButton>().ToArray();
         }
-        finally { updatingLeagues = false; }
+        foreach (var chip in existing) chip.Selected = (chip.Tag as League)?.Id == selected;
 
         if (selectedLeague == selected) return;
         selectedLeague = selected;
         leagueRevision++;
-        rates.Rows.Clear();
-        currencyStatus.Text = selected is null ? "No trade league selected." : $"{selected} · Refresh to load rates.";
-    }
-
-    private static TableLayoutPanel Page(string title)
-    {
-        var page = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(16), AutoScroll = true };
-        page.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        var heading = new Label { Text = title, AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont!.FontFamily, 18, FontStyle.Bold) };
-        Add(page, heading);
-        return page;
-    }
-
-    private static void Add(TableLayoutPanel page, Control control)
-    {
-        page.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        page.Controls.Add(control);
+        lastRates = null;
+        rates.SetRows([]);
+        currencyLabel.Text = selected is null ? "No trade league selected." : $"{selected} · refresh to load rates.";
+        if (Currency.Parent is not null && selected is not null) CurrencyShown();
     }
 
     public void Dispose()
     {
-        worker.Dispose();
+        Worker.Dispose();
+        tradeWorker.Dispose();
+        denominationMenu.Dispose();
         Settings.Dispose();
         Currency.Dispose();
+        Trades.Dispose();
+        About.Dispose();
+    }
+}
+
+/// <summary>Currency rows with their icons, priced in the chosen denomination.</summary>
+internal sealed class CurrencyView : ScrollList
+{
+    private const int ThinSample = 8;
+    private CurrencyRow[] rows = [];
+    private CurrencyRow[] shown = [];
+    private string denomination = "chaos";
+
+    public CurrencyView()
+    {
+        AccessibleName = "Currency rates";
+        AccessibleRole = AccessibleRole.Table;
+        CurrencyIcons.Changed += Invalidate;
+    }
+
+    public string Denomination
+    {
+        get => denomination;
+        set { denomination = value; Rebuild(); }
+    }
+
+    public void SetRows(CurrencyRow[] value)
+    {
+        rows = value;
+        Rebuild();
+    }
+
+    /// <summary>Restates chaos rates in the denomination, adding Chaos itself when it is not the unit.</summary>
+    private void Rebuild()
+    {
+        double divisor = 1;
+        if (denomination != "chaos")
+        {
+            var unit = rows.FirstOrDefault(row => row.Id == denomination)?.Rate;
+            divisor = unit is { Median: > 0 } ? unit.Median : double.NaN;
+        }
+        var list = new List<CurrencyRow>();
+        if (denomination != "chaos" && rows.Length > 0)
+            list.Add(new CurrencyRow("chaos", "Chaos Orb", double.IsFinite(divisor) ? new CurrencyQuote(1 / divisor, int.MaxValue) : null, null));
+        foreach (var row in rows.Where(row => row.Id != denomination))
+            list.Add(row with
+            {
+                Rate = row.Rate is { } rate && double.IsFinite(divisor) ? rate with { Median = rate.Median / divisor } : null,
+            });
+        shown = [.. list];
+        Reset();
+    }
+
+    protected override int Count => shown.Length;
+    protected override int RowHeight => this.Px(40);
+    protected override int HeaderHeight => this.Px(26);
+
+    protected override void DrawHeader(Graphics g, Rectangle bounds)
+    {
+        var font = WindowTheme.Mono(7f);
+        WindowTheme.Text(g, "CURRENCY", font, new Rectangle(this.Px(46), 0, Width / 2, bounds.Height), WindowTheme.Faint);
+        WindowTheme.Text(g, "RATE", font, new Rectangle(0, 0, Width - this.Px(20), bounds.Height), WindowTheme.Faint,
+            TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        using var line = new Pen(WindowTheme.Hairline);
+        g.DrawLine(line, 0, bounds.Bottom - 1, Width - this.Px(8), bounds.Bottom - 1);
+    }
+
+    protected override void DrawRow(Graphics g, int index, Rectangle bounds, bool hovered)
+    {
+        var row = shown[index];
+        if (hovered) WindowTheme.FillRounded(g, Rectangle.Inflate(bounds, 0, -2), this.Px(6), WindowTheme.Hover);
+        int icon = this.Px(26);
+        var iconBox = new Rectangle(bounds.Left + this.Px(8), bounds.Top + (bounds.Height - icon) / 2, icon, icon);
+        if (CurrencyIcons.Get(row.Id) is { } image)
+        {
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.DrawImage(image, iconBox);
+        }
+        else WindowTheme.FillRounded(g, iconBox, this.Px(6), WindowTheme.Chip);
+        var rateBox = Rectangle.FromLTRB(bounds.Right - this.Px(220), bounds.Top, bounds.Right - this.Px(12), bounds.Bottom);
+        WindowTheme.Text(g, row.Label, WindowTheme.Sans(10f), Rectangle.FromLTRB(iconBox.Right + this.Px(12), bounds.Top, rateBox.Left, bounds.Bottom),
+            WindowTheme.Body);
+
+        if (row.Rate is { } rate)
+        {
+            string amount = Format(rate.Median);
+            var big = WindowTheme.Mono(10.5f, FontStyle.Bold);
+            var unitFont = WindowTheme.Sans(8.5f);
+            string unit = denomination;
+            int unitWidth = TextRenderer.MeasureText(g, unit, unitFont, Size.Empty, TextFormatFlags.NoPadding).Width;
+            bool thin = rate.SampleSize < ThinSample;
+            int middle = bounds.Top + bounds.Height / 2;
+            var line = thin ? new Rectangle(rateBox.Left, bounds.Top + this.Px(3), rateBox.Width, middle - bounds.Top) : rateBox;
+            WindowTheme.Text(g, unit, unitFont, line, WindowTheme.Dim, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+            WindowTheme.Text(g, amount, big, Rectangle.FromLTRB(line.Left, line.Top, line.Right - unitWidth - this.Px(6), line.Bottom),
+                WindowTheme.Foreground, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+            if (thin)
+                WindowTheme.Text(g, $"from {rate.SampleSize} offers", WindowTheme.Mono(7f),
+                    new Rectangle(rateBox.Left, middle, rateBox.Width, bounds.Bottom - middle - this.Px(3)),
+                    WindowTheme.Down, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        }
+        else
+        {
+            WindowTheme.Text(g, row.Error ?? "no offers", WindowTheme.Sans(8.5f), rateBox,
+                row.Error is null ? WindowTheme.Faint : WindowTheme.Down, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        }
+        if (index < shown.Length - 1)
+        {
+            using var pen = new Pen(WindowTheme.Hairline);
+            g.DrawLine(pen, iconBox.Right + this.Px(12), bounds.Bottom - 1, bounds.Right - this.Px(8), bounds.Bottom - 1);
+        }
+    }
+
+    private static string Format(double value) =>
+        value >= 1000 ? Math.Round(value).ToString("#,0")
+        : value >= 10 ? value.ToString("0")
+        : value >= 1 ? value.ToString("0.0")
+        : value >= 0.01 ? value.ToString("0.00")
+        : value.ToString("G2");
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) CurrencyIcons.Changed -= Invalidate;
+        base.Dispose(disposing);
     }
 }

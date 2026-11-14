@@ -8,8 +8,18 @@ internal sealed class Worker : IDisposable
 {
     private Process? process;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    // One pipe carries one request at a time; overlapping writes would pair
+    // a response with the wrong caller.
+    private readonly SemaphoreSlim gate = new(1, 1);
 
     public async Task<T> SendAsync<T>(object request, TimeSpan? timeout = null)
+    {
+        await gate.WaitAsync();
+        try { return await SendOnceAsync<T>(request, timeout); }
+        finally { gate.Release(); }
+    }
+
+    private async Task<T> SendOnceAsync<T>(object request, TimeSpan? timeout)
     {
         process ??= Start();
         try
@@ -62,8 +72,10 @@ internal record League(string Id, string Text)
 }
 internal record LeagueResult(League[] Leagues, string? Selected);
 internal record PriceResult(League[] Leagues, string Selected, int Total, Listing[] Listings,
-    Modifier[] Filters, string TradeUrl, string? ItemName);
-internal record Listing(double Amount, string Currency, string AccountName, int? Ilvl, string Presence);
+    Modifier[] Filters, string TradeUrl, string? ItemName, TypicalPrice? Typical);
+internal record TypicalPrice(double Amount, string Currency, double? Chaos);
+internal record Listing(double Amount, string Currency, string AccountName, int? Ilvl, string Presence,
+    string? Indexed = null, string? Whisper = null);
 internal record Modifier(string Key, string Label, bool Enabled)
 {
     public override string ToString() => Label;
@@ -73,7 +85,8 @@ internal record CurrencyResult(string Selected, CurrencyRow[] Rows);
 internal record CurrencyRow(string Id, string Label, CurrencyQuote? Rate, string? Error);
 internal record CurrencyQuote(double Median, int SampleSize);
 
-internal record TradeWhisper(string Character, string Summary, string Direction, string Reply)
+internal record TradeWhisper(string Character, string Summary, string Direction, string Reply,
+    string Invite, string Trade, string Kick, string? ReceivedAt = null, string? Raw = null)
 {
     public override string ToString() => $"{(Direction == "incoming" ? "From" : "To")} {Character} · {Summary}";
 }

@@ -75,11 +75,40 @@ internal sealed class GameHotkey : IDisposable
         }
     }
 
+    private static readonly string[] GameProcesses =
+        ["PathOfExile", "PathOfExile_x64", "PathOfExileSteam", "PathOfExile_x64Steam"];
+
     public static string? ClientLog(nint game)
     {
         GetWindowThreadProcessId(game, out uint pid);
         if (pid == 0) return null;
         using var process = Process.GetProcessById((int)pid);
+        return LogBeside(process);
+    }
+
+    /// <summary>Finds Client.txt from any running game process, for the desktop window.</summary>
+    public static string? FindClientLog()
+    {
+        foreach (string name in GameProcesses)
+        {
+            foreach (var process in Process.GetProcessesByName(name))
+            {
+                using (process)
+                {
+                    try
+                    {
+                        if (LogBeside(process) is { } path && File.Exists(path)) return path;
+                    }
+                    catch (Exception error) when (error is InvalidOperationException
+                        or System.ComponentModel.Win32Exception) { }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static string? LogBeside(Process process)
+    {
         string? folder = Path.GetDirectoryName(process.MainModule?.FileName);
         return folder is null ? null : Path.Combine(folder, "logs", "Client.txt");
     }
@@ -117,13 +146,15 @@ internal sealed class GameHotkey : IDisposable
 
     public static async Task SendReplyAsync(nint game, string reply)
     {
-        if (reply.Length < 3 || reply.Length > 240 || reply[0] != '@' || reply.Any(char.IsControl))
-            throw new InvalidOperationException("The trade reply is invalid.");
+        // Only whispers (@name …) and chat commands (/invite, /tradewith, /kick,
+        // /hideout) are typed; one press sends exactly one line.
+        if (reply.Length < 3 || reply.Length > 240 || reply[0] is not ('@' or '/') || reply.Any(char.IsControl))
+            throw new InvalidOperationException("The chat command is invalid.");
 
         void SendToGame(Input[] keys)
         {
             if (game == 0 || ForegroundGame() != game)
-                throw new InvalidOperationException("Focus Path of Exile before sending a reply.");
+                throw new InvalidOperationException("Focus Path of Exile before sending a command.");
             if (SendInput((uint)keys.Length, keys, Marshal.SizeOf<Input>()) != (uint)keys.Length)
                 throw new InvalidOperationException("Windows blocked game input. Run both apps at the same privilege level.");
         }

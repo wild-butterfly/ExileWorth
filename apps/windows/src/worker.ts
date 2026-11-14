@@ -7,8 +7,11 @@ import {
 } from '@vaaluation/trade-client';
 import {
   describeRequest,
+  inviteCommand,
+  kickCommand,
   parseTradeWhisper,
   thanksCommand,
+  tradeCommand,
 } from '@vaaluation/trade-whispers';
 import { PriceCheckEngine } from './engine';
 
@@ -16,7 +19,7 @@ import { PriceCheckEngine } from './engine';
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.10 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.11 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
 
@@ -39,7 +42,7 @@ async function currency(preferred: string | null) {
     selected,
     rows: TRACKED_CURRENCIES.filter(({ id }) => id !== 'chaos').map(({ id, label }) => ({
       label,
-      ...rows.find((row) => row.id === id),
+      ...(rows.find((row) => row.id === id) ?? { id, rate: null, error: null }),
     })),
   };
 }
@@ -56,8 +59,17 @@ async function run() {
         enabled?: string[];
         currency?: string;
         lines?: string[];
+        thanks?: string;
       };
+      if (request.action === 'icons') {
+        const icons = await client.getCurrencyIcons();
+        process.stdout.write(
+          JSON.stringify({ result: Object.fromEntries(icons) }) + '\n',
+        );
+        continue;
+      }
       if (request.action === 'trades') {
+        const requestThanks = request.thanks?.trim() || null;
         const result = (request.lines ?? [])
           .flatMap((line) => {
             const request = parseTradeWhisper(line);
@@ -67,7 +79,12 @@ async function run() {
                 character: request.character,
                 direction: request.direction,
                 summary: describeRequest(request),
-                reply: thanksCommand(request, 'Thanks!').text,
+                receivedAt: request.receivedAt,
+                raw: request.raw,
+                reply: thanksCommand(request, requestThanks ?? 'Thanks!').text,
+                invite: inviteCommand(request).text,
+                trade: tradeCommand(request).text,
+                kick: kickCommand(request).text,
               },
             ];
           })

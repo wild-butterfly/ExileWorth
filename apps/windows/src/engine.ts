@@ -3,6 +3,7 @@ import { resolveLeagueId } from '@vaaluation/shared-types';
 import {
   buildFilters,
   buildQuery,
+  distribution,
   relaxWeakest,
   toPricedListings,
   tradeSearchUrl,
@@ -89,6 +90,7 @@ export class PriceCheckEngine {
       selected,
       total: search.total,
       listings,
+      typical: await this.typical(selected, listings),
       itemName: item.name,
       filters: filters.map(({ key, label, selected }) => ({
         key,
@@ -97,5 +99,36 @@ export class PriceCheckEngine {
       })),
       tradeUrl: tradeSearchUrl(selected, search.id),
     };
+  }
+
+  /**
+   * The headline price: the median asking price, restated in Divine Orbs when
+   * it is worth at least one. The exchange rate is cached by the client, so
+   * repeated checks do not each spend a request; if it fails, the chaos
+   * figure stands on its own.
+   */
+  private async typical(
+    league: string,
+    listings: ReturnType<typeof toPricedListings>,
+  ): Promise<{ amount: number; currency: string; chaos: number | null } | null> {
+    const spread = distribution(listings);
+    if (spread === null) return null;
+    if (spread.currency !== 'chaos') {
+      return { amount: spread.median, currency: spread.currency, chaos: null };
+    }
+    try {
+      const rates = await this.client.currencyRates(league, ['divine'], 'chaos');
+      const divine = rates.get('divine')?.median ?? 0;
+      if (divine > 0 && spread.median >= divine) {
+        return {
+          amount: spread.median / divine,
+          currency: 'divine',
+          chaos: spread.median,
+        };
+      }
+    } catch {
+      // A convenience, not the answer.
+    }
+    return { amount: spread.median, currency: 'chaos', chaos: null };
   }
 }

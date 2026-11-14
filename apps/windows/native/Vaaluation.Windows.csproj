@@ -6,8 +6,10 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>0.1.10</Version>
+    <Version>0.1.11</Version>
     <ApplicationIcon>ExileWorth.ico</ApplicationIcon>
     <AssemblyName>ExileWorth</AssemblyName>
+    <!-- Controls are built in code; there is no designer to serialize properties for. -->
+    <NoWarn>$(NoWarn);WFO1000</NoWarn>
   </PropertyGroup>
 </Project>
