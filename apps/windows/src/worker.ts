@@ -5,13 +5,18 @@ import {
   TradeClient,
   type CurrencyRate,
 } from '@vaaluation/trade-client';
+import {
+  describeRequest,
+  parseTradeWhisper,
+  thanksCommand,
+} from '@vaaluation/trade-whispers';
 import { PriceCheckEngine } from './engine';
 
 // Keep requests bounded so a stalled connection does not freeze the UI.
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.8 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.9 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
 
@@ -50,7 +55,27 @@ async function run() {
         text?: string;
         enabled?: string[];
         currency?: string;
+        lines?: string[];
       };
+      if (request.action === 'trades') {
+        const result = (request.lines ?? [])
+          .flatMap((line) => {
+            const request = parseTradeWhisper(line);
+            if (!request) return [];
+            return [
+              {
+                character: request.character,
+                direction: request.direction,
+                summary: describeRequest(request),
+                reply: thanksCommand(request, 'Thanks!').text,
+              },
+            ];
+          })
+          .slice(-30)
+          .reverse();
+        process.stdout.write(JSON.stringify({ result }) + '\n');
+        continue;
+      }
       if (request.action === 'currency') {
         process.stdout.write(
           JSON.stringify({ result: await currency(request.preferred) }) + '\n',

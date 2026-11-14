@@ -29,37 +29,30 @@ internal static class Program
             {
                 app = Process.Start(args[0]) ?? throw new Exception("App could not start.");
                 await Until(() => FindAppWindow(app.Id) != 0, "app window");
-                nint overlay = FindAppWindow(app.Id);
+                nint desktop = FindAppWindow(app.Id);
+                nint overlay = 0;
                 await Task.Delay(1600); // Let the packaged worker load the fixture league.
-                Foreground(overlay);
-                await Until(() => GetForegroundWindow() == overlay, "app focus");
+                Foreground(desktop);
+                await Until(() => GetForegroundWindow() == desktop, "app focus");
                 SendChord(Keys.D);
                 await Task.Delay(750);
-                Assert(copies == 0 && !IsTopmost(overlay), "Shortcut ran outside the game.");
+                Assert(copies == 0 && !IsTopmost(desktop), "Shortcut ran outside the game.");
 
-                PostMessageW(overlay, 0x0112, 0xF060, 0); // Close-to-tray must keep the shortcut registered.
-                await Until(() => !IsWindowVisible(overlay), "hide to tray");
+                PostMessageW(desktop, 0x0112, 0xF060, 0); // Close-to-tray must keep the shortcut registered.
+                await Until(() => !IsWindowVisible(desktop), "hide to tray");
                 Foreground(game.Handle);
                 await Until(() => GetForegroundWindow() == game.Handle, "game focus");
                 await Task.Delay(750);
                 SendChord(Keys.D);
                 await Until(() => copies >= 1, "game copy chord");
-                await Until(() => IsTopmost(overlay) && IsWindowVisible(overlay), "visible topmost overlay");
+                await Until(() => (overlay = FindAppWindow(app.Id, desktop)) != 0 && IsTopmost(overlay),
+                    "visible compact overlay");
+                Assert(!IsWindowVisible(desktop), "Game shortcut showed the desktop window.");
+                Assert(GetWindowRect(overlay, out var bounds) && bounds.Bottom - bounds.Top <= 440,
+                    "Game overlay was not compact.");
                 Assert(copies == 1, "Expected exactly one copy.");
                 Assert(GetForegroundWindow() == game.Handle, "Overlay stole game focus.");
                 Assert(Clipboard.GetText() == item, "Clipboard did not contain the captured item.");
-
-                Foreground(overlay);
-                await Until(() => GetForegroundWindow() == overlay, "overlay focus before minimizing");
-                ShowWindow(overlay, 6); // SW_MINIMIZE, as from the title bar.
-                await Until(() => IsIconic(overlay), "minimized overlay");
-                Foreground(game.Handle);
-                await Until(() => GetForegroundWindow() == game.Handle, "game focus after minimizing");
-                await Task.Delay(750);
-                SendChord(Keys.D);
-                await Until(() => copies == 2, "copy after minimizing");
-                await Until(() => !IsIconic(overlay) && IsTopmost(overlay), "restored overlay");
-                Assert(GetForegroundWindow() == game.Handle, "Restoring the overlay stole game focus.");
 
                 if (args.Length > 1)
                 {
@@ -67,12 +60,16 @@ internal static class Program
                     CaptureOverlay(overlay, args[1]);
                 }
 
-                Foreground(overlay);
-                await Until(() => GetForegroundWindow() == overlay && !IsTopmost(overlay), "overlay no longer topmost after switch");
+                // The fixture process is recognized as the game, so use the app's desktop
+                // window to exercise the transition out of the game.
+                ShowWindow(desktop, 4);
+                Foreground(desktop);
+                await Until(() => GetForegroundWindow() == desktop && !IsWindowVisible(overlay),
+                    "overlay hidden after switching away");
                 SendChord(Keys.D);
                 await Task.Delay(750);
-                Assert(copies == 2, "Shortcut fired outside the game.");
-                Console.WriteLine("PASS: game-only shortcut, one copy, visible topmost overlay, game focus retained, topmost cleared off-game.");
+                Assert(copies == 1, "Shortcut fired outside the game.");
+                Console.WriteLine("PASS: compact overlay kept game focus and hid after switching away.");
             }
             catch (Exception error)
             {
@@ -142,13 +139,13 @@ internal static class Program
         throw new InvalidOperationException($"Timed out waiting for {description}.");
     }
 
-    private static nint FindAppWindow(int pid)
+    private static nint FindAppWindow(int pid, nint exclude = 0)
     {
         nint found = 0;
         EnumWindows((window, _) =>
         {
             GetWindowThreadProcessId(window, out uint owner);
-            if (owner != pid || !IsWindowVisible(window)) return true;
+            if (owner != pid || window == exclude || !IsWindowVisible(window)) return true;
             found = window;
             return false;
         }, 0);
@@ -174,7 +171,6 @@ internal static class Program
     [DllImport("user32.dll")] private static extern bool EnumWindows(WindowCallback callback, nint data);
     [DllImport("user32.dll")] private static extern bool PostMessageW(nint window, uint message, nint wParam, nint lParam);
     [DllImport("user32.dll")] private static extern bool ShowWindow(nint window, int command);
-    [DllImport("user32.dll")] private static extern bool IsIconic(nint window);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);

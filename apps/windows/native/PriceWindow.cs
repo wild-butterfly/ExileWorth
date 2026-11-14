@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace ExileWorth.Windows;
 
@@ -22,6 +21,8 @@ internal sealed class PriceWindow : Form
     private readonly NotifyIcon tray;
     private readonly ContextMenuStrip menu = new();
     private readonly Worker worker = new();
+    private readonly GamePriceOverlay overlay;
+    private Listing[] currentListings = [];
     private readonly string settingsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Vaaluation", "league.txt");
@@ -32,9 +33,7 @@ internal sealed class PriceWindow : Form
     private GameHotkey? hotkey;
     private string? preferred;
     private Uri? tradeUrl;
-    private bool quitting, busy, hasItem, passive;
-
-    protected override bool ShowWithoutActivation => passive;
+    private bool quitting, busy, hasItem;
 
     public PriceWindow()
     {
@@ -65,16 +64,7 @@ internal sealed class PriceWindow : Form
         })
         {
             var option = new ToolStripMenuItem(label) { Checked = id is null };
-            option.Click += async (_, _) =>
-            {
-                if (busy || listingCurrency == id) return;
-                listingCurrency = id;
-                currencyLabel = label;
-                currencyFilter.Text = $"Currency: {label} ▾";
-                foreach (ToolStripMenuItem entry in currencyMenu.Items)
-                    entry.Checked = entry == option;
-                if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
-            };
+            option.Click += async (_, _) => await SelectCurrencyAsync(id);
             currencyMenu.Items.Add(option);
         }
         currencyFilter.Click += (_, _) => currencyMenu.Show(currencyFilter, new Point(0, currencyFilter.Height));
@@ -149,6 +139,7 @@ internal sealed class PriceWindow : Form
         currency.Click += (_, _) => ShowPage(pages.Currency);
         settings.Click += (_, _) => ShowPage(pages.Settings);
         navigation.Controls.AddRange([price, currency, settings]);
+        overlay = new GamePriceOverlay(id => _ = SelectCurrencyAsync(id));
         Controls.Add(layout);
         Controls.Add(pageHost);
         Controls.Add(navigation);
@@ -224,7 +215,7 @@ internal sealed class PriceWindow : Form
         WindowTheme.ApplyTitleBar(Handle);
         hotkey = new GameHotkey(Handle, preferences.Shortcut, active =>
         {
-            if (!active) ClearOverlayZOrder();
+            if (!active) overlay?.Hide();
         });
     }
 
@@ -248,7 +239,9 @@ internal sealed class PriceWindow : Form
     private Task CaptureAsync(nint game) => RunAsync(async () =>
     {
         status.Text = "Copying item from Path of Exile…";
-        ShowGameOverlay(game);
+        currentListings = [];
+        overlay.Open(game, preferences.NearCursor);
+        UpdateOverlay();
         string? text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key);
         if (text is null)
         {
@@ -256,9 +249,9 @@ internal sealed class PriceWindow : Form
             return;
         }
         await CheckAsync(text, null);
-    }, game);
+    });
 
-    private async Task RunAsync(Func<Task> operation, nint game = 0)
+    private async Task RunAsync(Func<Task> operation)
     {
         if (busy) return;
         busy = true;
@@ -280,38 +273,26 @@ internal sealed class PriceWindow : Form
                 league.Enabled = currencyFilter.Enabled = paste.Enabled = true;
                 search.Enabled = hasItem;
                 open.Enabled = tradeUrl is not null;
-                if (game != 0) ShowGameOverlay(game);
+                UpdateOverlay();
             }
         }
     }
 
-    private void ShowGameOverlay(nint game)
+    private void UpdateOverlay()
     {
-        if (GameHotkey.ForegroundGame() != game) return;
-        ShowPage(null);
-        navigation.Hide();
-        passive = true;
-        try
-        {
-            if (IsIconic(Handle))
-            {
-                ShowWindow(Handle, 4); // SW_SHOWNOACTIVATE restores the minimized window.
-            }
-            else if (!Visible)
-            {
-                Point cursor = Cursor.Position;
-                Rectangle bounds = Screen.FromPoint(cursor).WorkingArea;
-                StartPosition = FormStartPosition.Manual;
-                Location = preferences.NearCursor
-                    ? new Point(
-                        Math.Clamp(cursor.X + 18, bounds.Left, Math.Max(bounds.Left, bounds.Right - Width)),
-                        Math.Clamp(cursor.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - Height)))
-                    : new Point(bounds.Right - Math.Min(Width, bounds.Width), bounds.Top);
-                Show();
-            }
-            SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x0013); // TOPMOST, NOACTIVATE, NOMOVE, NOSIZE
-        }
-        finally { passive = false; }
+        if (overlay.Visible)
+            overlay.Present(itemTitle.Text, status.Text, currentListings, listingCurrency, busy || !hasItem);
+    }
+
+    private async Task SelectCurrencyAsync(string? id)
+    {
+        if (busy || listingCurrency == id) return;
+        listingCurrency = id;
+        currencyLabel = id switch { "alch" => "Alchemy", "chaos" => "Chaos", "divine" => "Divine", _ => "All" };
+        currencyFilter.Text = $"Currency: {currencyLabel} ▾";
+        foreach (ToolStripMenuItem option in currencyMenu.Items)
+            option.Checked = option.Text == currencyLabel;
+        if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
     }
 
     private async Task LoadLeaguesAsync()
@@ -334,7 +315,9 @@ internal sealed class PriceWindow : Form
         }
         estimate.Text = "";
         listings.Rows.Clear();
+        currentListings = [];
         status.Text = "Looking up trade listings…";
+        UpdateOverlay();
         var result = await worker.SendAsync<PriceResult>(new { action = "check", preferred, text, enabled, currency = listingCurrency });
         if (IsDisposed) return;
         SetLeagues(result.Leagues, result.Selected);
@@ -345,7 +328,8 @@ internal sealed class PriceWindow : Form
         itemTitle.Text = result.ItemName ?? "Price Check";
         if (result.Listings.FirstOrDefault() is { } first)
             estimate.Text = $"First ask: {first.Amount:g} {first.Currency}";
-        foreach (var item in result.Listings)
+        currentListings = result.Listings;
+        foreach (var item in currentListings)
             listings.Rows.Add($"{item.Amount:g} {item.Currency}", item.Ilvl?.ToString() ?? "—",
                 item.AccountName, item.Presence);
         listings.ClearSelection();
@@ -388,24 +372,9 @@ internal sealed class PriceWindow : Form
         if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
     }
 
-    private void ClearOverlayZOrder()
-    {
-        SetWindowPos(Handle, -2, 0, 0, 0, 0, 0x0013); // NOTOPMOST, NOACTIVATE, NOMOVE, NOSIZE
-        navigation.Show();
-    }
-
-    [DllImport("user32.dll")]
-    private static extern bool IsIconic(nint window);
-
-    [DllImport("user32.dll")]
-    private static extern bool ShowWindow(nint window, int command);
-
-    [DllImport("user32.dll")]
-    private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
-
     private void Reveal()
     {
-        ClearOverlayZOrder();
+        overlay.Hide();
         Show();
         WindowState = FormWindowState.Normal;
         Activate();
@@ -430,6 +399,7 @@ internal sealed class PriceWindow : Form
             leagueMenu.Dispose();
             currencyMenu.Dispose();
             pages?.Dispose();
+            overlay?.Dispose();
             worker.Dispose();
         }
         base.Dispose(disposing);

@@ -69,7 +69,7 @@ internal sealed class DesktopPages : IDisposable
         WindowTheme.StyleListings(rates);
         rates.Columns.Clear();
         rates.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Currency", FillWeight = 55 });
-        rates.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Chaos per unit", FillWeight = 28 });
+        rates.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Per 1 Divine Orb", FillWeight = 28 });
         rates.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Offers", FillWeight = 17 });
         var refresh = new GlassButton(true) { Text = "Refresh rates", AutoSize = true };
         var currencyLayout = Page("Currency");
@@ -90,15 +90,22 @@ internal sealed class DesktopPages : IDisposable
                 var result = await worker.SendAsync<CurrencyResult>(new { action = "currency", preferred = preferred() },
                     TimeSpan.FromMinutes(3));
                 if (Currency.IsDisposed || leagueRevision != requested) return;
-                foreach (var row in result.Rows)
+                double? divine = result.Rows.FirstOrDefault(row => row.Id == "divine")?.Rate?.Median;
+                bool hasDivineRate = divine is > 0 && double.IsFinite(divine.Value);
+                rates.Rows.Add("Chaos Orb", hasDivineRate ? FormatRate(divine!.Value) : "Unavailable", "—");
+                foreach (var row in result.Rows.Where(row => row.Id != "divine"))
                 {
                     int index = rates.Rows.Add(row.Label,
-                        row.Rate?.Median.ToString("G4") ?? (row.Error is null ? "No offers" : "Unavailable"),
+                        hasDivineRate && row.Rate is { Median: > 0 } quote && double.IsFinite(quote.Median)
+                            ? FormatRate(divine!.Value / quote.Median)
+                            : row.Rate is null && row.Error is null ? "No offers" : "Unavailable",
                         row.Rate?.SampleSize.ToString() ?? "—");
                     if (row.Error is not null) rates.Rows[index].Cells[1].ToolTipText = row.Error;
                 }
                 rates.ClearSelection();
-                currencyStatus.Text = $"{result.Selected} · Median asking rates · {DateTime.Now:t}";
+                currencyStatus.Text = hasDivineRate
+                    ? $"{result.Selected} · Estimated from bulk asking rates · {DateTime.Now:t}"
+                    : $"{result.Selected} · Divine Orb rate unavailable. Try refreshing.";
             }
             catch (Exception error)
             {
@@ -110,6 +117,9 @@ internal sealed class DesktopPages : IDisposable
             }
         };
     }
+
+    private static string FormatRate(double amount) =>
+        amount >= 0.01 ? amount.ToString("#,0.##") : amount.ToString("G3");
 
     public void SetLeagues(League[] available, string? selected)
     {

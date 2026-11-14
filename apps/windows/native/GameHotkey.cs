@@ -75,6 +75,15 @@ internal sealed class GameHotkey : IDisposable
         }
     }
 
+    public static string? ClientLog(nint game)
+    {
+        GetWindowThreadProcessId(game, out uint pid);
+        if (pid == 0) return null;
+        using var process = Process.GetProcessById((int)pid);
+        string? folder = Path.GetDirectoryName(process.MainModule?.FileName);
+        return folder is null ? null : Path.Combine(folder, "logs", "Client.txt");
+    }
+
     public static async Task<string?> CopyItemAsync(nint game, Keys trigger)
     {
         // Never forward a copy command if the game lost focus after WM_HOTKEY.

@@ -8,6 +8,7 @@
   "dependencies": {
     "@vaaluation/item-parser": "*",
     "@vaaluation/shared-types": "*",
-    "@vaaluation/trade-client": "*"
+    "@vaaluation/trade-client": "*",
+    "@vaaluation/trade-whispers": "*"
   }
 }

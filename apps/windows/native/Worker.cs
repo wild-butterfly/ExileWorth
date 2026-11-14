@@ -70,5 +70,10 @@ internal record Modifier(string Key, string Label, bool Enabled)
 }
 
 internal record CurrencyResult(string Selected, CurrencyRow[] Rows);
-internal record CurrencyRow(string Label, CurrencyQuote? Rate, string? Error);
+internal record CurrencyRow(string Id, string Label, CurrencyQuote? Rate, string? Error);
 internal record CurrencyQuote(double Median, int SampleSize);
+
+internal record TradeWhisper(string Character, string Summary, string Direction, string Reply)
+{
+    public override string ToString() => $"{(Direction == "incoming" ? "From" : "To")} {Character} · {Summary}";
+}
