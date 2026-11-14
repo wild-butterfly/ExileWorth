@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Vaaluation.Windows;
 
@@ -111,7 +112,7 @@ internal sealed class PriceWindow : Form
         base.OnHandleCreated(e);
         hotkey = new GameHotkey(Handle, active =>
         {
-            if (!active && TopMost) TopMost = false;
+            if (!active) ClearOverlayZOrder();
         });
     }
 
@@ -166,7 +167,6 @@ internal sealed class PriceWindow : Form
                     passive = true;
                     try
                     {
-                        TopMost = true;
                         if (!Visible)
                         {
                             Point cursor = Cursor.Position;
@@ -177,6 +177,7 @@ internal sealed class PriceWindow : Form
                                 Math.Clamp(cursor.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - Height)));
                             Show();
                         }
+                        SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x0013); // TOPMOST, NOACTIVATE, NOMOVE, NOSIZE
                     }
                     finally { passive = false; }
                 }
@@ -240,9 +241,15 @@ internal sealed class PriceWindow : Form
         finally { loadingLeagues = false; }
     }
 
+    private void ClearOverlayZOrder() =>
+        SetWindowPos(Handle, -2, 0, 0, 0, 0, 0x0013); // NOTOPMOST, NOACTIVATE, NOMOVE, NOSIZE
+
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
+
     private void Reveal()
     {
-        TopMost = false;
+        ClearOverlayZOrder();
         Show();
         WindowState = FormWindowState.Normal;
         Activate();

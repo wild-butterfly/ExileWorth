@@ -7,14 +7,14 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-        using var game = new Form { Text = "Vaaluation game fixture", Width = 400, Height = 240, KeyPreview = true };
+        using var game = new GameFixture { Text = "Vaaluation game fixture", Width = 400, Height = 240, KeyPreview = true };
         const string item = "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
         int copies = 0;
-        game.KeyDown += (_, e) =>
+        game.ItemCopied += () =>
         {
-            if (e.KeyCode != Keys.C || !e.Control || !e.Alt) return;
             Clipboard.SetText(item);
             copies++;
+            Console.WriteLine($"Fixture received copy #{copies}.");
         };
 
         game.Shown += async (_, _) =>
@@ -38,7 +38,9 @@ internal static class Program
                 await Until(() => GetForegroundWindow() == game.Handle, "game focus");
                 await Task.Delay(750);
                 SendChord(Keys.D);
-                await Until(() => copies == 1 && IsTopmost(overlay) && IsWindowVisible(overlay), "clipboard copy and overlay");
+                await Until(() => copies >= 1, "game copy chord");
+                await Until(() => IsTopmost(overlay) && IsWindowVisible(overlay), "visible topmost overlay");
+                Assert(copies == 1, "Expected exactly one copy.");
                 Assert(GetForegroundWindow() == game.Handle, "Overlay stole game focus.");
                 Assert(Clipboard.GetText() == item, "Clipboard did not contain the captured item.");
 
@@ -51,6 +53,7 @@ internal static class Program
             }
             catch (Exception error)
             {
+                Console.Error.WriteLine($"copies={copies}; foreground={GetForegroundWindow()}; game={game.Handle}; app={app?.Id}; exited={app?.HasExited}");
                 Console.Error.WriteLine(error);
                 Environment.ExitCode = 1;
             }
@@ -65,6 +68,23 @@ internal static class Program
             }
         };
         Application.Run(game);
+    }
+
+    private sealed class GameFixture : Form
+    {
+        public event Action? ItemCopied;
+        protected override void WndProc(ref Message m)
+        {
+            if ((m.Msg == 0x0100 || m.Msg == 0x0104) &&
+                m.WParam == (nint)Keys.C && GetKeyState((int)Keys.ControlKey) < 0 &&
+                GetKeyState((int)Keys.Menu) < 0)
+            {
+                ItemCopied?.Invoke();
+                return;
+            }
+            base.WndProc(ref m);
+        }
+        [DllImport("user32.dll")] private static extern short GetKeyState(int key);
     }
 
     private static void Assert(bool condition, string message)
