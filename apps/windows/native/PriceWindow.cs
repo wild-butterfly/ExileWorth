@@ -229,10 +229,12 @@ internal sealed class PriceWindow : Form
         passive = true;
         try
         {
-            if (!Visible || WindowState == FormWindowState.Minimized)
+            if (IsIconic(Handle))
             {
-                if (WindowState == FormWindowState.Minimized) Hide();
-                WindowState = FormWindowState.Normal;
+                ShowWindow(Handle, 4); // SW_SHOWNOACTIVATE restores the minimized window.
+            }
+            else if (!Visible)
+            {
                 Point cursor = Cursor.Position;
                 Rectangle bounds = Screen.FromPoint(cursor).WorkingArea;
                 StartPosition = FormStartPosition.Manual;
@@ -318,6 +320,12 @@ internal sealed class PriceWindow : Form
 
     private void ClearOverlayZOrder() =>
         SetWindowPos(Handle, -2, 0, 0, 0, 0, 0x0013); // NOTOPMOST, NOACTIVATE, NOMOVE, NOSIZE
+
+    [DllImport("user32.dll")]
+    private static extern bool IsIconic(nint window);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(nint window, int command);
 
     [DllImport("user32.dll")]
     private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
