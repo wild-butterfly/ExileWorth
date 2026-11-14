@@ -69,10 +69,15 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or -not $reply.error) { throw 'Worker did not respond' }
           # Use deterministic trade results in the isolated desktop test only.
           Copy-Item apps/windows/test/desktop/worker-fixture.cjs "$appDir/worker.cjs"
-          dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -- "$appDir/ExileWorth.exe"
+          dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -- "$appDir/ExileWorth.exe" "$PWD/dist/windows-overlay.png"
           if ($LASTEXITCODE -ne 0) { throw 'Windows shortcut or overlay test failed' }
       - uses: actions/upload-artifact@v4
         with:
           name: ExileWorth-Windows-x64
           path: dist/ExileWorth-Windows-x64.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-overlay-screenshot
+          path: dist/windows-overlay.png
           if-no-files-found: error

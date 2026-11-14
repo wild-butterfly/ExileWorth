@@ -7,7 +7,12 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-        using var game = new GameFixture { Text = "ExileWorth game fixture", Width = 400, Height = 240, KeyPreview = true };
+        using var game = new GameFixture { Text = "ExileWorth game fixture", WindowState = FormWindowState.Maximized, BackColor = Color.FromArgb(38, 34, 31), KeyPreview = true };
+        game.Controls.Add(new Label
+        {
+            Text = "Windows overlay test fixture", AutoSize = true,
+            Location = new Point(24, 24), ForeColor = Color.White,
+        });
         const string item = "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
         int copies = 0;
         game.ItemCopied += () =>
@@ -44,6 +49,12 @@ internal static class Program
                 Assert(GetForegroundWindow() == game.Handle, "Overlay stole game focus.");
                 Assert(Clipboard.GetText() == item, "Clipboard did not contain the captured item.");
 
+                if (args.Length > 1)
+                {
+                    await Task.Delay(350);
+                    CaptureOverlay(overlay, args[1]);
+                }
+
                 Foreground(overlay);
                 await Until(() => GetForegroundWindow() == overlay && !IsTopmost(overlay), "overlay no longer topmost after switch");
                 SendChord(Keys.D);
@@ -69,6 +80,23 @@ internal static class Program
         };
         Application.Run(game);
     }
+
+    private static void CaptureOverlay(nint overlay, string path)
+    {
+        if (!GetWindowRect(overlay, out var window))
+            throw new InvalidOperationException("Could not locate the overlay for capture.");
+        var overlayBounds = Rectangle.FromLTRB(window.Left, window.Top, window.Right, window.Bottom);
+        var bounds = Rectangle.Intersect(Screen.FromHandle(overlay).Bounds,
+            Rectangle.Inflate(overlayBounds, 28, 28));
+        using var image = new Bitmap(bounds.Width, bounds.Height);
+        using var graphics = Graphics.FromImage(image);
+        graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
+        image.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WindowRect { public int Left, Top, Right, Bottom; }
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(nint window, out WindowRect bounds);
 
     private sealed class GameFixture : Form
     {
