@@ -62,7 +62,7 @@ internal record League(string Id, string Text)
 }
 internal record LeagueResult(League[] Leagues, string? Selected);
 internal record PriceResult(League[] Leagues, string Selected, int Total, Listing[] Listings,
-    Modifier[] Filters, string TradeUrl);
+    Modifier[] Filters, string TradeUrl, string? ItemName);
 internal record Listing(double Amount, string Currency, string AccountName, int? Ilvl, string Presence);
 internal record Modifier(string Key, string Label, bool Enabled)
 {

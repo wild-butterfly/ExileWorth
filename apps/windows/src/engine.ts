@@ -73,6 +73,7 @@ export class PriceCheckEngine {
       selected,
       total: search.total,
       listings,
+      itemName: item.name,
       filters: filters.map(({ key, label, selected }) => ({
         key,
         label,
