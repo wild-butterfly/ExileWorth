@@ -42,7 +42,7 @@ internal class Card : Panel
     }
 }
 
-internal enum ButtonKind { Primary, Secondary, Ghost, Nav, Tab, Chip, Icon }
+internal enum ButtonKind { Primary, Secondary, Ghost, Nav, Tab, Chip, Icon, Accent }
 
 /// <summary>One owner-drawn button for every role, so states look the same everywhere.</summary>
 internal sealed class FlatButton : Button
@@ -89,12 +89,13 @@ internal sealed class FlatButton : Button
         Margin = kind switch
         {
             ButtonKind.Nav => new Padding(0, 0, 0, 3),
-            ButtonKind.Tab or ButtonKind.Chip or ButtonKind.Icon => new Padding(0, 0, 4, 0),
+            ButtonKind.Tab or ButtonKind.Chip or ButtonKind.Icon or ButtonKind.Accent => new Padding(0, 0, 4, 0),
             _ => new Padding(0, 0, 8, 0),
         };
         Font = kind switch
         {
             ButtonKind.Primary or ButtonKind.Tab => WindowTheme.Sans(9.5f, FontStyle.Bold),
+            ButtonKind.Accent => WindowTheme.Sans(8.5f, FontStyle.Bold),
             ButtonKind.Chip => WindowTheme.Sans(8.5f),
             ButtonKind.Icon => WindowTheme.Sans(10f),
             _ => WindowTheme.Sans(9.5f),
@@ -112,6 +113,7 @@ internal sealed class FlatButton : Button
             ButtonKind.Primary or ButtonKind.Secondary or ButtonKind.Ghost => (16, 34),
             ButtonKind.Tab => (12, 26),
             ButtonKind.Chip => (icon > 0 && text.Width == 0 ? 5 : 8, 24),
+            ButtonKind.Accent => (12, 24),
             ButtonKind.Icon => (0, 26),
             _ => (12, 38),
         };
@@ -136,10 +138,10 @@ internal sealed class FlatButton : Button
 
         (Color? fill, Color? edge, Color text) = Kind switch
         {
-            ButtonKind.Primary => (
+            ButtonKind.Primary or ButtonKind.Accent => (
                 (Color?)(!Enabled ? WindowTheme.AccentFill : hovered ? WindowTheme.ActionHover : WindowTheme.Action),
-                (Color?)(Enabled ? Color.FromArgb(214, 70, 84) : WindowTheme.AccentBorder),
-                Enabled ? Color.White : WindowTheme.Muted),
+                (Color?)(Enabled ? WindowTheme.ActionEdge : WindowTheme.AccentBorder),
+                Enabled ? WindowTheme.ActionText : WindowTheme.Muted),
             ButtonKind.Secondary => (
                 hovered && Enabled ? WindowTheme.Hover : WindowTheme.Raised,
                 selected ? WindowTheme.AccentBorder : WindowTheme.BorderStrong,
@@ -165,7 +167,7 @@ internal sealed class FlatButton : Button
             fill = ControlPaint.Dark(pressedFill, 0.02f);
         if (Focused && ShowFocusCues) edge = WindowTheme.AccentText;
 
-        int radius = this.Px(Kind switch { ButtonKind.Nav => 9, ButtonKind.Chip or ButtonKind.Tab or ButtonKind.Icon => 6, _ => 8 });
+        int radius = this.Px(Kind switch { ButtonKind.Nav => 9, ButtonKind.Chip or ButtonKind.Tab or ButtonKind.Icon or ButtonKind.Accent => 6, _ => 8 });
         if (fill is { } solid) WindowTheme.FillRounded(g, bounds, radius, solid, edge);
         else if (edge is { } line) WindowTheme.FillRounded(g, bounds, radius, Parent?.BackColor ?? WindowTheme.Background, line);
 
@@ -177,14 +179,14 @@ internal sealed class FlatButton : Button
             {
                 var glyphBox = new Rectangle(content.Left, content.Top, this.Px(18), content.Height);
                 WindowTheme.Text(g, Glyph, WindowTheme.Sans(10f), glyphBox,
-                    selected ? Color.FromArgb(255, 194, 200) : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+                    selected ? WindowTheme.AccentSoftText : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
                 content = Rectangle.FromLTRB(glyphBox.Right + this.Px(10), content.Top, content.Right, content.Bottom);
             }
             Font label = selected ? WindowTheme.Sans(9.5f, FontStyle.Bold) : WindowTheme.Sans(9.5f);
             if (Hint is not null)
             {
                 WindowTheme.Text(g, Hint, WindowTheme.Mono(7.5f), content,
-                    selected ? Color.FromArgb(255, 194, 200) : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+                    selected ? WindowTheme.AccentSoftText : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
             }
             WindowTheme.Text(g, Text, label, content, text);
             DrawBadge(g, content);
@@ -251,10 +253,10 @@ internal sealed class Toggle : CheckBox
         var track = new Rectangle(0, 0, Width - 1, Height - 1);
         WindowTheme.FillRounded(g, track, track.Height / 2,
             Checked ? WindowTheme.Action : WindowTheme.Sunken,
-            Checked ? Color.FromArgb(214, 70, 84) : (Focused && ShowFocusCues ? WindowTheme.AccentText : WindowTheme.BorderStrong));
+            Checked ? WindowTheme.ActionEdge : (Focused && ShowFocusCues ? WindowTheme.AccentText : WindowTheme.BorderStrong));
         int knob = Height - this.Px(6);
         int x = Checked ? Width - knob - this.Px(3) : this.Px(3);
-        using var brush = new SolidBrush(Checked ? Color.White : WindowTheme.Muted);
+        using var brush = new SolidBrush(Checked ? WindowTheme.ActionText : WindowTheme.Muted);
         g.FillEllipse(brush, x, this.Px(3), knob - 1, knob - 1);
     }
 }
@@ -295,6 +297,11 @@ internal sealed class TextField : Panel
 /// <summary>The ExileWorth mark: the Vaal-orb silhouette from the macOS app, drawn natively.</summary>
 internal sealed class BrandMark : Control
 {
+    // The mark is the brand, so it stays Vaal red whatever accent is chosen.
+    private static readonly Color MarkLight = Color.FromArgb(207, 31, 45);
+    private static readonly Color MarkMiddle = Color.FromArgb(158, 17, 34);
+    private static readonly Color MarkDark = Color.FromArgb(76, 8, 18);
+
     public BrandMark(int size)
     {
         DoubleBuffered = true;
@@ -322,10 +329,10 @@ internal sealed class BrandMark : Control
             P(17, 49), P(9, 39), P(9, 26), P(9, 13), P(18, 5), P(32, 5),
         ]);
         body.CloseFigure();
-        using var gradient = new LinearGradientBrush(P(13, 5), P(51, 61), WindowTheme.Glow, Color.FromArgb(76, 8, 18));
+        using var gradient = new LinearGradientBrush(P(13, 5), P(51, 61), MarkLight, MarkDark);
         gradient.InterpolationColors = new ColorBlend
         {
-            Colors = [WindowTheme.Glow, WindowTheme.Accent, Color.FromArgb(76, 8, 18)],
+            Colors = [MarkLight, MarkMiddle, MarkDark],
             Positions = [0f, 0.58f, 1f],
         };
         g.FillPath(gradient, body);
@@ -366,14 +373,33 @@ internal abstract class ScrollList : Control
 
     protected abstract int Count { get; }
     protected abstract int RowHeight { get; }
+    /// <summary>Rows may grow, for example to show a whisper's prepared replies.</summary>
+    protected virtual int HeightOf(int index) => RowHeight;
     protected virtual int HeaderHeight => 0;
     protected int HoverIndex => hover;
     protected abstract void DrawRow(Graphics g, int index, Rectangle bounds, bool hovered);
     protected virtual void DrawHeader(Graphics g, Rectangle bounds) { }
 
-    private int ContentHeight => Count * RowHeight;
+    /// <summary>Total height of every row, used to size compact lists to their content.</summary>
+    public int ContentHeight
+    {
+        get
+        {
+            int total = 0;
+            for (int index = 0; index < Count; index++) total += HeightOf(index);
+            return total;
+        }
+    }
+
     private int ViewHeight => Math.Max(0, Height - HeaderHeight);
     private int MaxOffset => Math.Max(0, ContentHeight - ViewHeight);
+
+    private int TopOf(int index)
+    {
+        int top = 0;
+        for (int row = 0; row < index; row++) top += HeightOf(row);
+        return HeaderHeight + top - offset;
+    }
 
     protected void Reset()
     {
@@ -398,12 +424,13 @@ internal abstract class ScrollList : Control
         }
         offset = Math.Clamp(offset, 0, MaxOffset);
         g.SetClip(new Rectangle(0, header, Width, ViewHeight));
-        int first = offset / RowHeight;
-        for (int index = first; index < Count; index++)
+        int top = header - offset;
+        for (int index = 0; index < Count && top <= Height; index++)
         {
-            int top = header + index * RowHeight - offset;
-            if (top > Height) break;
-            DrawRow(g, index, new Rectangle(0, top, Width - this.Px(8), RowHeight), index == hover);
+            int height = HeightOf(index);
+            if (top + height >= header)
+                DrawRow(g, index, new Rectangle(0, top, Width - this.Px(8), height), index == hover);
+            top += height;
         }
         g.ResetClip();
         if (MaxOffset > 0)
@@ -459,7 +486,7 @@ internal abstract class ScrollList : Control
         }
         int index = IndexAt(e.Location);
         if (e.Button == MouseButtons.Left && index >= 0)
-            RowClicked?.Invoke(index, new Point(e.X, e.Y - (HeaderHeight + index * RowHeight - offset)));
+            RowClicked?.Invoke(index, new Point(e.X, e.Y - TopOf(index)));
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -473,8 +500,7 @@ internal abstract class ScrollList : Control
         }
         int index = IndexAt(e.Location);
         if (index != hover) { hover = index; Invalidate(); }
-        Cursor = index >= 0 && IsClickable(index, new Point(e.X, e.Y - (HeaderHeight + index * RowHeight - offset)))
-            ? Cursors.Hand : Cursors.Default;
+        Cursor = index >= 0 && IsClickable(index, new Point(e.X, e.Y - TopOf(index))) ? Cursors.Hand : Cursors.Default;
     }
 
     protected virtual bool IsClickable(int index, Point local) => false;
@@ -488,8 +514,14 @@ internal abstract class ScrollList : Control
     private int IndexAt(Point point)
     {
         if (point.Y < HeaderHeight || point.X >= Width - this.Px(8)) return -1;
-        int index = (point.Y - HeaderHeight + offset) / RowHeight;
-        return index < Count ? index : -1;
+        int top = HeaderHeight - offset;
+        for (int index = 0; index < Count; index++)
+        {
+            int height = HeightOf(index);
+            if (point.Y < top + height) return point.Y >= top ? index : -1;
+            top += height;
+        }
+        return -1;
     }
 }
 
@@ -563,8 +595,10 @@ internal sealed class ListingView : ScrollList
         string amount = WindowTheme.Amount(listing.Amount);
         var amountFont = WindowTheme.Mono(compact ? 9f : 9.5f, FontStyle.Bold);
         int amountWidth = TextRenderer.MeasureText(g, amount, amountFont, Size.Empty, TextFormatFlags.NoPadding).Width;
-        WindowTheme.Text(g, amount, amountFont, new Rectangle(x, bounds.Top, amountWidth + this.Px(4), bounds.Height),
-            WindowTheme.Foreground, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        // Drawn at its natural width: a clipped box turned some prices into "…".
+        int amountHeight = TextRenderer.MeasureText(g, amount, amountFont, Size.Empty, TextFormatFlags.NoPadding).Height;
+        TextRenderer.DrawText(g, amount, amountFont, new Point(x, bounds.Top + (bounds.Height - amountHeight) / 2),
+            WindowTheme.Foreground, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         WindowTheme.Text(g, WindowTheme.ShortCurrency(listing.Currency), WindowTheme.Sans(compact ? 7.5f : 8f),
             Rectangle.FromLTRB(x + amountWidth + this.Px(3), bounds.Top, price.Right, bounds.Bottom), WindowTheme.Dim);
 
@@ -617,9 +651,11 @@ internal sealed class ListingView : ScrollList
 internal sealed class ModifierView : ScrollList
 {
     private readonly List<(Modifier Modifier, bool Enabled)> items = [];
+    private readonly bool compact;
 
-    public ModifierView()
+    public ModifierView(bool compact = false)
     {
+        this.compact = compact;
         AccessibleName = "Item modifiers";
         AccessibleRole = AccessibleRole.List;
         RowClicked += (index, _) =>
@@ -640,23 +676,24 @@ internal sealed class ModifierView : ScrollList
     }
 
     public string[] Selected => items.Where(item => item.Enabled).Select(item => item.Modifier.Key).ToArray();
+    public int ItemCount => items.Count;
 
     protected override int Count => items.Count;
-    protected override int RowHeight => this.Px(30);
+    protected override int RowHeight => this.Px(compact ? 24 : 30);
 
     protected override bool IsClickable(int index, Point local) => true;
 
     protected override void DrawRow(Graphics g, int index, Rectangle bounds, bool hovered)
     {
         var (modifier, enabled) = items[index];
-        var chip = Rectangle.FromLTRB(bounds.Left, bounds.Top + this.Px(2), bounds.Right, bounds.Bottom - this.Px(2));
+        var chip = Rectangle.FromLTRB(bounds.Left, bounds.Top + this.Px(1), bounds.Right, bounds.Bottom - this.Px(1));
         WindowTheme.FillRounded(g, chip, this.Px(6), hovered ? WindowTheme.Hover : WindowTheme.Chip, WindowTheme.Hairline);
-        int side = this.Px(14);
+        int side = this.Px(compact ? 12 : 14);
         var box = new Rectangle(chip.Left + this.Px(10), chip.Top + (chip.Height - side) / 2, side, side);
         if (enabled)
         {
             WindowTheme.FillRounded(g, box, this.Px(4), WindowTheme.Action);
-            using var tick = new Pen(Color.White, 1.6f * DeviceDpi / 96);
+            using var tick = new Pen(WindowTheme.ActionText, 1.6f * DeviceDpi / 96);
             g.DrawLines(tick, [
                 new Point(box.Left + side / 4, box.Top + side / 2),
                 new Point(box.Left + side * 2 / 5, box.Top + side * 7 / 10),
@@ -664,24 +701,23 @@ internal sealed class ModifierView : ScrollList
             ]);
         }
         else WindowTheme.FillRounded(g, box, this.Px(4), WindowTheme.Sunken, WindowTheme.BorderStrong);
-        WindowTheme.Text(g, modifier.Label, WindowTheme.Sans(9f),
+        WindowTheme.Text(g, modifier.Label, WindowTheme.Sans(compact ? 8.5f : 9f),
             Rectangle.FromLTRB(box.Right + this.Px(10), chip.Top, chip.Right - this.Px(8), chip.Bottom),
             enabled ? WindowTheme.Body : WindowTheme.Muted);
     }
 }
 
-/// <summary>Recent trade whispers with one-press actions, each a single game command.</summary>
+/// <summary>
+/// Recent trade whispers with the macOS actions. Every button is one game
+/// command; Reply opens the prepared replies and Done only dims the row.
+/// </summary>
 internal sealed class TradeView : ScrollList
 {
-    private static readonly (string Label, Func<TradeWhisper, string> Command)[] Actions =
-    [
-        ("Invite", trade => trade.Invite),
-        ("Trade", trade => trade.Trade),
-        ("Thanks", trade => trade.Reply),
-        ("Kick", trade => trade.Kick),
-    ];
+    private static readonly string[] Actions = ["Invite", "Trade", "Thanks", "Kick", "Reply", "Done"];
 
     private IReadOnlyList<TradeWhisper> trades = [];
+    private readonly HashSet<string> done = [];
+    private string? expanded;
     private readonly bool compact;
 
     public TradeView(bool compact)
@@ -689,68 +725,230 @@ internal sealed class TradeView : ScrollList
         this.compact = compact;
         AccessibleName = "Trade requests";
         AccessibleRole = AccessibleRole.List;
-        RowClicked += (index, local) =>
-        {
-            for (int action = 0; action < Actions.Length; action++)
-                if (ActionBounds(action, Width - this.Px(8)).Contains(local))
-                    CommandChosen?.Invoke(trades[index], Actions[action].Command(trades[index]), Actions[action].Label);
-        };
+        RowClicked += (index, local) => Activate(trades[index], local);
     }
 
-    /// <summary>Raised with the whisper, the chat command, and the button label.</summary>
+    /// <summary>Raised with the whisper, the chat command, and a description of it.</summary>
     public event Action<TradeWhisper, string, string>? CommandChosen;
 
     public IReadOnlyList<TradeWhisper> Trades
     {
         get => trades;
-        set { trades = value; Reset(); }
+        set
+        {
+            trades = value;
+            if (expanded is not null && !value.Any(trade => Key(trade) == expanded)) expanded = null;
+            Reset();
+        }
     }
 
-    protected override int Count => trades.Count;
-    protected override int RowHeight => this.Px(compact ? 70 : 78);
+    private static string Key(TradeWhisper trade) => $"{trade.ReceivedAt}|{trade.Character}|{trade.Raw}";
+    private bool IsExpanded(TradeWhisper trade) => expanded == Key(trade);
 
-    private Rectangle ActionBounds(int action, int width)
+    protected override int Count => trades.Count;
+    protected override int RowHeight => this.Px(compact ? 72 : 80);
+    private int ReplyHeight => this.Px(compact ? 24 : 26);
+
+    protected override int HeightOf(int index)
     {
-        int chip = this.Px(compact ? 50 : 58), gap = this.Px(4), height = this.Px(22);
-        int left = this.Px(10) + action * (chip + gap);
-        return new Rectangle(left, RowHeight - height - this.Px(9), chip, height);
+        var trade = trades[index];
+        return RowHeight + (IsExpanded(trade) ? (trade.Replies?.Length ?? 0) * ReplyHeight + this.Px(4) : 0);
+    }
+
+    private Rectangle ActionBounds(int action)
+    {
+        int pad = this.Px(10), gap = this.Px(4), height = this.Px(22);
+        int available = Width - this.Px(8) - pad * 2 - gap * (Actions.Length - 1);
+        int chip = Math.Min(this.Px(72), available / Actions.Length);
+        return new Rectangle(pad + action * (chip + gap), RowHeight - height - this.Px(10), chip, height);
+    }
+
+    private Rectangle ReplyBounds(int reply) =>
+        new(this.Px(10), RowHeight - this.Px(4) + reply * ReplyHeight, Width - this.Px(8) - this.Px(20), ReplyHeight - this.Px(3));
+
+    private void Activate(TradeWhisper trade, Point local)
+    {
+        for (int action = 0; action < Actions.Length; action++)
+        {
+            if (!ActionBounds(action).Contains(local)) continue;
+            switch (Actions[action])
+            {
+                case "Invite": CommandChosen?.Invoke(trade, trade.Invite, $"Invite {trade.Character}"); break;
+                case "Trade": CommandChosen?.Invoke(trade, trade.Trade, $"Trade with {trade.Character}"); break;
+                case "Thanks": CommandChosen?.Invoke(trade, trade.Reply, $"Thanks to {trade.Character}"); break;
+                case "Kick": CommandChosen?.Invoke(trade, trade.Kick, $"Kick {trade.Character}"); break;
+                case "Reply": expanded = IsExpanded(trade) ? null : Key(trade); break;
+                case "Done": if (!done.Add(Key(trade))) done.Remove(Key(trade)); break;
+            }
+            Invalidate();
+            return;
+        }
+        if (!IsExpanded(trade)) return;
+        var replies = trade.Replies ?? [];
+        for (int reply = 0; reply < replies.Length; reply++)
+            if (ReplyBounds(reply).Contains(local))
+                CommandChosen?.Invoke(trade, replies[reply], $"Reply to {trade.Character}");
     }
 
     protected override bool IsClickable(int index, Point local) =>
-        Enumerable.Range(0, Actions.Length).Any(action => ActionBounds(action, Width).Contains(local));
+        Enumerable.Range(0, Actions.Length).Any(action => ActionBounds(action).Contains(local)) ||
+        (IsExpanded(trades[index]) && Enumerable.Range(0, trades[index].Replies?.Length ?? 0).Any(reply => ReplyBounds(reply).Contains(local)));
 
     protected override void DrawRow(Graphics g, int index, Rectangle bounds, bool hovered)
     {
         var trade = trades[index];
+        bool finished = done.Contains(Key(trade));
         var card = Rectangle.FromLTRB(bounds.Left, bounds.Top + this.Px(3), bounds.Right, bounds.Bottom - this.Px(3));
-        WindowTheme.FillRounded(g, card, this.Px(8), WindowTheme.Chip, hovered ? WindowTheme.BorderStrong : WindowTheme.Hairline);
+        WindowTheme.FillRounded(g, card, this.Px(8), finished ? WindowTheme.Card : WindowTheme.Chip,
+            hovered && !finished ? WindowTheme.BorderStrong : WindowTheme.Hairline);
         int pad = this.Px(10);
         var head = new Rectangle(card.Left + pad, card.Top + this.Px(5), card.Width - pad * 2, this.Px(18));
         bool incoming = trade.Direction == "incoming";
         string age = ListingView.Age(trade.ReceivedAt);
-        WindowTheme.Text(g, (incoming ? "" : "To ") + trade.Character, WindowTheme.Sans(9.5f, FontStyle.Bold), head, WindowTheme.Foreground);
-        WindowTheme.Text(g, (incoming ? "WTB · " : "SENT · ") + age, WindowTheme.Mono(7f), head,
-            incoming ? WindowTheme.UpText : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        WindowTheme.Text(g, (incoming ? "" : "To ") + trade.Character, WindowTheme.Sans(9.5f, FontStyle.Bold), head,
+            finished ? WindowTheme.Faint : WindowTheme.Foreground);
+        WindowTheme.Text(g, (finished ? "DONE · " : incoming ? "WTB · " : "SENT · ") + age, WindowTheme.Mono(7f), head,
+            incoming && !finished ? WindowTheme.UpText : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
         var summary = new Rectangle(head.Left, head.Bottom, head.Width, this.Px(17));
-        WindowTheme.Text(g, trade.Summary, WindowTheme.Sans(8.5f), summary, WindowTheme.AccentText);
+        WindowTheme.Text(g, trade.Summary, WindowTheme.Sans(8.5f), summary, finished ? WindowTheme.Faint : WindowTheme.AccentText);
 
         var local = PointToClient(Cursor.Position);
+        local.Offset(-bounds.Left, -bounds.Top);
         for (int action = 0; action < Actions.Length; action++)
         {
-            var area = ActionBounds(action, bounds.Width);
-            area.Offset(bounds.Left, bounds.Top);
-            bool over = hovered && area.Contains(local);
-            WindowTheme.FillRounded(g, area, this.Px(5), over ? WindowTheme.AccentFill : WindowTheme.Raised,
-                over ? WindowTheme.AccentBorder : WindowTheme.Border);
-            WindowTheme.Text(g, Actions[action].Label, WindowTheme.Sans(8f), area,
-                over ? WindowTheme.AccentSoftText : WindowTheme.Body, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+            var area = ActionBounds(action);
+            bool active = Actions[action] switch { "Reply" => IsExpanded(trade), "Done" => finished, _ => false };
+            string label = Actions[action] == "Done" && finished ? "Undo" : Actions[action];
+            Chip(g, area, bounds, label, hovered && area.Contains(local), active, finished && !active);
         }
+        if (!IsExpanded(trade)) return;
+        var replies = trade.Replies ?? [];
+        for (int reply = 0; reply < replies.Length; reply++)
+        {
+            var area = ReplyBounds(reply);
+            string text = replies[reply];
+            int space = text.IndexOf(' ');
+            Chip(g, area, bounds, "↪  " + (space > 0 ? text[(space + 1)..] : text), hovered && area.Contains(local), false, false,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+        }
+    }
+
+    private void Chip(Graphics g, Rectangle area, Rectangle row, string label, bool over, bool active, bool dim,
+        TextFormatFlags align = TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter)
+    {
+        area.Offset(row.Left, row.Top);
+        WindowTheme.FillRounded(g, area, this.Px(5),
+            over || active ? WindowTheme.AccentFill : WindowTheme.Raised,
+            over || active ? WindowTheme.AccentBorder : WindowTheme.Border);
+        var text = align.HasFlag(TextFormatFlags.HorizontalCenter) ? area
+            : Rectangle.FromLTRB(area.Left + this.Px(8), area.Top, area.Right - this.Px(6), area.Bottom);
+        WindowTheme.Text(g, label, WindowTheme.Sans(8f), text,
+            over || active ? WindowTheme.AccentSoftText : dim ? WindowTheme.Faint : WindowTheme.Body, align);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
         if (HoverIndex >= 0) Invalidate();
+    }
+}
+
+/// <summary>
+/// The overlay's currency dropdown, painted inside the overlay itself: a
+/// separate popup window could take focus from the game.
+/// </summary>
+internal sealed class CurrencyPicker : Control
+{
+    private int hover = -1;
+    private string? selected;
+
+    public CurrencyPicker()
+    {
+        SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+        Visible = false;
+        TabStop = false;
+        AccessibleRole = AccessibleRole.MenuPopup;
+        AccessibleName = "Listing currency";
+        CurrencyIcons.Changed += Invalidate;
+    }
+
+    public event Action<string?>? Chosen;
+
+    private int RowHeight => this.Px(28);
+
+    public void Toggle(Point at, string? current)
+    {
+        if (Visible) { Visible = false; return; }
+        selected = current;
+        int pad = this.Px(4);
+        Bounds = new Rectangle(at, new Size(this.Px(176), GamePriceOverlay.CurrencyFilters.Length * RowHeight + pad * 2));
+        Visible = true;
+        BringToFront();
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        var g = e.Graphics;
+        g.Clear(Parent?.BackColor ?? WindowTheme.Overlay);
+        WindowTheme.FillRounded(g, new Rectangle(0, 0, Width - 1, Height - 1), this.Px(8), WindowTheme.Raised, WindowTheme.BorderStrong);
+        int pad = this.Px(4);
+        for (int index = 0; index < GamePriceOverlay.CurrencyFilters.Length; index++)
+        {
+            var (label, id, _) = GamePriceOverlay.CurrencyFilters[index];
+            var row = new Rectangle(pad, pad + index * RowHeight, Width - pad * 2, RowHeight);
+            bool active = id == selected;
+            if (index == hover || active)
+                WindowTheme.FillRounded(g, row, this.Px(5), index == hover ? WindowTheme.AccentFill : WindowTheme.Hover);
+            int icon = this.Px(18);
+            var iconBox = new Rectangle(row.Left + this.Px(8), row.Top + (row.Height - icon) / 2, icon, icon);
+            if (id is not null && CurrencyIcons.Get(id) is { } image)
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(image, iconBox);
+            }
+            else if (id is null)
+                WindowTheme.Text(g, "∗", WindowTheme.Sans(10f), iconBox, WindowTheme.Muted, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+            var text = Rectangle.FromLTRB(iconBox.Right + this.Px(8), row.Top, row.Right - this.Px(8), row.Bottom);
+            WindowTheme.Text(g, label, WindowTheme.Sans(9f), text, active ? WindowTheme.AccentSoftText : WindowTheme.Body);
+            if (active) WindowTheme.Text(g, "✓", WindowTheme.Sans(9f), text, WindowTheme.AccentText, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        }
+    }
+
+    private int IndexAt(Point point)
+    {
+        int index = (point.Y - this.Px(4)) / RowHeight;
+        return point.Y >= this.Px(4) && index < GamePriceOverlay.CurrencyFilters.Length ? index : -1;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        int index = IndexAt(e.Location);
+        Cursor = index >= 0 ? Cursors.Hand : Cursors.Default;
+        if (index != hover) { hover = index; Invalidate(); }
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        hover = -1;
+        Invalidate();
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        int index = IndexAt(e.Location);
+        if (index < 0) return;
+        Visible = false;
+        Chosen?.Invoke(GamePriceOverlay.CurrencyFilters[index].Id);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) CurrencyIcons.Changed -= Invalidate;
+        base.Dispose(disposing);
     }
 }
 
@@ -871,12 +1069,15 @@ internal sealed class PriceHeader : Control
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         if (typical is not null)
         {
-            var glow = new Rectangle(Width - this.Px(compact ? 170 : 230), -this.Px(46), this.Px(compact ? 210 : 280), this.Px(compact ? 120 : 150));
+            // Keep the whole ellipse above the bottom edge so the bloom fades out
+            // instead of being cut off into a visible box.
+            int reach = Height * 8 / 10;
+            var glow = new Rectangle(Width - this.Px(compact ? 190 : 260), -reach, this.Px(compact ? 240 : 320), reach * 2);
             using var path = new System.Drawing.Drawing2D.GraphicsPath();
             path.AddEllipse(glow);
             using var bloom = new System.Drawing.Drawing2D.PathGradientBrush(path)
             {
-                CenterColor = Color.FromArgb(compact ? 70 : 60, WindowTheme.Glow),
+                CenterColor = Color.FromArgb(compact ? 64 : 52, WindowTheme.Glow),
                 SurroundColors = [Color.FromArgb(0, BackColor)],
             };
             g.FillEllipse(bloom, glow);

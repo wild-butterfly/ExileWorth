@@ -3,7 +3,7 @@ namespace ExileWorth.Windows;
 /// <summary>Reads recent trade whispers from the end of the game's Client.txt.</summary>
 internal static class TradeLog
 {
-    public static async Task<TradeWhisper[]> ReadAsync(Worker worker, string? path, string thanks)
+    public static async Task<TradeWhisper[]> ReadAsync(Worker worker, string? path, string thanks, string[] replies)
     {
         if (path is null || !File.Exists(path))
             throw new IOException("Start Path of Exile to read trade whispers from its chat log.");
@@ -17,6 +17,6 @@ internal static class TradeLog
             if (start > 0) await reader.ReadLineAsync();
             lines = (await reader.ReadToEndAsync()).Split('\n');
         }
-        return await worker.SendAsync<TradeWhisper[]>(new { action = "trades", lines, thanks });
+        return await worker.SendAsync<TradeWhisper[]>(new { action = "trades", lines, thanks, replies });
     }
 }

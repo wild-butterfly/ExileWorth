@@ -12,12 +12,15 @@ client. It includes its runtimes. Extract the entire ZIP into a folder and run
    Umbra. If a saved league has ended, ExileWorth selects the current league.
    A valid selection such as Standard is kept.
 4. The compact overlay opens next to the item without taking focus from the
-   game. It shows the typical asking price, the cheapest listings, and small
-   currency icons that limit listings to Alchemy, Chaos or Divine prices.
-   Click a listing to copy its whisper. Drag the top bar to move the panel.
+   game. It shows the typical asking price, the item's modifiers, and the
+   cheapest listings. Untick or tick modifiers and select **Search** to refine
+   the prices. The **All ▾** menu limits listings to Alchemy, Chaos, Exalted
+   or Divine prices. Click a listing to copy its whisper. Drag the top bar to
+   move the panel.
 5. The overlay's **Trades** tab lists recent trade whispers from the game's
    chat log. **Invite**, **Trade**, **Thanks** and **Kick** each type exactly
-   one chat command into the game. Close game chat first.
+   one chat command into the game; **Reply** shows your prepared replies and
+   **Done** dims the request. Close game chat first.
 
 In the desktop window, **Price Check** shows the same result with modifier
 filters you can adjust before clicking **Search**. **Open trade site** opens
@@ -29,7 +32,8 @@ to the notification area; use the tray menu to reopen it or quit.
 **Trades** shows recent whispers and copies chat commands to the clipboard.
 **Currency** loads median bulk asking prices, with icons, in Chaos, Divine or
 Exalted Orbs. **Settings** changes the shortcut, trade league, overlay
-placement, the Thanks message, and whether ExileWorth starts with Windows.
+placement, accent colour, the Thanks message and prepared replies, and whether
+ExileWorth starts with Windows.
 Changes apply immediately. Use **Ctrl + 1** through **Ctrl + 5** to switch pages.
 
 Trade history is currently a macOS feature.

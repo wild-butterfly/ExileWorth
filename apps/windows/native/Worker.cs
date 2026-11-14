@@ -86,7 +86,8 @@ internal record CurrencyRow(string Id, string Label, CurrencyQuote? Rate, string
 internal record CurrencyQuote(double Median, int SampleSize);
 
 internal record TradeWhisper(string Character, string Summary, string Direction, string Reply,
-    string Invite, string Trade, string Kick, string? ReceivedAt = null, string? Raw = null)
+    string Invite, string Trade, string Kick, string? ReceivedAt = null, string? Raw = null,
+    string[]? Replies = null)
 {
     public override string ToString() => $"{(Direction == "incoming" ? "From" : "To")} {Character} · {Summary}";
 }

@@ -6,7 +6,9 @@ internal sealed class PriceWindow : Form
 {
     private readonly FlatButton league = new(ButtonKind.Secondary, "League ▾") { AccessibleName = "Trade league" };
     private readonly ContextMenuStrip leagueMenu = WindowTheme.Menu();
-    private readonly List<FlatButton> currencyChips = [];
+    private readonly FlatButton currencyFilter = new(ButtonKind.Chip, "All  ▾") { AccessibleName = "Listing currency" };
+    private readonly ContextMenuStrip currencyMenu = WindowTheme.Menu();
+    private Modifier[] currentFilters = [];
     private string? listingCurrency;
     private readonly PriceHeader hero = new(compact: false) { Dock = DockStyle.Fill, BackColor = WindowTheme.Card };
     private readonly ListingView listings = new(compact: false) { Dock = DockStyle.Fill };
@@ -52,6 +54,7 @@ internal sealed class PriceWindow : Form
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
 
         preferences = DesktopPreferences.Load();
+        WindowTheme.ApplyTheme(preferences.Theme, notify: false);
         Text = "ExileWorth";
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.None;
@@ -72,8 +75,9 @@ internal sealed class PriceWindow : Form
         listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
 
         pricePage = BuildPricePage();
-        pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague, () => preferences.Thanks);
-        overlay = new GamePriceOverlay(id => _ = SelectCurrencyAsync(id), () => preferences.Thanks);
+        pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague, () => preferences);
+        overlay = new GamePriceOverlay(id => _ = SelectCurrencyAsync(id),
+            selected => _ = RunAsync(() => CheckAsync(null, selected)), () => preferences);
 
         Controls.Add(pageHost);
         Controls.Add(BuildRail());
@@ -106,7 +110,8 @@ internal sealed class PriceWindow : Form
         };
         gameWatch.Tick += (_, _) => { if (Visible) UpdateGameStatus(); };
         gameWatch.Start();
-        CurrencyIcons.Changed += RefreshChipIcons;
+        CurrencyIcons.Changed += RefreshCurrencyFilter;
+        WindowTheme.ThemeChanged += OnThemeChanged;
         UpdateGameStatus();
         Render();
     }
@@ -241,21 +246,17 @@ internal sealed class PriceWindow : Form
         listTop.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         listTop.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         listTop.Controls.Add(Ui.Eyebrow("Asking prices"), 0, 0);
-        var chips = Ui.Row();
-        chips.Margin = new Padding(0, 0, 0, S(6));
-        var tip = new ToolTip();
-        foreach (var (label, id, shortName) in GamePriceOverlay.CurrencyFilters)
+        currencyFilter.Margin = new Padding(0, 0, 0, S(6));
+        currencyMenu.ShowImageMargin = true;
+        foreach (var (label, id, _) in GamePriceOverlay.CurrencyFilters)
         {
-            var chip = new FlatButton(ButtonKind.Chip, shortName)
-            {
-                Tag = id, Selected = id is null, AccessibleName = id is null ? "All currencies" : $"Only {label} listings",
-            };
-            tip.SetToolTip(chip, id is null ? "Listings in any currency" : $"Only listings priced in {label}");
-            chip.Click += async (_, _) => await SelectCurrencyAsync(id);
-            currencyChips.Add(chip);
-            chips.Controls.Add(chip);
+            var option = new ToolStripMenuItem(label) { Tag = id, Checked = id is null };
+            option.Click += async (_, _) => await SelectCurrencyAsync(id);
+            currencyMenu.Items.Add(option);
         }
-        listTop.Controls.Add(chips, 1, 0);
+        currencyFilter.Click += (_, _) => currencyMenu.Show(currencyFilter, new Point(0, currencyFilter.Height + 4));
+        new ToolTip().SetToolTip(currencyFilter, "Only show listings priced in one currency");
+        listTop.Controls.Add(currencyFilter, 1, 0);
         list.Controls.Add(listTop, 0, 0);
         listings.Margin = new Padding(0, 0, 0, S(8));
         list.Controls.Add(listings, 0, 1);
@@ -272,10 +273,26 @@ internal sealed class PriceWindow : Form
         return page;
     }
 
-    private void RefreshChipIcons()
+    /// <summary>The dropdown shows the chosen currency, and its menu lists each with its icon.</summary>
+    private void RefreshCurrencyFilter()
     {
-        foreach (var chip in currencyChips)
-            if (chip.Tag is string id && CurrencyIcons.Get(id) is { } image) chip.Icon = image;
+        var entry = GamePriceOverlay.CurrencyFilters.First(option => option.Id == listingCurrency);
+        currencyFilter.Icon = entry.Id is null ? null : CurrencyIcons.Get(entry.Id);
+        currencyFilter.Text = $"{entry.Short}  ▾";
+        currencyFilter.Selected = entry.Id is not null;
+        foreach (ToolStripMenuItem item in currencyMenu.Items)
+        {
+            item.Checked = Equals(item.Tag, listingCurrency);
+            if (item.Tag is string id && item.Image is null) item.Image = CurrencyIcons.Get(id);
+        }
+    }
+
+    private void OnThemeChanged()
+    {
+        WindowTheme.Repaint(this);
+        // Hidden pages are not children of the window, so repaint them too.
+        WindowTheme.Repaint(pricePage);
+        foreach (var page in new[] { pages.Trades, pages.Currency, pages.Settings, pages.About }) WindowTheme.Repaint(page);
     }
 
     private void ShowPage(Control page)
@@ -302,8 +319,10 @@ internal sealed class PriceWindow : Form
     private void SavePreferences(DesktopPreferences updated)
     {
         updated.Save();
+        bool themeChanged = updated.Theme != preferences.Theme;
         preferences = updated;
         hotkey?.SetShortcut(updated.Shortcut);
+        if (themeChanged) WindowTheme.ApplyTheme(updated.Theme);
         if (pricePage.Controls.Find("shortcutHint", true).FirstOrDefault() is Label hint)
             hint.Text = $"Hover an item in Path of Exile and press {updated.Shortcut}.";
         UpdateGameStatus();
@@ -411,7 +430,7 @@ internal sealed class PriceWindow : Form
     private void SetControlsEnabled()
     {
         league.Enabled = paste.Enabled = !busy;
-        foreach (var chip in currencyChips) chip.Enabled = !busy;
+        currencyFilter.Enabled = !busy;
         search.Enabled = hasItem && !busy;
         search.Text = busy && hasItem ? "Searching…" : "Search";
         open.Enabled = tradeUrl is not null && !busy;
@@ -430,7 +449,7 @@ internal sealed class PriceWindow : Form
         if (overlay.Visible)
         {
             overlay.Present(new PriceView(itemName ?? "ExileWorth", meta.Length > 0 ? meta : statusText, currentListings,
-                typical, total, listingCurrency, busy, tradeUrl), statusText, leagueName);
+                currentFilters, typical, total, listingCurrency, busy, hasItem, tradeUrl), statusText, leagueName);
         }
     }
 
@@ -438,7 +457,7 @@ internal sealed class PriceWindow : Form
     {
         if (busy || listingCurrency == id) return;
         listingCurrency = id;
-        foreach (var chip in currencyChips) chip.Selected = Equals(chip.Tag, id);
+        RefreshCurrencyFilter();
         if (hasItem) await RunAsync(() => CheckAsync(null, filters.Selected));
         else Render();
     }
@@ -461,6 +480,7 @@ internal sealed class PriceWindow : Form
             hasItem = false;
             itemName = null;
             filters.SetItems([]);
+            currentFilters = [];
         }
         typical = null;
         total = 0;
@@ -473,6 +493,7 @@ internal sealed class PriceWindow : Form
         SetLeagues(result.Leagues, result.Selected);
         hasItem = true;
         filters.SetItems(result.Filters);
+        currentFilters = result.Filters;
         itemName = result.ItemName ?? "Price Check";
         typical = result.Typical;
         total = result.Total;
@@ -560,7 +581,9 @@ internal sealed class PriceWindow : Form
     {
         if (disposing)
         {
-            CurrencyIcons.Changed -= RefreshChipIcons;
+            CurrencyIcons.Changed -= RefreshCurrencyFilter;
+            WindowTheme.ThemeChanged -= OnThemeChanged;
+            currencyMenu.Dispose();
             gameWatch.Dispose();
             tray?.Dispose();
             menu.Dispose();

@@ -23,9 +23,29 @@ internal sealed record Shortcut(uint Modifiers, Keys Key)
     public override string ToString() => $"{FormatModifiers(Modifiers)} + {Key}";
 }
 
-internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, string? ThanksMessage = null)
+internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, string? ThanksMessage = null,
+    string[]? QuickReplies = null, string? Theme = null)
 {
     public const string DefaultThanks = "Thanks, have a nice day!";
+
+    /// <summary>The macOS defaults (packages/shared-types settings).</summary>
+    public static readonly string[] DefaultReplies =
+    [
+        "Hi, I am ready to trade. Sending an invite now.",
+        "Hi, one moment please.",
+        "Sorry, that one is already sold.",
+    ];
+
+    [JsonIgnore]
+    public string[] Replies => QuickReplies ?? DefaultReplies;
+
+    // Records compare arrays by reference; compare the replies by content.
+    public bool Equals(DesktopPreferences? other) =>
+        other is not null && Shortcut == other.Shortcut && NearCursor == other.NearCursor &&
+        ThanksMessage == other.ThanksMessage && Theme == other.Theme &&
+        Replies.SequenceEqual(other.Replies);
+
+    public override int GetHashCode() => HashCode.Combine(Shortcut, NearCursor, ThanksMessage, Theme);
     [JsonIgnore]
     public string Thanks => string.IsNullOrWhiteSpace(ThanksMessage) ? DefaultThanks : ThanksMessage.Trim();
 

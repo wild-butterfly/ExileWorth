@@ -12,7 +12,7 @@ internal sealed class DesktopPages : IDisposable
 
     private readonly Worker tradeWorker = new();
     private readonly Func<string?> preferred;
-    private readonly Func<string> thanks;
+    private readonly Func<DesktopPreferences> settings;
     private readonly Func<League, Task> selectLeague;
     private readonly Action<DesktopPreferences> save;
     private DesktopPreferences current;
@@ -47,13 +47,13 @@ internal sealed class DesktopPages : IDisposable
     public League[] Available { get; private set; } = [];
 
     public DesktopPages(DesktopPreferences preferences, Action<DesktopPreferences> save,
-        Func<string?> preferred, Func<League, Task> selectLeague, Func<string> thanks)
+        Func<string?> preferred, Func<League, Task> selectLeague, Func<DesktopPreferences> settings)
     {
         current = preferences;
         this.save = save;
         this.preferred = preferred;
         this.selectLeague = selectLeague;
-        this.thanks = thanks;
+        this.settings = settings;
         Currency = BuildCurrency();
         Trades = BuildTrades();
         Settings = BuildSettings();
@@ -213,7 +213,7 @@ internal sealed class DesktopPages : IDisposable
         loadingTrades = true;
         try
         {
-            var result = await TradeLog.ReadAsync(tradeWorker, GameHotkey.FindClientLog(), thanks());
+            var result = await TradeLog.ReadAsync(tradeWorker, GameHotkey.FindClientLog(), settings().Thanks, settings().Replies);
             if (Trades.IsDisposed) return;
             trades.Trades = result;
             SetTradeStatus(result.Length == 0 ? "No recent trade whispers."
@@ -270,6 +270,28 @@ internal sealed class DesktopPages : IDisposable
             "and ExileWorth then sends the game's own Ctrl + Alt + C once to copy the item.",
             Ui.Row(modifier, plus, key, reset)));
 
+        // Accent colour.
+        var swatches = Ui.Row();
+        swatches.WrapContents = true;
+        swatches.MaximumSize = new Size(700, 0);
+        foreach (var theme in WindowTheme.Themes)
+        {
+            var chip = new FlatButton(ButtonKind.Chip, theme.Label)
+            {
+                Tag = theme.Id, Icon = WindowTheme.Swatch(theme.Accent, 16),
+                Selected = theme.Id == WindowTheme.ThemeName, Margin = new Padding(0, 0, 6, 6),
+            };
+            chip.Click += (_, _) =>
+            {
+                Apply(current with { Theme = theme.Id });
+                foreach (var other in swatches.Controls.OfType<FlatButton>()) other.Selected = Equals(other.Tag, theme.Id);
+            };
+            swatches.Controls.Add(chip);
+        }
+        stack.Add(Ui.Section("Accent colour",
+            "Tints buttons, tabs and highlights in this window and the in-game overlay. The ExileWorth mark stays red.",
+            swatches));
+
         // League.
         stack.Add(Ui.Section("Trade league",
             "Prices come from this league's public trade listings. Private leagues need a sign-in, which ExileWorth deliberately does not ask for.",
@@ -313,9 +335,65 @@ internal sealed class DesktopPages : IDisposable
             Apply(current with { ThanksMessage = thanksField.Input.Text.Trim() is { Length: > 0 } text ? text : null });
         };
         thanksField.Input.TextChanged += (_, _) => { debounce.Stop(); debounce.Start(); };
+        var repliesList = Ui.Stack();
+        repliesList.Dock = DockStyle.Top;
+        var replies = current.Replies.ToList();
+        var replyDebounce = new System.Windows.Forms.Timer { Interval = 600 };
+        void SaveReplies() => Apply(current with
+        {
+            QuickReplies = replies.Select(reply => reply.Trim()).Where(reply => reply.Length > 0).ToArray(),
+        });
+        replyDebounce.Tick += (_, _) => { replyDebounce.Stop(); SaveReplies(); };
+        var addReply = new FlatButton(ButtonKind.Secondary, "+ Add reply");
+        void BuildReplies()
+        {
+            repliesList.SuspendLayout();
+            while (repliesList.Controls.Count > 0) repliesList.Controls[0].Dispose();
+            repliesList.RowStyles.Clear();
+            for (int index = 0; index < replies.Count; index++)
+            {
+                int position = index;
+                var field = new TextField("Reply text") { Width = 420, Margin = new Padding(0, 0, 8, 0) };
+                field.Input.Text = replies[position];
+                field.Input.MaxLength = 120;
+                field.Input.TextChanged += (_, _) =>
+                {
+                    replies[position] = field.Input.Text;
+                    replyDebounce.Stop();
+                    replyDebounce.Start();
+                };
+                var remove = new FlatButton(ButtonKind.Ghost, "Remove") { AccessibleName = $"Remove reply {position + 1}" };
+                // Rebuild after the click returns: disposing a button in its own Click is unsafe.
+                remove.Click += (_, _) => repliesList.BeginInvoke(() =>
+                {
+                    replies.RemoveAt(position);
+                    SaveReplies();
+                    BuildReplies();
+                });
+                var row = Ui.Row(field, remove);
+                row.Margin = new Padding(0, 0, 0, 6);
+                repliesList.Add(row);
+            }
+            repliesList.ResumeLayout();
+            addReply.Enabled = replies.Count < 8;
+        }
+        addReply.Click += (_, _) => repliesList.BeginInvoke(() =>
+        {
+            replies.Add("Hi, are you still interested?");
+            SaveReplies();
+            BuildReplies();
+        });
+        BuildReplies();
+        var repliesLabel = Ui.Label("Prepared replies", WindowTheme.Sans(9.5f), WindowTheme.Body);
+        repliesLabel.Margin = new Padding(0, 14, 0, 2);
+        var repliesHint = Ui.Label("Shown under Reply on each trade whisper. One press sends one message.",
+            WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true);
+        repliesHint.Margin = new Padding(0, 0, 0, 8);
+        var thanksLabel = Ui.Label("Thanks button", WindowTheme.Sans(9.5f), WindowTheme.Body);
+        thanksLabel.Margin = new Padding(0, 0, 0, 6);
         stack.Add(Ui.Section("Trade replies",
-            "Sent by the Thanks button on a trade whisper, one message per press.",
-            thanksField));
+            "Messages for the Thanks and Reply buttons on trade whispers.",
+            thanksLabel, thanksField, repliesLabel, repliesHint, repliesList, addReply));
 
         // Item copy.
         stack.Add(Ui.Section("Item copy",
@@ -365,8 +443,9 @@ internal sealed class DesktopPages : IDisposable
         try
         {
             save(next);
+            bool shortcutChanged = next.Shortcut != current.Shortcut;
             current = next;
-            ShowFeedback($"Saved. Price check: {next.Shortcut} while Path of Exile is in front.");
+            ShowFeedback(shortcutChanged ? $"Saved. Price check: {next.Shortcut} while Path of Exile is in front." : "Saved.");
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {

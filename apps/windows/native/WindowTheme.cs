@@ -35,16 +35,78 @@ internal static class WindowTheme
     public static readonly Color Faint = Color.FromArgb(95, 90, 84);
     public static readonly Color Disabled = Color.FromArgb(67, 64, 60);
 
-    // Brand.
-    public static readonly Color Accent = Color.FromArgb(158, 17, 34);
-    public static readonly Color AccentText = Color.FromArgb(221, 85, 96);
-    public static readonly Color Action = Color.FromArgb(184, 21, 39);
-    public static readonly Color ActionHover = Color.FromArgb(204, 30, 50);
-    public static readonly Color AccentFill = Color.FromArgb(62, 16, 23);
-    public static readonly Color AccentFillHover = Color.FromArgb(76, 20, 28);
-    public static readonly Color AccentBorder = Color.FromArgb(110, 26, 36);
-    public static readonly Color AccentSoftText = Color.FromArgb(255, 221, 225);
-    public static readonly Color Glow = Color.FromArgb(207, 31, 45);
+    // Brand. Set by ApplyTheme; Vaal Red is the default, as on macOS.
+    public static Color Accent { get; private set; }
+    public static Color AccentText { get; private set; }
+    public static Color Action { get; private set; }
+    public static Color ActionText { get; private set; }
+    public static Color ActionHover { get; private set; }
+    public static Color ActionEdge { get; private set; }
+    public static Color AccentFill { get; private set; }
+    public static Color AccentFillHover { get; private set; }
+    public static Color AccentBorder { get; private set; }
+    public static Color AccentSoftText { get; private set; }
+    public static Color Glow { get; private set; }
+    public static string ThemeName { get; private set; } = "vaalRed";
+
+    /// <summary>The accent palettes the macOS app has offered (packages/ui tokens history).</summary>
+    public static readonly (string Id, string Label, Color Accent, Color AccentText, Color Action, Color ActionText)[] Themes =
+    [
+        ("vaalRed", "Vaal Red", Color.FromArgb(158, 17, 34), Color.FromArgb(221, 85, 96), Color.FromArgb(184, 21, 39), Color.White),
+        ("emberGold", "Ember Gold", Color.FromArgb(217, 178, 95), Color.FromArgb(231, 200, 128), Color.FromArgb(176, 58, 58), Color.White),
+        ("coldSteel", "Cold Steel", Color.FromArgb(143, 184, 216), Color.FromArgb(169, 204, 230), Color.FromArgb(69, 132, 179), Color.FromArgb(12, 16, 22)),
+        ("verdantRot", "Verdant Rot", Color.FromArgb(158, 200, 114), Color.FromArgb(182, 217, 146), Color.FromArgb(77, 127, 71), Color.White),
+        ("vaalViolet", "Vaal Violet", Color.FromArgb(180, 138, 217), Color.FromArgb(201, 168, 230), Color.FromArgb(122, 79, 168), Color.White),
+        ("boneAsh", "Bone Ash", Color.FromArgb(216, 211, 200), Color.FromArgb(230, 226, 218), Color.FromArgb(138, 131, 120), Color.FromArgb(15, 15, 16)),
+    ];
+
+    /// <summary>Raised after the accent changes so open windows can repaint.</summary>
+    public static event Action? ThemeChanged;
+
+    static WindowTheme() => ApplyTheme("vaalRed", notify: false);
+
+    public static void ApplyTheme(string? id, bool notify = true)
+    {
+        var theme = Themes.FirstOrDefault(entry => entry.Id == id);
+        if (theme.Id is null) theme = Themes[0];
+        ThemeName = theme.Id;
+        Accent = theme.Accent;
+        AccentText = theme.AccentText;
+        Action = theme.Action;
+        ActionText = theme.ActionText;
+        ActionHover = Mix(theme.Action, Color.White, 0.12);
+        ActionEdge = Mix(theme.Action, Color.White, 0.3);
+        // Tints are mixed onto the near-black surface, which WinForms cannot blend for us.
+        AccentFill = Mix(Card, theme.Accent, 0.24);
+        AccentFillHover = Mix(Card, theme.Accent, 0.32);
+        AccentBorder = Mix(Card, theme.Accent, 0.55);
+        AccentSoftText = Mix(theme.AccentText, Color.White, 0.7);
+        Glow = theme.Id == "vaalRed" ? Color.FromArgb(207, 31, 45) : theme.Accent;
+        if (notify) ThemeChanged?.Invoke();
+    }
+
+    public static Color Mix(Color from, Color to, double amount) => Color.FromArgb(
+        (int)Math.Round(from.R + (to.R - from.R) * amount),
+        (int)Math.Round(from.G + (to.G - from.G) * amount),
+        (int)Math.Round(from.B + (to.B - from.B) * amount));
+
+    /// <summary>A round swatch for theme pickers.</summary>
+    public static Bitmap Swatch(Color color, int size)
+    {
+        var bitmap = new Bitmap(size, size);
+        using var g = Graphics.FromImage(bitmap);
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        using var brush = new SolidBrush(color);
+        g.FillEllipse(brush, 1, 1, size - 3, size - 3);
+        return bitmap;
+    }
+
+    /// <summary>Repaints a window and everything in it after a theme change.</summary>
+    public static void Repaint(Control root)
+    {
+        root.Invalidate(true);
+        foreach (Control child in root.Controls) Repaint(child);
+    }
 
     // Price movement and presence avoid red and green, as on macOS.
     public static readonly Color Up = Color.FromArgb(143, 174, 106);

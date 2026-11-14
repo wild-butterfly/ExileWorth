@@ -11,6 +11,9 @@ import {
   type TradeClient,
 } from '@vaaluation/trade-client';
 
+/** Currencies the listing filter may restrict prices to. */
+const LISTING_CURRENCIES = new Set(['alch', 'chaos', 'divine', 'exalted']);
+
 export class PriceCheckEngine {
   private item: ReturnType<typeof parseItemText> | null = null;
   private filters: SelectableFilter[] = [];
@@ -50,7 +53,7 @@ export class PriceCheckEngine {
           }));
     const searchListings = () => {
       const query = buildQuery(item, filters, { baseTypes });
-      if (currency === 'alch' || currency === 'chaos' || currency === 'divine') {
+      if (currency !== undefined && LISTING_CURRENCIES.has(currency)) {
         return this.client.search(selected, {
           ...query,
           query: {
