@@ -4,22 +4,19 @@ namespace ExileWorth.Windows;
 
 internal sealed class PriceWindow : Form
 {
-    private readonly GlassButton league = new() { Text = "League ▾", AutoSize = true };
-    private readonly ContextMenuStrip leagueMenu = new();
-    private readonly GlassButton currencyFilter = new() { Text = "Currency: All ▾", AutoSize = true };
-    private readonly ContextMenuStrip currencyMenu = new();
+    private readonly FlatButton league = new(ButtonKind.Secondary, "League ▾") { AccessibleName = "Trade league" };
+    private readonly ContextMenuStrip leagueMenu = WindowTheme.Menu();
+    private readonly List<FlatButton> currencyChips = [];
     private string? listingCurrency;
-    private string currencyLabel = "All";
-    private readonly Label status = new() { AutoSize = true, Dock = DockStyle.Fill };
-    private readonly DataGridView listings = new() { Dock = DockStyle.Fill };
-    private readonly Label itemTitle = new() { Text = "Price Check", AutoSize = true };
-    private readonly Label estimate = new() { AutoSize = true };
-    private readonly CheckedListBox filters = new ModifierList() { Dock = DockStyle.Fill, CheckOnClick = true };
-    private readonly Button paste = new GlassButton() { Text = "Check clipboard", AutoSize = true };
-    private readonly Button search = new GlassButton(true) { Text = "Apply filters", AutoSize = true, Enabled = false };
-    private readonly Button open = new GlassButton() { Text = "Open trade search", AutoSize = true, Enabled = false };
+    private readonly PriceHeader hero = new(compact: false) { Dock = DockStyle.Fill, BackColor = WindowTheme.Card };
+    private readonly ListingView listings = new(compact: false) { Dock = DockStyle.Fill };
+    private readonly ModifierView filters = new() { Dock = DockStyle.Fill };
+    private readonly FlatButton paste = new(ButtonKind.Secondary, "Check clipboard");
+    private readonly FlatButton search = new(ButtonKind.Primary, "Search") { Enabled = false };
+    private readonly FlatButton open = new(ButtonKind.Ghost, "Open trade site ↗") { Enabled = false };
+    private readonly Label listingHint = Ui.Label("", WindowTheme.Sans(8.5f), WindowTheme.Dim);
     private readonly NotifyIcon tray;
-    private readonly ContextMenuStrip menu = new();
+    private readonly ContextMenuStrip menu = WindowTheme.Menu();
     private readonly Worker worker = new();
     private readonly GamePriceOverlay overlay;
     private Listing[] currentListings = [];
@@ -28,12 +25,26 @@ internal sealed class PriceWindow : Form
         "Vaaluation", "league.txt");
     private DesktopPreferences preferences;
     private readonly DesktopPages pages;
-    private readonly Panel pageHost = new() { Dock = DockStyle.Fill };
-    private readonly FlowLayoutPanel navigation = new() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(12, 8, 12, 0) };
+    private readonly Panel pageHost = new() { Dock = DockStyle.Fill, BackColor = WindowTheme.Background };
+    private readonly Control pricePage;
+    private readonly List<(FlatButton Button, Control Page)> navigation = [];
+    private readonly Label statusTitle = Ui.Label("Waiting for the game", WindowTheme.Sans(8.5f, FontStyle.Bold), WindowTheme.Foreground);
+    private readonly Label statusMeta = Ui.Label("", WindowTheme.Mono(7.5f), WindowTheme.Muted);
+    private readonly Panel statusDot = new() { Size = new Size(7, 7), Margin = new Padding(0, 6, 7, 0) };
+    private readonly System.Windows.Forms.Timer gameWatch = new() { Interval = 3000 };
     private GameHotkey? hotkey;
     private string? preferred;
+    private string leagueName = "";
+    private string statusText = "";
+    private string? itemName;
+    private string meta = "";
+    private TypicalPrice? typical;
+    private int total;
     private Uri? tradeUrl;
     private bool quitting, busy, hasItem;
+    // Started from the Windows Run key: live in the tray until opened.
+    private bool startHidden = Environment.GetCommandLineArgs().Skip(1)
+        .Contains("--tray", StringComparer.OrdinalIgnoreCase);
 
     public PriceWindow()
     {
@@ -41,141 +52,251 @@ internal sealed class PriceWindow : Form
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
 
         preferences = DesktopPreferences.Load();
-        Text = "ExileWorth — Path of Exile";
+        Text = "ExileWorth";
         StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(560, 665);
-        MinimumSize = new Size(460, 480);
+        AutoScaleMode = AutoScaleMode.None;
+        int S(int value) => value * DeviceDpi / 96;
+        ClientSize = new Size(S(980), S(680));
+        MinimumSize = new Size(S(780), S(540));
         BackColor = WindowTheme.Background;
         ForeColor = WindowTheme.Foreground;
+        Font = WindowTheme.Sans(9.5f);
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
-        AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
         ShowInTaskbar = true;
-        league.AccessibleName = "Trade league";
-        leagueMenu.BackColor = WindowTheme.Surface;
-        leagueMenu.ForeColor = WindowTheme.Foreground;
-        league.Click += (_, _) => leagueMenu.Show(league, new Point(0, league.Height));
-        currencyFilter.AccessibleName = "Listing currency";
-        currencyMenu.BackColor = WindowTheme.Surface;
-        currencyMenu.ForeColor = WindowTheme.Foreground;
-        foreach (var (label, id) in new (string, string?)[]
-        {
-            ("All", null), ("Alchemy", "alch"), ("Chaos", "chaos"), ("Divine", "divine"),
-        })
-        {
-            var option = new ToolStripMenuItem(label) { Checked = id is null };
-            option.Click += async (_, _) => await SelectCurrencyAsync(id);
-            currencyMenu.Items.Add(option);
-        }
-        currencyFilter.Click += (_, _) => currencyMenu.Show(currencyFilter, new Point(0, currencyFilter.Height));
-        listings.AccessibleName = "Trade listings";
-        WindowTheme.StyleListings(listings);
-        filters.AccessibleName = "Item modifiers";
-        WindowTheme.StyleFilters(filters);
 
-        var layout = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 1, RowCount = 5,
-        };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 44));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 56));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        league.Click += (_, _) => leagueMenu.Show(league, new Point(0, league.Height + 4));
+        listings.Placeholder = "Listings appear here after a price check.";
+        filters.Placeholder = "Modifiers you can match appear here.";
+        filters.Changed += () => search.Enabled = hasItem && !busy;
+        listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
 
-        var header = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3 };
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        header.Controls.Add(new PictureBox
-        {
-            Image = Icon.ToBitmap(), Size = new Size(32, 32), SizeMode = PictureBoxSizeMode.Zoom,
-            Anchor = AnchorStyles.Left, Margin = new Padding(0, 0, 6, 0),
-        });
-        header.Controls.Add(new Label
-        {
-            Text = "ExileWorth", AutoSize = true, Anchor = AnchorStyles.Left,
-            ForeColor = WindowTheme.Foreground, Font = new Font(Font, FontStyle.Bold),
-        });
-        header.Controls.Add(league);
-        layout.Controls.Add(header);
+        pricePage = BuildPricePage();
+        pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague, () => preferences.Thanks);
+        overlay = new GamePriceOverlay(id => _ = SelectCurrencyAsync(id), () => preferences.Thanks);
 
-        var hero = new GlassPanel(accent: true) { Dock = DockStyle.Fill, AutoSize = true };
-        var summary = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2 };
-        summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        summary.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        itemTitle.Font = new Font(Font.FontFamily, 18, FontStyle.Bold);
-        itemTitle.AutoSize = false;
-        itemTitle.AutoEllipsis = true;
-        itemTitle.Height = itemTitle.Font.Height + 4;
-        itemTitle.Dock = DockStyle.Fill;
-        estimate.Font = new Font(Font.FontFamily, 15, FontStyle.Bold);
-        estimate.ForeColor = WindowTheme.Accent;
-        estimate.Anchor = AnchorStyles.Right;
-        status.ForeColor = WindowTheme.Muted;
-        status.Margin = new Padding(3, 4, 3, 0);
-        summary.Controls.Add(itemTitle, 0, 0);
-        summary.Controls.Add(estimate, 1, 0);
-        summary.Controls.Add(status, 0, 1);
-        summary.SetColumnSpan(status, 2);
-        hero.Controls.Add(summary);
-        layout.Controls.Add(hero);
-        layout.Controls.Add(ResultPanel("Match item modifiers", filters));
-        layout.Controls.Add(ResultPanel("Trade listings", listings));
-
-        var toolbar = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill, AutoSize = true, WrapContents = true,
-            Padding = new Padding(0, 4, 0, 0),
-        };
-        toolbar.Controls.AddRange([search, open, paste, currencyFilter]);
-        layout.Controls.Add(toolbar);
-        pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague);
-        var price = new GlassButton(true) { Text = "Price Check", AutoSize = true };
-        var currency = new GlassButton { Text = "Currency", AutoSize = true };
-        var settings = new GlassButton { Text = "Settings", AutoSize = true };
-        price.Click += (_, _) => ShowPage(null);
-        currency.Click += (_, _) => ShowPage(pages.Currency);
-        settings.Click += (_, _) => ShowPage(pages.Settings);
-        navigation.Controls.AddRange([price, currency, settings]);
-        overlay = new GamePriceOverlay(id => _ = SelectCurrencyAsync(id));
-        Controls.Add(layout);
         Controls.Add(pageHost);
-        Controls.Add(navigation);
-        ShowPage(null);
-        Shown += async (_, _) => await RunAsync(LoadLeaguesAsync);
+        Controls.Add(BuildRail());
+        ShowPage(pricePage);
 
         menu.Items.Add("Open ExileWorth", null, (_, _) => Reveal());
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quit", null, (_, _) => { quitting = true; Close(); });
         tray = new() { Text = "ExileWorth", Icon = Icon, Visible = true, ContextMenuStrip = menu };
         tray.DoubleClick += (_, _) => Reveal();
 
         paste.Click += async (_, _) => await RunAsync(async () =>
         {
-            if (!Clipboard.ContainsText()) throw new InvalidOperationException("Copy item text from Path of Exile first.");
+            if (!Clipboard.ContainsText()) throw new InvalidOperationException("Copy item text from Path of Exile first (Ctrl + Alt + C).");
             await CheckAsync(Clipboard.GetText(), null);
         });
-        search.Click += async (_, _) => await RunAsync(() => CheckAsync(null, SelectedFilters()));
+        search.Click += async (_, _) => await RunAsync(() => CheckAsync(null, filters.Selected));
         open.Click += (_, _) =>
         {
             if (tradeUrl is not null) Process.Start(new ProcessStartInfo(tradeUrl.AbsoluteUri) { UseShellExecute = true });
         };
         KeyDown += (_, e) =>
         {
-            if (e.KeyCode != Keys.Escape) return;
-            Hide();
-            e.SuppressKeyPress = true;
+            if (e.KeyCode == Keys.Escape) { Hide(); e.SuppressKeyPress = true; }
+            else if (e.Control && e.KeyCode is >= Keys.D1 and <= Keys.D5 && (int)(e.KeyCode - Keys.D1) < navigation.Count)
+            {
+                ShowPage(navigation[e.KeyCode - Keys.D1].Page);
+                e.SuppressKeyPress = true;
+            }
         };
+        gameWatch.Tick += (_, _) => { if (Visible) UpdateGameStatus(); };
+        gameWatch.Start();
+        CurrencyIcons.Changed += RefreshChipIcons;
+        UpdateGameStatus();
+        Render();
     }
 
-    private void ShowPage(Control? page)
+    private Control BuildRail()
     {
+        int S(int value) => value * DeviceDpi / 96;
+        var rail = new Panel { Dock = DockStyle.Left, Width = S(214), BackColor = WindowTheme.Rail };
+        rail.Paint += (_, e) =>
+        {
+            using var line = new Pen(WindowTheme.Hairline);
+            e.Graphics.DrawLine(line, rail.Width - 1, 0, rail.Width - 1, rail.Height);
+        };
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3,
+            Padding = new Padding(S(10), S(22), S(10), S(12)),
+        };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        var brand = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, Margin = new Padding(S(6), 0, 0, S(18)) };
+        var mark = new BrandMark(S(30)) { Margin = new Padding(0, 0, S(10), 0) };
+        brand.Controls.Add(mark, 0, 0);
+        brand.SetRowSpan(mark, 2);
+        var name = Ui.Label("ExileWorth", WindowTheme.Sans(11f, FontStyle.Bold), WindowTheme.Foreground);
+        name.Margin = new Padding(0, S(1), 0, 0);
+        var sub = Ui.Label("PRICE CHECK", WindowTheme.Mono(6.5f), WindowTheme.Dim);
+        sub.Margin = Padding.Empty;
+        brand.Controls.Add(name, 1, 0);
+        brand.Controls.Add(sub, 1, 1);
+        layout.Controls.Add(brand, 0, 0);
+
+        var nav = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
+        nav.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        foreach (var (label, glyph, page) in new (string, string, Control)[]
+        {
+            ("Price Check", "◈", pricePage), ("Trades", "⇄", pages.Trades), ("Currency", "◆", pages.Currency),
+            ("Settings", "⚙", pages.Settings), ("About", "◍", pages.About),
+        })
+        {
+            var button = new FlatButton(ButtonKind.Nav, label)
+            {
+                Glyph = glyph, Dock = DockStyle.Top, Height = S(38),
+                Hint = navigation.Count < 5 ? $"Ctrl {navigation.Count + 1}" : null,
+            };
+            button.Click += (_, _) => ShowPage(page);
+            navigation.Add((button, page));
+            nav.Add(button);
+        }
+        layout.Controls.Add(nav, 0, 1);
+
+        var status = new Card { Dock = DockStyle.Fill, AutoSize = true, Padding = new Padding(S(12)), Margin = Padding.Empty };
+        var statusStack = Ui.Stack();
+        statusStack.Dock = DockStyle.Top;
+        statusDot.Size = new Size(S(7), S(7));
+        statusDot.Paint += (_, e) =>
+        {
+            e.Graphics.Clear(status.BackColor);
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using var brush = new SolidBrush(statusDot.ForeColor);
+            e.Graphics.FillEllipse(brush, 0, 0, statusDot.Width - 1, statusDot.Height - 1);
+        };
+        statusTitle.Margin = Padding.Empty;
+        statusStack.Add(Ui.Row(statusDot, statusTitle));
+        statusMeta.Margin = new Padding(0, S(3), 0, 0);
+        statusStack.Add(statusMeta);
+        status.Controls.Add(statusStack);
+        layout.Controls.Add(status, 0, 2);
+        rail.Controls.Add(layout);
+        return rail;
+    }
+
+    private Control BuildPricePage()
+    {
+        int S(int value) => value * DeviceDpi / 96;
+        var page = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 3, BackColor = WindowTheme.Background,
+            Padding = new Padding(S(24), S(20), S(24), S(20)),
+        };
+        page.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42));
+        page.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
+        page.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        page.RowStyles.Add(new RowStyle(SizeType.Absolute, S(112)));
+        page.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        // Title row: heading and the league picker.
+        var top = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2, Margin = new Padding(0, 0, 0, S(14)) };
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        top.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        var titles = Ui.Stack();
+        titles.Add(Ui.Label("Price Check", WindowTheme.Display(18f), WindowTheme.Foreground)).Margin = Padding.Empty;
+        titles.Add(Ui.Label($"Hover an item in Path of Exile and press {preferences.Shortcut}.", WindowTheme.Sans(9f), WindowTheme.Muted))
+            .Name = "shortcutHint";
+        top.Controls.Add(titles, 0, 0);
+        league.Anchor = AnchorStyles.Right;
+        league.Margin = Padding.Empty;
+        top.Controls.Add(league, 1, 0);
+        page.Controls.Add(top, 0, 0);
+        page.SetColumnSpan(top, 2);
+
+        var heroCard = new Card { Dock = DockStyle.Fill, Padding = new Padding(S(18), S(14), S(18), S(12)) };
+        heroCard.Controls.Add(hero);
+        page.Controls.Add(heroCard, 0, 1);
+        page.SetColumnSpan(heroCard, 2);
+
+        // Modifiers card.
+        var modCard = new Card { Dock = DockStyle.Fill, Margin = new Padding(0, 0, S(12), 0), Padding = new Padding(S(14)) };
+        var mods = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
+        mods.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        mods.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        mods.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        mods.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        mods.Controls.Add(Ui.Eyebrow("Match modifiers"), 0, 0);
+        filters.Margin = new Padding(0, 0, 0, S(10));
+        mods.Controls.Add(filters, 0, 1);
+        mods.Controls.Add(Ui.Row(search, paste), 0, 2);
+        modCard.Controls.Add(mods);
+        page.Controls.Add(modCard, 0, 2);
+
+        // Listings card with the currency filter as small icon chips.
+        var listCard = new Card { Dock = DockStyle.Fill, Padding = new Padding(S(14)) };
+        var list = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
+        list.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        list.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        list.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        list.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var listTop = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2, Margin = Padding.Empty };
+        listTop.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        listTop.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        listTop.Controls.Add(Ui.Eyebrow("Asking prices"), 0, 0);
+        var chips = Ui.Row();
+        chips.Margin = new Padding(0, 0, 0, S(6));
+        var tip = new ToolTip();
+        foreach (var (label, id, shortName) in GamePriceOverlay.CurrencyFilters)
+        {
+            var chip = new FlatButton(ButtonKind.Chip, shortName)
+            {
+                Tag = id, Selected = id is null, AccessibleName = id is null ? "All currencies" : $"Only {label} listings",
+            };
+            tip.SetToolTip(chip, id is null ? "Listings in any currency" : $"Only listings priced in {label}");
+            chip.Click += async (_, _) => await SelectCurrencyAsync(id);
+            currencyChips.Add(chip);
+            chips.Controls.Add(chip);
+        }
+        listTop.Controls.Add(chips, 1, 0);
+        list.Controls.Add(listTop, 0, 0);
+        listings.Margin = new Padding(0, 0, 0, S(8));
+        list.Controls.Add(listings, 0, 1);
+        var listBottom = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2, Margin = Padding.Empty };
+        listBottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        listBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        listingHint.Anchor = AnchorStyles.Left;
+        listingHint.AutoEllipsis = true;
+        listBottom.Controls.Add(listingHint, 0, 0);
+        listBottom.Controls.Add(open, 1, 0);
+        list.Controls.Add(listBottom, 0, 2);
+        listCard.Controls.Add(list);
+        page.Controls.Add(listCard, 1, 2);
+        return page;
+    }
+
+    private void RefreshChipIcons()
+    {
+        foreach (var chip in currencyChips)
+            if (chip.Tag is string id && CurrencyIcons.Get(id) is { } image) chip.Icon = image;
+    }
+
+    private void ShowPage(Control page)
+    {
+        pageHost.SuspendLayout();
         pageHost.Controls.Clear();
-        if (page is not null) pageHost.Controls.Add(page);
-        pageHost.Visible = page is not null;
-        if (page is not null) pageHost.BringToFront();
-        navigation.BringToFront();
+        page.Dock = DockStyle.Fill;
+        pageHost.Controls.Add(page);
+        pageHost.ResumeLayout();
+        foreach (var (button, target) in navigation) button.Selected = target == page;
+        if (page == pages.Currency) pages.CurrencyShown();
+        if (page == pages.Trades) pages.TradesShown();
+    }
+
+    private void UpdateGameStatus()
+    {
+        bool running = GameHotkey.FindClientLog() is not null || GameHotkey.ForegroundGame() != 0;
+        statusDot.ForeColor = running ? WindowTheme.Glow : WindowTheme.Disabled;
+        statusDot.Invalidate();
+        statusTitle.Text = running ? "Overlay armed" : "Waiting for the game";
+        statusMeta.Text = $"{preferences.Shortcut} on hover";
     }
 
     private void SavePreferences(DesktopPreferences updated)
@@ -183,36 +304,38 @@ internal sealed class PriceWindow : Form
         updated.Save();
         preferences = updated;
         hotkey?.SetShortcut(updated.Shortcut);
+        if (pricePage.Controls.Find("shortcutHint", true).FirstOrDefault() is Label hint)
+            hint.Text = $"Hover an item in Path of Exile and press {updated.Shortcut}.";
+        UpdateGameStatus();
         if (!hasItem && !busy) ShowShortcutHint();
     }
 
-    private void ShowShortcutHint() =>
-        status.Text = $"Hover an item in Path of Exile and press {preferences.Shortcut}, or check the clipboard.";
-
-    private static Control ResultPanel(string title, Control content)
+    private void ShowShortcutHint()
     {
-        var panel = new GlassPanel { Dock = DockStyle.Fill };
-        var layout = new TableLayoutPanel
+        statusText = $"Hover an item in Path of Exile and press {preferences.Shortcut}, or copy it and use Check clipboard.";
+        Render();
+    }
+
+    protected override void SetVisibleCore(bool value)
+    {
+        if (startHidden && value)
         {
-            Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2,
-        };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        layout.Controls.Add(new Label
-        {
-            Text = title, AutoSize = true, ForeColor = WindowTheme.Muted, Margin = new Padding(0, 0, 0, 9),
-        });
-        content.Margin = Padding.Empty;
-        layout.Controls.Add(content);
-        panel.Controls.Add(layout);
-        return panel;
+            startHidden = false;
+            if (!IsHandleCreated) CreateHandle();
+            value = false;
+        }
+        base.SetVisibleCore(value);
     }
 
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
-        WindowTheme.ApplyTitleBar(Handle);
+        BeginInvoke(async () =>
+        {
+            _ = CurrencyIcons.LoadAsync(pages.Worker, ["chaos", "divine", "alch", "exalted"]);
+            await RunAsync(LoadLeaguesAsync);
+        });
+        WindowTheme.ApplyTitleBar(Handle, WindowTheme.Background);
         hotkey = new GameHotkey(Handle, preferences.Shortcut, active =>
         {
             if (!active) overlay?.Hide();
@@ -238,8 +361,9 @@ internal sealed class PriceWindow : Form
 
     private Task CaptureAsync(nint game) => RunAsync(async () =>
     {
-        status.Text = "Copying item from Path of Exile…";
+        statusText = "Copying item from Path of Exile…";
         currentListings = [];
+        Render();
         string? text;
         try { text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key); }
         finally
@@ -247,13 +371,13 @@ internal sealed class PriceWindow : Form
             if (!IsDisposed && GameHotkey.ForegroundGame() == game)
             {
                 overlay.Open(game, preferences.NearCursor);
-                UpdateOverlay();
+                Render();
             }
         }
         if (IsDisposed) return;
         if (text is null)
         {
-            status.Text = "Item copy cancelled. Release the shortcut keys and try again.";
+            statusText = "Item copy cancelled. Release the shortcut keys and try again.";
             return;
         }
         await CheckAsync(text, null);
@@ -263,7 +387,7 @@ internal sealed class PriceWindow : Form
     {
         if (busy) return;
         busy = true;
-        league.Enabled = currencyFilter.Enabled = paste.Enabled = search.Enabled = open.Enabled = false;
+        SetControlsEnabled();
         try
         {
             await operation();
@@ -271,41 +395,58 @@ internal sealed class PriceWindow : Form
         catch (Exception error)
         {
             if (IsDisposed) return;
-            status.Text = error.Message;
+            statusText = error.Message;
         }
         finally
         {
             busy = false;
             if (!IsDisposed)
             {
-                league.Enabled = currencyFilter.Enabled = paste.Enabled = true;
-                search.Enabled = hasItem;
-                open.Enabled = tradeUrl is not null;
-                UpdateOverlay();
+                SetControlsEnabled();
+                Render();
             }
         }
     }
 
-    private void UpdateOverlay()
+    private void SetControlsEnabled()
     {
+        league.Enabled = paste.Enabled = !busy;
+        foreach (var chip in currencyChips) chip.Enabled = !busy;
+        search.Enabled = hasItem && !busy;
+        search.Text = busy && hasItem ? "Searching…" : "Search";
+        open.Enabled = tradeUrl is not null && !busy;
+    }
+
+    /// <summary>Pushes the current state to the desktop page and the overlay.</summary>
+    private void Render()
+    {
+        string title = itemName ?? (hasItem ? "Unknown item" : "No item checked yet");
+        hero.Show(title, statusText, typical, total);
+        listingHint.Text = currentListings.Any(listing => listing.Whisper is not null)
+            ? "Click a listing to copy its whisper." : "";
+        if (!ReferenceEquals(listings.Listings, currentListings)) listings.Listings = currentListings;
+        listings.Placeholder = busy ? "Searching…" : hasItem ? "No asking prices matched. Try fewer modifiers or All currencies."
+            : "Listings appear here after a price check.";
         if (overlay.Visible)
-            overlay.Present(itemTitle.Text, status.Text, currentListings, listingCurrency, busy || !hasItem);
+        {
+            overlay.Present(new PriceView(itemName ?? "ExileWorth", meta.Length > 0 ? meta : statusText, currentListings,
+                typical, total, listingCurrency, busy, tradeUrl), statusText, leagueName);
+        }
     }
 
     private async Task SelectCurrencyAsync(string? id)
     {
         if (busy || listingCurrency == id) return;
         listingCurrency = id;
-        currencyLabel = id switch { "alch" => "Alchemy", "chaos" => "Chaos", "divine" => "Divine", _ => "All" };
-        currencyFilter.Text = $"Currency: {currencyLabel} ▾";
-        foreach (ToolStripMenuItem option in currencyMenu.Items)
-            option.Checked = option.Text == currencyLabel;
-        if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
+        foreach (var chip in currencyChips) chip.Selected = Equals(chip.Tag, id);
+        if (hasItem) await RunAsync(() => CheckAsync(null, filters.Selected));
+        else Render();
     }
 
     private async Task LoadLeaguesAsync()
     {
-        status.Text = "Loading trade leagues…";
+        statusText = "Loading trade leagues…";
+        Render();
         var data = await worker.SendAsync<LeagueResult>(new { action = "leagues", preferred });
         if (IsDisposed) return;
         SetLeagues(data.Leagues, data.Selected);
@@ -318,52 +459,69 @@ internal sealed class PriceWindow : Form
         if (text is not null)
         {
             hasItem = false;
-            filters.Items.Clear();
-            itemTitle.Text = "Price Check";
+            itemName = null;
+            filters.SetItems([]);
         }
-        estimate.Text = "";
-        listings.Rows.Clear();
+        typical = null;
+        total = 0;
+        meta = "";
         currentListings = [];
-        status.Text = "Looking up trade listings…";
-        UpdateOverlay();
+        statusText = "Looking up trade listings…";
+        Render();
         var result = await worker.SendAsync<PriceResult>(new { action = "check", preferred, text, enabled, currency = listingCurrency });
         if (IsDisposed) return;
         SetLeagues(result.Leagues, result.Selected);
         hasItem = true;
-        filters.Items.Clear();
-        foreach (var filter in result.Filters) filters.Items.Add(filter, filter.Enabled);
-
-        itemTitle.Text = result.ItemName ?? "Price Check";
-        if (result.Listings.FirstOrDefault() is { } first)
-            estimate.Text = $"First ask: {first.Amount:g} {first.Currency}";
+        filters.SetItems(result.Filters);
+        itemName = result.ItemName ?? "Price Check";
+        typical = result.Typical;
+        total = result.Total;
         currentListings = result.Listings;
-        foreach (var item in currentListings)
-            listings.Rows.Add($"{item.Amount:g} {item.Currency}", item.Ilvl?.ToString() ?? "—",
-                item.AccountName, item.Presence);
-        listings.ClearSelection();
+        _ = CurrencyIcons.LoadAsync(pages.Worker, currentListings.Select(listing => listing.Currency).Distinct());
         if (Uri.TryCreate(result.TradeUrl, UriKind.Absolute, out var url) &&
             url.Scheme == Uri.UriSchemeHttps && url.Host == "www.pathofexile.com")
             tradeUrl = url;
-        string scope = listingCurrency is null ? result.Selected : $"{result.Selected} · {currencyLabel}";
-        status.Text = result.Total == 0
+        string currency = GamePriceOverlay.CurrencyFilters.First(entry => entry.Id == listingCurrency).Short;
+        string scope = listingCurrency is null ? result.Selected : $"{result.Selected} · {currency} only";
+        meta = result.Total == 0 ? $"{scope} · no matches" : $"{scope} · {result.Total:N0} matches";
+        statusText = result.Total == 0
             ? $"No matches in {scope}. Try All currencies or fewer modifiers."
-            : $"{scope}: {result.Total:N0} matches. Showing {result.Listings.Length} asking prices.";
+            : $"{scope} · {result.Total:N0} matches · showing the {result.Listings.Length} cheapest asking prices.";
     }
 
-    private string[] SelectedFilters() => filters.CheckedItems.Cast<Modifier>().Select(f => f.Key).ToArray();
+    private void CopyWhisper(Listing listing)
+    {
+        if (listing.Whisper is null) return;
+        try
+        {
+            Clipboard.SetText(listing.Whisper);
+            listingHint.Text = $"Whisper to {listing.AccountName} copied. Paste it in game chat.";
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            listingHint.Text = "The clipboard is busy. Try again.";
+        }
+    }
 
     private void SetLeagues(League[] available, string? selected)
     {
         pages.SetLeagues(available, selected);
         var current = available.FirstOrDefault(entry => entry.Id == selected);
-        league.Text = current is null ? "League ▾" : $"{current.Text} ▾";
-        while (leagueMenu.Items.Count > 0) leagueMenu.Items[0].Dispose();
-        foreach (var entry in available)
+        leagueName = current?.Text ?? selected ?? "";
+        league.Text = current is null ? "League ▾" : $"{current.Text}  ▾";
+        var items = leagueMenu.Items.OfType<ToolStripMenuItem>().ToArray();
+        if (!items.Select(item => (item.Tag as League)?.Id).SequenceEqual(available.Select(entry => (string?)entry.Id)))
         {
-            var option = new ToolStripMenuItem(entry.Text) { Checked = entry.Id == selected };
-            option.Click += async (_, _) => await SelectLeague(entry);
-            leagueMenu.Items.Add(option);
+            while (leagueMenu.Items.Count > 0) leagueMenu.Items[0].Dispose();
+            foreach (var entry in available)
+            {
+                var option = new ToolStripMenuItem(entry.Text) { Tag = entry };
+                option.Click += async (_, _) => await SelectLeague(entry);
+                leagueMenu.Items.Add(option);
+            }
+            items = leagueMenu.Items.OfType<ToolStripMenuItem>().ToArray();
         }
+        foreach (var item in items) item.Checked = (item.Tag as League)?.Id == selected;
     }
 
     private async Task SelectLeague(League entry)
@@ -377,7 +535,7 @@ internal sealed class PriceWindow : Form
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
         SetLeagues(pages.Available, entry.Id);
-        if (hasItem) await RunAsync(() => CheckAsync(null, SelectedFilters()));
+        if (hasItem) await RunAsync(() => CheckAsync(null, filters.Selected));
     }
 
     private void Reveal()
@@ -402,10 +560,11 @@ internal sealed class PriceWindow : Form
     {
         if (disposing)
         {
+            CurrencyIcons.Changed -= RefreshChipIcons;
+            gameWatch.Dispose();
             tray?.Dispose();
             menu.Dispose();
             leagueMenu.Dispose();
-            currencyMenu.Dispose();
             pages?.Dispose();
             overlay?.Dispose();
             worker.Dispose();

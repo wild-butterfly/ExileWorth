@@ -3,16 +3,81 @@ using System.Runtime.InteropServices;
 
 namespace ExileWorth.Windows;
 
+/// <summary>
+/// The Vaal Red glass palette shared with the macOS app (packages/ui/src/tokens.ts),
+/// flattened onto opaque colours because WinForms cannot blend translucent fills.
+/// </summary>
 internal static class WindowTheme
 {
-    public static readonly Color Background = Color.FromArgb(20, 16, 17);
-    public static readonly Color Surface = Color.FromArgb(31, 25, 26);
-    public static readonly Color Foreground = Color.FromArgb(247, 239, 236);
-    public static readonly Color Muted = Color.FromArgb(195, 181, 174);
-    public static readonly Color Accent = Color.FromArgb(255, 187, 193);
-    public static readonly Color Border = Color.FromArgb(79, 65, 63);
-    public static readonly Color Hover = Color.FromArgb(63, 36, 40);
-    public static readonly Color Action = Color.FromArgb(165, 18, 41);
+    // Surfaces, darkest first.
+    public static readonly Color Window = Color.FromArgb(12, 10, 11);
+    public static readonly Color Rail = Color.FromArgb(18, 14, 16);
+    public static readonly Color Background = Color.FromArgb(15, 12, 14);
+    public static readonly Color Overlay = Color.FromArgb(19, 14, 16);
+    public static readonly Color Card = Color.FromArgb(25, 21, 23);
+    public static readonly Color Raised = Color.FromArgb(33, 28, 30);
+    public static readonly Color Sunken = Color.FromArgb(10, 8, 9);
+    public static readonly Color Chip = Color.FromArgb(28, 24, 26);
+    public static readonly Color Hover = Color.FromArgb(40, 33, 36);
+
+    // Lines.
+    public static readonly Color Hairline = Color.FromArgb(31, 27, 29);
+    public static readonly Color Border = Color.FromArgb(42, 37, 39);
+    public static readonly Color BorderStrong = Color.FromArgb(58, 52, 54);
+    public static readonly Color RimLight = Color.FromArgb(52, 47, 49);
+
+    // Text.
+    public static readonly Color Foreground = Color.FromArgb(253, 249, 247);
+    public static readonly Color Body = Color.FromArgb(224, 213, 206);
+    public static readonly Color Secondary = Color.FromArgb(193, 182, 174);
+    public static readonly Color Muted = Color.FromArgb(162, 152, 144);
+    public static readonly Color Dim = Color.FromArgb(143, 133, 126);
+    public static readonly Color Faint = Color.FromArgb(95, 90, 84);
+    public static readonly Color Disabled = Color.FromArgb(67, 64, 60);
+
+    // Brand.
+    public static readonly Color Accent = Color.FromArgb(158, 17, 34);
+    public static readonly Color AccentText = Color.FromArgb(221, 85, 96);
+    public static readonly Color Action = Color.FromArgb(184, 21, 39);
+    public static readonly Color ActionHover = Color.FromArgb(204, 30, 50);
+    public static readonly Color AccentFill = Color.FromArgb(62, 16, 23);
+    public static readonly Color AccentFillHover = Color.FromArgb(76, 20, 28);
+    public static readonly Color AccentBorder = Color.FromArgb(110, 26, 36);
+    public static readonly Color AccentSoftText = Color.FromArgb(255, 221, 225);
+    public static readonly Color Glow = Color.FromArgb(207, 31, 45);
+
+    // Price movement and presence avoid red and green, as on macOS.
+    public static readonly Color Up = Color.FromArgb(143, 174, 106);
+    public static readonly Color UpText = Color.FromArgb(179, 209, 151);
+    public static readonly Color Down = Color.FromArgb(192, 134, 79);
+
+    public static readonly string SansFamily = Pick("Segoe UI Variable Text", "Segoe UI");
+    public static readonly string DisplayFamily = Pick("Segoe UI Variable Display", "Segoe UI Semibold", "Segoe UI");
+    public static readonly string MonoFamily = Pick("Cascadia Mono", "Cascadia Code", "Consolas");
+
+    private static readonly Dictionary<(string, float, FontStyle), Font> FontCache = [];
+
+    public static Font Sans(float size, FontStyle style = FontStyle.Regular) => Get(SansFamily, size, style);
+    public static Font Display(float size, FontStyle style = FontStyle.Bold) => Get(DisplayFamily, size, style);
+    public static Font Mono(float size, FontStyle style = FontStyle.Regular) => Get(MonoFamily, size, style);
+
+    private static Font Get(string family, float size, FontStyle style)
+    {
+        var key = (family, size, style);
+        if (!FontCache.TryGetValue(key, out var font))
+            FontCache[key] = font = new Font(family, size, style, GraphicsUnit.Point);
+        return font;
+    }
+
+    private static string Pick(params string[] names)
+    {
+        using var installed = new System.Drawing.Text.InstalledFontCollection();
+        var available = installed.Families.Select(family => family.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return names.FirstOrDefault(available.Contains) ?? SystemFonts.MessageBoxFont?.FontFamily.Name ?? "Segoe UI";
+    }
+
+    /// <summary>Scales a 96-DPI length to the control's monitor.</summary>
+    public static int Px(this Control control, int value) => value * control.DeviceDpi / 96;
 
     public static GraphicsPath Rounded(Rectangle bounds, int radius)
     {
@@ -31,185 +96,121 @@ internal static class WindowTheme
         return path;
     }
 
-    public static void StyleFilters(CheckedListBox filters)
+    public static void FillRounded(Graphics graphics, Rectangle bounds, int radius, Color fill, Color? edge = null)
     {
-        filters.BackColor = Surface;
-        filters.ForeColor = Foreground;
-        filters.BorderStyle = BorderStyle.None;
-        filters.IntegralHeight = false;
-    }
-
-    public static void StyleListings(DataGridView grid)
-    {
-        grid.BackgroundColor = Surface;
-        grid.BorderStyle = BorderStyle.None;
-        grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-        grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
-        grid.GridColor = Color.FromArgb(53, 43, 43);
-        grid.EnableHeadersVisualStyles = false;
-        grid.RowHeadersVisible = false;
-        grid.ReadOnly = true;
-        grid.AllowUserToAddRows = false;
-        grid.AllowUserToDeleteRows = false;
-        grid.AllowUserToResizeRows = false;
-        grid.MultiSelect = false;
-        grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-        grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        grid.DefaultCellStyle = new DataGridViewCellStyle
+        if (bounds.Width < 1 || bounds.Height < 1) return;
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        using var shape = Rounded(bounds, radius);
+        using var brush = new SolidBrush(fill);
+        graphics.FillPath(brush, shape);
+        if (edge is { } line)
         {
-            BackColor = Surface, ForeColor = Foreground, SelectionBackColor = Hover,
-            SelectionForeColor = Foreground, Padding = new Padding(5, 4, 5, 4),
-        };
-        grid.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
-        {
-            BackColor = Background, ForeColor = Muted, SelectionBackColor = Background,
-            SelectionForeColor = Muted, Padding = new Padding(5, 4, 5, 4),
-        };
-        foreach (var (name, label, weight) in new[]
-        {
-            ("price", "Price", 26), ("level", "iLvl", 13),
-            ("account", "Account", 42), ("status", "Status", 19),
-        })
-        {
-            grid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = name, HeaderText = label, FillWeight = weight,
-                SortMode = DataGridViewColumnSortMode.NotSortable,
-            });
+            using var pen = new Pen(line);
+            graphics.DrawPath(pen, shape);
         }
-        grid.Columns[0].DefaultCellStyle.ForeColor = Accent;
-        grid.CellFormatting += (_, e) =>
-        {
-            if (e.ColumnIndex == 3 && e.Value is string presence)
-                e.CellStyle!.ForeColor = presence.Equals("online", StringComparison.OrdinalIgnoreCase)
-                    ? Color.FromArgb(179, 204, 145) : Muted;
-        };
     }
 
-    public static void ApplyTitleBar(nint handle)
+    public static void Text(Graphics graphics, string text, Font font, Rectangle bounds, Color color,
+        TextFormatFlags flags = TextFormatFlags.VerticalCenter) =>
+        TextRenderer.DrawText(graphics, text, font, bounds, color,
+            flags | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
+
+    public static Color PresenceColor(string presence) => presence.ToLowerInvariant() switch
+    {
+        "online" => Up,
+        "afk" => Down,
+        _ => Disabled,
+    };
+
+    public static string ShortCurrency(string currency) => currency switch
+    {
+        "divine" => "div",
+        "exalted" => "ex",
+        _ => currency,
+    };
+
+    public static string Amount(double value) =>
+        value >= 100 ? value.ToString("#,0")
+        : value >= 10 ? value.ToString("0.#")
+        : value.ToString("0.##");
+
+    /// <summary>Dark title bar whose caption matches the window, with Windows 11 rounding.</summary>
+    public static void ApplyTitleBar(nint handle, Color caption)
     {
         int enabled = 1;
-        _ = DwmSetWindowAttribute(handle, 20, ref enabled, sizeof(int));
+        _ = DwmSetWindowAttribute(handle, 20, ref enabled, sizeof(int)); // immersive dark mode
+        int rounded = 2;
+        _ = DwmSetWindowAttribute(handle, 33, ref rounded, sizeof(int)); // round corners
+        int color = ColorTranslator.ToWin32(caption);
+        _ = DwmSetWindowAttribute(handle, 35, ref color, sizeof(int)); // caption colour (Win11)
+        int border = ColorTranslator.ToWin32(Border);
+        _ = DwmSetWindowAttribute(handle, 34, ref border, sizeof(int)); // border colour (Win11)
+    }
+
+    /// <summary>Rounded corners and a red rim for borderless popups on Windows 11.</summary>
+    public static void ApplyPopupFrame(nint handle)
+    {
         int rounded = 2;
         _ = DwmSetWindowAttribute(handle, 33, ref rounded, sizeof(int));
+        int border = ColorTranslator.ToWin32(AccentBorder);
+        _ = DwmSetWindowAttribute(handle, 34, ref border, sizeof(int));
     }
+
+    public static ContextMenuStrip Menu() => new()
+    {
+        Renderer = new DarkMenuRenderer(),
+        BackColor = Raised,
+        ForeColor = Body,
+        ShowImageMargin = false,
+        ShowCheckMargin = true,
+        Font = Sans(9.5f),
+        Padding = new Padding(4),
+    };
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int size);
 }
 
-internal sealed class GlassPanel : Panel
+internal sealed class DarkMenuRenderer() : ToolStripProfessionalRenderer(new DarkMenuColors())
 {
-    private readonly bool accent;
-
-    public GlassPanel(bool accent = false)
+    protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
     {
-        this.accent = accent;
-        DoubleBuffered = true;
-        ResizeRedraw = true;
-        Padding = new Padding(12);
-        Margin = new Padding(0, 0, 0, 8);
-        BackColor = Color.Transparent;
+        e.TextColor = e.Item.Enabled ? (e.Item.Selected ? WindowTheme.Foreground : WindowTheme.Body) : WindowTheme.Faint;
+        base.OnRenderItemText(e);
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
+    protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
     {
-        if (!AutoSize || Controls.Count == 0) return base.GetPreferredSize(proposedSize);
-        Size content = Controls[0].GetPreferredSize(new Size(
-            Math.Max(0, proposedSize.Width - Padding.Horizontal), 0));
-        return content + Padding.Size;
-    }
-
-    protected override void OnPaintBackground(PaintEventArgs e)
-    {
-        base.OnPaintBackground(e);
-        var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
-        if (bounds.Width < 1 || bounds.Height < 1) return;
+        var box = e.ImageRectangle;
+        using var pen = new Pen(WindowTheme.AccentText, 1.6f);
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        using var shape = WindowTheme.Rounded(bounds, 12 * DeviceDpi / 96);
-        using var fill = new LinearGradientBrush(bounds,
-            accent ? Color.FromArgb(74, 36, 39) : Color.FromArgb(45, 37, 37),
-            WindowTheme.Surface, LinearGradientMode.ForwardDiagonal);
-        using var edge = new Pen(WindowTheme.Border);
-        e.Graphics.FillPath(fill, shape);
-        e.Graphics.DrawPath(edge, shape);
+        e.Graphics.DrawLines(pen, [
+            new Point(box.Left + box.Width / 5, box.Top + box.Height / 2),
+            new Point(box.Left + box.Width * 2 / 5, box.Top + box.Height * 7 / 10),
+            new Point(box.Left + box.Width * 4 / 5, box.Top + box.Height * 3 / 10),
+        ]);
     }
-}
 
-internal sealed class GlassButton : Button
-{
-    private readonly bool primary;
-    private bool hovered;
-
-    public GlassButton(bool primary = false)
+    protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
     {
-        this.primary = primary;
-        FlatStyle = FlatStyle.Flat;
-        Padding = new Padding(12, 6, 12, 6);
-        Margin = new Padding(0, 0, 8, 0);
+        if (!e.Item.Selected || !e.Item.Enabled) return;
+        var bounds = new Rectangle(2, 0, e.Item.Width - 4, e.Item.Height - 1);
+        WindowTheme.FillRounded(e.Graphics, bounds, 5, WindowTheme.AccentFill);
     }
 
-    protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); hovered = true; Invalidate(); }
-    protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hovered = false; Invalidate(); }
-
-    protected override void OnPaint(PaintEventArgs e)
+    private sealed class DarkMenuColors : ProfessionalColorTable
     {
-        var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
-        if (bounds.Width < 1 || bounds.Height < 1) return;
-        e.Graphics.Clear(Parent?.BackColor ?? WindowTheme.Background);
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        using var shape = WindowTheme.Rounded(bounds, 8 * DeviceDpi / 96);
-        Color color = !Enabled ? WindowTheme.Surface
-            : primary ? (hovered ? Color.FromArgb(195, 23, 49) : WindowTheme.Action)
-            : hovered ? WindowTheme.Hover : WindowTheme.Surface;
-        using var fill = new SolidBrush(color);
-        using var edge = new Pen(Focused && ShowFocusCues ? WindowTheme.Accent : WindowTheme.Border);
-        e.Graphics.FillPath(fill, shape);
-        e.Graphics.DrawPath(edge, shape);
-        TextRenderer.DrawText(e.Graphics, Text, Font, bounds,
-            Enabled ? WindowTheme.Foreground : WindowTheme.Muted,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+        public override Color ToolStripDropDownBackground => WindowTheme.Raised;
+        public override Color MenuBorder => WindowTheme.BorderStrong;
+        public override Color MenuItemBorder => Color.Transparent;
+        public override Color MenuItemSelected => WindowTheme.AccentFill;
+        public override Color ImageMarginGradientBegin => WindowTheme.Raised;
+        public override Color ImageMarginGradientMiddle => WindowTheme.Raised;
+        public override Color ImageMarginGradientEnd => WindowTheme.Raised;
+        public override Color CheckBackground => Color.Transparent;
+        public override Color CheckSelectedBackground => Color.Transparent;
+        public override Color CheckPressedBackground => Color.Transparent;
+        public override Color SeparatorDark => WindowTheme.Border;
+        public override Color SeparatorLight => WindowTheme.Border;
     }
-}
-
-internal sealed class ModifierList : CheckedListBox
-{
-    protected override void OnDrawItem(DrawItemEventArgs e)
-    {
-        if (e.Index < 0 || e.Index >= Items.Count) return;
-        bool selected = (e.State & DrawItemState.Selected) != 0;
-        bool isChecked = GetItemChecked(e.Index);
-        var bounds = Rectangle.Inflate(e.Bounds, -1, -2);
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        using var row = WindowTheme.Rounded(bounds, 6 * DeviceDpi / 96);
-        using var fill = new SolidBrush(selected ? WindowTheme.Hover : Color.FromArgb(43, 35, 35));
-        using var edge = new Pen(WindowTheme.Border);
-        e.Graphics.FillPath(fill, row);
-        e.Graphics.DrawPath(edge, row);
-        int side = Math.Min(14 * DeviceDpi / 96, bounds.Height - 2);
-        if (side < 1) return;
-        var box = new Rectangle(bounds.Left + 7, bounds.Top + (bounds.Height - side) / 2, side, side);
-        using var mark = WindowTheme.Rounded(box, 4 * DeviceDpi / 96);
-        using var accent = new SolidBrush(WindowTheme.Action);
-        if (isChecked)
-        {
-            e.Graphics.FillPath(accent, mark);
-            using var tick = new Pen(WindowTheme.Foreground, 1.5f);
-            e.Graphics.DrawLines(tick, [
-                new Point(box.Left + side / 4, box.Top + side / 2),
-                new Point(box.Left + side * 2 / 5, box.Top + side * 2 / 3),
-                new Point(box.Left + side * 3 / 4, box.Top + side / 3),
-            ]);
-        }
-        else e.Graphics.DrawPath(edge, mark);
-        var label = Rectangle.FromLTRB(box.Right + 7, bounds.Top, bounds.Right - 6, bounds.Bottom);
-        TextRenderer.DrawText(e.Graphics, GetItemText(Items[e.Index]), Font, label,
-            isChecked ? WindowTheme.Foreground : WindowTheme.Muted,
-            TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-        e.DrawFocusRectangle();
-    }
-
-    public override int ItemHeight => Font.Height + 12 * DeviceDpi / 96;
 }

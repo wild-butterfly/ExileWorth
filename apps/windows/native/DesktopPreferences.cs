@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ExileWorth.Windows;
 
@@ -22,8 +23,12 @@ internal sealed record Shortcut(uint Modifiers, Keys Key)
     public override string ToString() => $"{FormatModifiers(Modifiers)} + {Key}";
 }
 
-internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor)
+internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, string? ThanksMessage = null)
 {
+    public const string DefaultThanks = "Thanks, have a nice day!";
+    [JsonIgnore]
+    public string Thanks => string.IsNullOrWhiteSpace(ThanksMessage) ? DefaultThanks : ThanksMessage.Trim();
+
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Vaaluation", "desktop-settings.json");
