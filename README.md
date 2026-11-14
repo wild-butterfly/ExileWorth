@@ -57,7 +57,7 @@ the current PC challenge league; valid choices such as Standard are preserved.
 
 The [Windows x64 preview](apps/windows/README.md) includes item price checks,
 modifier filters, and a game-scoped shortcut. See its build instructions to
-create a portable ZIP.
+create a portable ZIP, or [download the Windows preview](https://wild-butterfly.github.io/Vaaluation/#install).
 
 ## See it in action
 

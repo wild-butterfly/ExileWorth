@@ -646,3 +646,19 @@ summary:focus-visible {
     flex-wrap: wrap;
   }
 }
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 1rem;
+}
+.download-card {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 0.9rem;
+  min-height: auto;
+}
+.download-card h3 {
+  margin: 0;
+}
