@@ -112,6 +112,20 @@ internal static class Program
                 await Until(() => copies >= 3 && IsWindowVisible(overlay), "price overlay before opening Trades");
                 InvokeButton(overlay, "Trades");
                 await Until(() => File.Exists(verifiedReplies), "edited replies reaching the overlay trade worker");
+                await Task.Delay(350);
+                var list = AutomationElement.FromHandle(overlay).FindFirst(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.NameProperty, "Trade requests"));
+                Assert(list is not null, "The Trades overlay did not show its request list.");
+                var area = list!.Current.BoundingRectangle;
+                int Scale(int points) => (int)Math.Round(points * GetDpiForWindow(overlay) / 96.0);
+                int chip = Math.Min(Scale(72), ((int)area.Width - Scale(8) - 2 * Scale(10) - 5 * Scale(4)) / 6);
+                Click(new Point((int)area.Left + Scale(10) + 4 * (chip + Scale(4)) + chip / 2,
+                    (int)area.Top + Scale(50)));
+                await Task.Delay(250);
+                Click(new Point((int)area.Left + Scale(40), (int)area.Top + Scale(72 - 4 + 2 * 24 + 10)));
+                await Until(() => game.SubmittedChat.Count > 0, "added reply typed and submitted to the game fixture");
+                Assert(game.SubmittedChat.SequenceEqual(["@FixtureBuyer Hi, are you still interested?"]),
+                    "The overlay did not send exactly the added reply.");
                 Console.WriteLine("PASS: Settings add and remove propagated to the Trades overlay.");
                 Click(GameBackground(game.Handle));
                 await Until(() => !IsWindowVisible(overlay), "dismiss the Trades overlay");
@@ -208,6 +222,8 @@ internal static class Program
     private sealed class GameFixture : Form
     {
         public event Action? ItemCopied;
+        public List<string> SubmittedChat { get; } = [];
+        private System.Text.StringBuilder? chat;
         private const int CopyReceived = 0x8001;
         private KeyboardHook? keyboardHook;
         private nint hook;
@@ -251,6 +267,17 @@ internal static class Program
                     case Keys.RControlKey: rightControl = down; break;
                     case Keys.LShiftKey or Keys.RShiftKey: shift = down; break;
                     case Keys.LMenu or Keys.RMenu: alt = down; break;
+                    case Keys.Enter when down && GetForegroundWindow() == Handle:
+                        if (chat is null) chat = new System.Text.StringBuilder();
+                        else
+                        {
+                            SubmittedChat.Add(chat.ToString());
+                            chat = null;
+                        }
+                        break;
+                    case (Keys)0xe7 when down && chat is not null && GetForegroundWindow() == Handle:
+                        chat.Append((char)Marshal.ReadInt32(data, sizeof(int)));
+                        break;
                     case Keys.C when down && GetForegroundWindow() == Handle:
                         Console.WriteLine($"Fixture observed C: Ctrl={leftControl || rightControl}, Shift={shift}, Alt={alt}.");
                         if ((leftControl || rightControl) && !shift && !alt)
@@ -326,6 +353,8 @@ internal static class Program
         keybd_event((byte)key, (byte)MapVirtualKeyW((uint)key, 0), flags, 0);
 
     [DllImport("user32.dll")] private static extern uint MapVirtualKeyW(uint code, uint mapType);
+
+    [DllImport("user32.dll")] private static extern uint GetDpiForWindow(nint window);
 
     private static bool IsTopmost(nint window) => (GetWindowLongW(window, -20) & 8) != 0;
     private delegate bool WindowCallback(nint window, nint data);

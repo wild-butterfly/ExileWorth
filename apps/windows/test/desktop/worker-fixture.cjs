@@ -26,7 +26,22 @@ lines.on('line', (line) => {
     ) {
       writeFileSync(process.env.EXILEWORTH_TEST_REPLIES, 'verified');
     }
-    console.log(JSON.stringify({ result: [] }));
+    console.log(
+      JSON.stringify({
+        result: [
+          {
+            character: 'FixtureBuyer',
+            summary: 'Goldrim — 1 chaos',
+            direction: 'incoming',
+            reply: '@FixtureBuyer Thanks!',
+            invite: '/invite FixtureBuyer',
+            trade: '/tradewith FixtureBuyer',
+            kick: '/kick FixtureBuyer',
+            replies: request.replies.map((message) => `@FixtureBuyer ${message}`),
+          },
+        ],
+      }),
+    );
   } else if (request.text?.includes('Divine Orb')) {
     reply(
       JSON.stringify({
