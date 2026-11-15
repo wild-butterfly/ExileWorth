@@ -17,15 +17,23 @@ Use the English Path of Exile 1 client in **Windowed** or **Windowed Fullscreen*
 
 ## See it in game
 
-### Price Check
+### macOS Price Check
 
 <img src="docs/screenshots/price-check-detail.png" alt="ExileWorth's macOS Price Check overlay, showing a price estimate, modifier filters, and comparable listings" width="415">
 
-### Trades
+### macOS Trades
 
 ![ExileWorth's macOS Trades overlay over Path of Exile, showing a sample Goldrim trade whisper and its available actions](docs/screenshots/trades.png)
 
 *The Trades screenshot shows a simulated whisper.*
+
+## Windows desktop preview
+
+![ExileWorth for Windows showing the Price Check screen and the Trades, Currency, and Settings tabs](docs/screenshots/windows-desktop.png)
+
+*Windows 0.1.17 running with sample Divine Orb listings in a [Windows CI run](https://github.com/wild-butterfly/ExileWorth/actions/runs/43709975867).*
+
+## Features
 
 | Feature | What you can do |
 | --- | --- |
