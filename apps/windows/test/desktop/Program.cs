@@ -73,14 +73,11 @@ internal static class Program
                 Assert(IsWindowVisible(overlay), "A click inside the overlay closed it.");
                 Assert(GetForegroundWindow() == game.Handle, "A click inside the overlay took game focus.");
 
-                // The fixture process is recognized as the game, so use the app's desktop
-                // window to exercise the transition out of the game.
-                Rectangle screen = Screen.FromHandle(game.Handle).WorkingArea;
-                int clickX = bounds.Left > screen.Left + 40 ? screen.Left + 20 : screen.Right - 20;
-                Click(new Point(clickX, screen.Top + 65));
+                int clicksBeforeDismissal = gameClicks;
+                Click(GameBackground(game.Handle));
                 await Until(() => !IsWindowVisible(overlay), "overlay dismissed by game click");
+                await Until(() => gameClicks > clicksBeforeDismissal, "outside click delivered to game");
                 Assert(GetForegroundWindow() == game.Handle, "Outside click changed game focus.");
-                Assert(gameClicks >= 1, "The outside click did not reach the game.");
 
                 // The fixture worker answers this second lookup late. Dismiss the panel
                 // while it is pending; the answer must not bring the panel back.
@@ -88,7 +85,7 @@ internal static class Program
                 SendChord(Keys.D);
                 await Until(() => copies >= 2, "second game copy chord");
                 await Until(() => IsWindowVisible(overlay), "overlay for the pending lookup");
-                Click(new Point(clickX, screen.Top + 65));
+                Click(GameBackground(game.Handle));
                 await Until(() => !IsWindowVisible(overlay), "overlay dismissed during a pending lookup");
                 await Task.Delay(3500); // Longer than the fixture's delayed answer.
                 Assert(!IsWindowVisible(overlay), "A pending lookup reopened the dismissed overlay.");
@@ -247,6 +244,22 @@ internal static class Program
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint pid);
     [DllImport("user32.dll")] private static extern int GetWindowLongW(nint window, int index);
     [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint x, uint y, uint data, nuint extra);
+
+    private static Point GameBackground(nint game)
+    {
+        Rectangle area = Screen.FromHandle(game).WorkingArea;
+        // Pick an exposed spot in the fixture's client area, away from its label,
+        // title bar, and the overlay (which can move between price checks).
+        for (int y = area.Bottom - 48; y > area.Top + 120; y -= 48)
+        for (int x = area.Left + 32; x < area.Right - 32; x += 48)
+        {
+            if (WindowFromPoint(new WindowPoint { X = x, Y = y }) == game)
+                return new Point(x, y);
+        }
+        throw new InvalidOperationException("No exposed game background to click.");
+    }
+
+    [DllImport("user32.dll")] private static extern nint WindowFromPoint(WindowPoint point);
 
     private static void Click(Point point)
     {
