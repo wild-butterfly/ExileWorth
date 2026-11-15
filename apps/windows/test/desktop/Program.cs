@@ -7,6 +7,11 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 3 && args[0] == "--capture")
+        {
+            Environment.ExitCode = CaptureDesktop(args[1], args[2]).GetAwaiter().GetResult();
+            return;
+        }
         using var game = new GameFixture { Text = "ExileWorth game fixture", WindowState = FormWindowState.Maximized, BackColor = Color.FromArgb(38, 34, 31), KeyPreview = true };
         game.Controls.Add(new Label
         {
@@ -15,6 +20,8 @@ internal static class Program
         });
         const string item = "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
         int copies = 0;
+        int gameClicks = 0;
+        game.MouseDown += (_, _) => gameClicks++;
         game.ItemCopied += () =>
         {
             Clipboard.SetText(item);
@@ -60,15 +67,32 @@ internal static class Program
                     CaptureOverlay(overlay, args[1]);
                 }
 
+                // A click inside the panel (its status line) must not close it or take focus.
+                Click(new Point(bounds.Left + 60, bounds.Bottom - 12));
+                await Task.Delay(500);
+                Assert(IsWindowVisible(overlay), "A click inside the overlay closed it.");
+                Assert(GetForegroundWindow() == game.Handle, "A click inside the overlay took game focus.");
+
                 // The fixture process is recognized as the game, so use the app's desktop
                 // window to exercise the transition out of the game.
                 Rectangle screen = Screen.FromHandle(game.Handle).WorkingArea;
                 int clickX = bounds.Left > screen.Left + 40 ? screen.Left + 20 : screen.Right - 20;
-                Cursor.Position = new Point(clickX, screen.Top + 65);
-                mouse_event(0x0002, 0, 0, 0, 0);
-                mouse_event(0x0004, 0, 0, 0, 0);
+                Click(new Point(clickX, screen.Top + 65));
                 await Until(() => !IsWindowVisible(overlay), "overlay dismissed by game click");
                 Assert(GetForegroundWindow() == game.Handle, "Outside click changed game focus.");
+                Assert(gameClicks >= 1, "The outside click did not reach the game.");
+
+                // The fixture worker answers this second lookup late. Dismiss the panel
+                // while it is pending; the answer must not bring the panel back.
+                await Task.Delay(400);
+                SendChord(Keys.D);
+                await Until(() => copies >= 2, "second game copy chord");
+                await Until(() => IsWindowVisible(overlay), "overlay for the pending lookup");
+                Click(new Point(clickX, screen.Top + 65));
+                await Until(() => !IsWindowVisible(overlay), "overlay dismissed during a pending lookup");
+                await Task.Delay(3500); // Longer than the fixture's delayed answer.
+                Assert(!IsWindowVisible(overlay), "A pending lookup reopened the dismissed overlay.");
+                Assert(GetForegroundWindow() == game.Handle, "The pending lookup took game focus.");
 
                 ShowWindow(desktop, 4);
                 Foreground(desktop);
@@ -76,11 +100,14 @@ internal static class Program
                     "overlay hidden after switching away");
                 SendChord(Keys.D);
                 await Task.Delay(750);
-                Assert(copies == 1, "Shortcut fired outside the game.");
+                Assert(copies == 2, "Shortcut fired outside the game.");
                 if (args.Length > 2)
                 {
-                    // The desktop window now shows the fixture result; capture it for review.
-                    await Task.Delay(400);
+                    // Hover the second sidebar row so the capture shows hovered and selected states.
+                    var row = new WindowPoint { X = 107, Y = 130 };
+                    ClientToScreen(desktop, ref row);
+                    Cursor.Position = new Point(row.X, row.Y);
+                    await Task.Delay(600);
                     CaptureOverlay(desktop, args[2]);
                 }
                 Console.WriteLine("PASS: compact overlay kept game focus and hid after switching away.");
@@ -102,6 +129,35 @@ internal static class Program
             }
         };
         Application.Run(game);
+    }
+
+    /// <summary>Starts a packaged build, hovers the second sidebar row, and captures the window.</summary>
+    private static async Task<int> CaptureDesktop(string exe, string path)
+    {
+        using var app = Process.Start(exe) ?? throw new Exception("App could not start.");
+        try
+        {
+            await Until(() => FindAppWindow(app.Id) != 0, "app window");
+            nint desktop = FindAppWindow(app.Id);
+            await Task.Delay(2500); // Let the window lay out and the fixture league load.
+            Foreground(desktop);
+            var row = new WindowPoint { X = 107, Y = 130 };
+            ClientToScreen(desktop, ref row);
+            Cursor.Position = new Point(row.X, row.Y);
+            await Task.Delay(700);
+            CaptureOverlay(desktop, path);
+            Console.WriteLine($"Captured {exe} to {path}.");
+            return 0;
+        }
+        catch (Exception error)
+        {
+            Console.Error.WriteLine(error);
+            return 1;
+        }
+        finally
+        {
+            if (!app.HasExited) app.Kill(entireProcessTree: true);
+        }
     }
 
     private static void CaptureOverlay(nint overlay, string path)
@@ -191,5 +247,16 @@ internal static class Program
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint pid);
     [DllImport("user32.dll")] private static extern int GetWindowLongW(nint window, int index);
     [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint x, uint y, uint data, nuint extra);
+
+    private static void Click(Point point)
+    {
+        Cursor.Position = point;
+        mouse_event(0x0002, 0, 0, 0, 0);
+        mouse_event(0x0004, 0, 0, 0, 0);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WindowPoint { public int X, Y; }
+    [DllImport("user32.dll")] private static extern bool ClientToScreen(nint window, ref WindowPoint point);
     [DllImport("user32.dll")] private static extern void keybd_event(byte key, byte scan, uint flags, nuint extra);
 }

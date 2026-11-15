@@ -135,6 +135,12 @@ internal sealed class FlatButton : Button
         g.Clear(Parent?.BackColor ?? WindowTheme.Background);
         var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
         if (bounds.Width < 2 || bounds.Height < 2) return;
+        if (Kind == ButtonKind.Nav)
+        {
+            NavRow.Paint(g, bounds, Text, Glyph, Hint, selected, hovered, Focused && ShowFocusCues,
+                Parent?.BackColor ?? WindowTheme.Rail, DeviceDpi / 96f, 1f);
+            return;
+        }
 
         (Color? fill, Color? edge, Color text) = Kind switch
         {
@@ -172,30 +178,6 @@ internal sealed class FlatButton : Button
         else if (edge is { } line) WindowTheme.FillRounded(g, bounds, radius, Parent?.BackColor ?? WindowTheme.Background, line);
 
         var content = bounds;
-        if (Kind == ButtonKind.Nav)
-        {
-            content = Rectangle.FromLTRB(bounds.Left + this.Px(12), bounds.Top, bounds.Right - this.Px(10), bounds.Bottom);
-            if (Glyph is not null)
-            {
-                // Drawn rather than typed: symbol characters fell back to a wider
-                // font and were cut to "…" in a fixed-width slot.
-                int size = this.Px(16);
-                var iconBox = new Rectangle(content.Left, content.Top + (content.Height - size) / 2, size, size);
-                LineIcons.Draw(g, Glyph, iconBox,
-                    selected ? WindowTheme.AccentSoftText : hovered ? WindowTheme.Body : WindowTheme.Dim, DeviceDpi);
-                content = Rectangle.FromLTRB(iconBox.Right + this.Px(12), content.Top, content.Right, content.Bottom);
-            }
-            Font label = selected ? WindowTheme.Sans(9.5f, FontStyle.Bold) : WindowTheme.Sans(9.5f);
-            if (Hint is not null && (selected || hovered))
-            {
-                WindowTheme.Text(g, Hint, WindowTheme.Mono(7.5f), content,
-                    selected ? WindowTheme.AccentSoftText : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
-            }
-            WindowTheme.Text(g, Text, label, content, text);
-            DrawBadge(g, content);
-            return;
-        }
-
         Size measured = string.IsNullOrEmpty(Text) ? Size.Empty
             : TextRenderer.MeasureText(Text, Font, Size.Empty, TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
         int iconSize = image is null ? 0 : this.Px(Kind == ButtonKind.Chip ? 16 : 18);
@@ -228,6 +210,64 @@ internal sealed class FlatButton : Button
         WindowTheme.FillRounded(g, pill, height / 2, Color.FromArgb(235, 230, 228));
         WindowTheme.Text(g, badge, WindowTheme.Mono(7f, FontStyle.Bold), pill, Color.FromArgb(120, 6, 15),
             TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+    }
+}
+
+/// <summary>
+/// One sidebar row. Shared by the live control and the --render-sidebar
+/// diagnostic, so the diagnostic shows exactly what users get at each scale.
+/// </summary>
+internal static class NavRow
+{
+    /// <param name="scale">Pixel scale (DPI / 96).</param>
+    /// <param name="fontScale">1 for a live control, whose fonts already follow its DPI;
+    /// equal to <paramref name="scale"/> when emulating a scale on a 96-DPI bitmap.</param>
+    public static Layout Paint(Graphics g, Rectangle bounds, string text, string? glyph, string? hint,
+        bool selected, bool hovered, bool focused, Color back, float scale, float fontScale)
+    {
+        int Px(float value) => (int)Math.Round(value * scale);
+        Color? fill = selected ? (hovered ? WindowTheme.AccentFillHover : WindowTheme.AccentFill) : hovered ? WindowTheme.Hover : null;
+        Color? edge = focused ? WindowTheme.AccentText : selected ? WindowTheme.AccentBorder : null;
+        if (fill is { } solid) WindowTheme.FillRounded(g, bounds, Px(9), solid, edge);
+        else if (edge is { } line) WindowTheme.FillRounded(g, bounds, Px(9), back, line);
+
+        var content = Rectangle.FromLTRB(bounds.Left + Px(12), bounds.Top, bounds.Right - Px(10), bounds.Bottom);
+        var layout = new Layout();
+        if (glyph is not null)
+        {
+            int size = Px(16);
+            var iconBox = new Rectangle(content.Left, content.Top + (content.Height - size) / 2, size, size);
+            LineIcons.Draw(g, glyph, iconBox, selected ? WindowTheme.AccentSoftText : hovered ? WindowTheme.Body : WindowTheme.Dim,
+                (int)Math.Round(96 * scale));
+            content = Rectangle.FromLTRB(iconBox.Right + Px(12), content.Top, content.Right, content.Bottom);
+        }
+
+        // Reserve the hint's width first, so the label and hint can never overlap.
+        int labelRight = content.Right;
+        if (hint is not null && (selected || hovered))
+        {
+            var hintFont = WindowTheme.Mono(7.5f * fontScale);
+            int hintWidth = TextRenderer.MeasureText(g, hint, hintFont, Size.Empty, TextFormatFlags.NoPadding).Width;
+            var hintBox = Rectangle.FromLTRB(content.Right - hintWidth, content.Top, content.Right, content.Bottom);
+            TextRenderer.DrawText(g, hint, hintFont, hintBox, selected ? WindowTheme.AccentSoftText : WindowTheme.Faint,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.Right | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+            labelRight = hintBox.Left - Px(8);
+            layout.HintWidth = hintWidth;
+        }
+        var labelFont = selected ? WindowTheme.Sans(9.5f * fontScale, FontStyle.Bold) : WindowTheme.Sans(9.5f * fontScale);
+        layout.LabelWidth = TextRenderer.MeasureText(g, text, labelFont, Size.Empty, TextFormatFlags.NoPadding).Width;
+        layout.LabelSpace = labelRight - content.Left;
+        TextRenderer.DrawText(g, text, labelFont, Rectangle.FromLTRB(content.Left, content.Top, labelRight, content.Bottom),
+            selected ? WindowTheme.AccentSoftText : hovered ? WindowTheme.Body : WindowTheme.Muted,
+            TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+        return layout;
+    }
+
+    /// <summary>Measured widths, so the diagnostic can prove nothing is clipped.</summary>
+    internal sealed class Layout
+    {
+        public int LabelWidth, LabelSpace, HintWidth;
+        public bool Fits => LabelWidth <= LabelSpace;
     }
 }
 
