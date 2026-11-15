@@ -18,6 +18,12 @@ internal static class Program
             Text = "Windows overlay test fixture", AutoSize = true,
             Location = new Point(24, 24), ForeColor = Color.White,
         });
+        // Give the mock game a focused client control. System key messages
+        // (Alt+C) can reach the top-level window even without keyboard focus;
+        // an ordinary Ctrl+C needs a focused keyboard input target.
+        var keyboardTarget = new TextBox { Location = new Point(24, 48), Width = 220, ReadOnly = true };
+        game.Controls.Add(keyboardTarget);
+        game.Activated += (_, _) => keyboardTarget.Focus();
         const string item = "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
         int copies = 0;
         int gameClicks = 0;
