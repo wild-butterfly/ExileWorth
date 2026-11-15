@@ -25,7 +25,7 @@ without leaving the game.
 
 ExileWorth is a free, open-source **Path of Exile price checker for macOS**.
 It combines fast item valuation, official trade listings, currency rates and
-incoming trade-request tools in a native menu-bar app.
+incoming trade-request tools in a native macOS app.
 
 **Signed and notarized by Apple · No accounts · No telemetry · No paid tier**
 
@@ -79,7 +79,7 @@ _Path of Exile price check on macOS, captured before the ExileWorth rename._
 
 The established price-check tools target Windows and Linux; macOS support tends
 to be partial, with global shortcuts that never fire. ExileWorth is built
-natively for macOS — a menu-bar app with an AppKit shell, a real non-activating
+natively for macOS with an AppKit shell, a real non-activating
 overlay panel, and Carbon global hotkeys that work.
 
 ## Features
@@ -143,9 +143,8 @@ and the grant needs repeating. A development certificate keeps it stable.
 
 ### Where is the window?
 
-ExileWorth is a **menu-bar app** — no Dock icon, and no window on launch. Look
-for the mark in the menu bar. Clicking the app in Finder or Spotlight opens the
-main window.
+ExileWorth opens its main window on launch. Click the Dock icon to reopen
+it after closing the window, or open it from the menu bar.
 
 ## Shortcuts
 
