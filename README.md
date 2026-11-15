@@ -17,7 +17,7 @@ without leaving the game.
 
 ### [Download ExileWorth for macOS](https://github.com/wild-butterfly/ExileWorth/releases/latest)
 
-[Download the Windows 11 x64 preview](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.15/ExileWorth-0.1.15-Windows-x64.zip)
+[Download the Windows 11 x64 preview](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.16/ExileWorth-0.1.16-Windows-x64.zip)
 
 [Installation](#install) · [Features](#features) · [Shortcuts](#shortcuts) · [Privacy](docs/PRIVACY.md) · [Report an issue](https://github.com/wild-butterfly/ExileWorth/issues/new/choose)
 
