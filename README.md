@@ -17,20 +17,21 @@ Use the English Path of Exile 1 client in **Windowed** or **Windowed Fullscreen*
 
 ## See it in game
 
-![ExileWorth's price check overlay over Path of Exile, with modifier filters and comparable listings](docs/screenshots/price-check.png)
+### Price Check
+
+<img src="docs/screenshots/price-check-detail.png" alt="ExileWorth's macOS Price Check overlay, showing a price estimate, modifier filters, and comparable listings" width="415">
+
+### Trades
+
+![ExileWorth's macOS Trades overlay over Path of Exile, showing a sample Goldrim trade whisper and its available actions](docs/screenshots/trades.png)
+
+*The Trades screenshot shows a simulated whisper.*
 
 | Feature | What you can do |
 | --- | --- |
 | **Price Check** | Compare asking prices from the official trade service and refine the search by modifier. |
 | **Trades** | Enable chat log watching to see incoming trade requests. Send replies, invites, or trade requests with a click. Edit, add, or remove quick replies in Settings. |
 | **Currency** | Compare exchange rates for currencies such as Divine, Chaos, and Exalted Orbs. |
-
-<details>
-<summary>See the Trades overlay</summary>
-
-![ExileWorth's Trades overlay showing a trade request and its available actions](docs/screenshots/trades.png)
-
-</details>
 
 ## First launch
 
