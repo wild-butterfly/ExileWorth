@@ -51,9 +51,9 @@ internal static class Program
                 await Until(() => GetForegroundWindow() == game.Handle, "game focus");
                 await Task.Delay(750);
                 SendChord(Keys.D);
-                await Until(() => copies >= 1, "game copy chord");
                 await Until(() => (overlay = FindAppWindow(app.Id, desktop)) != 0 && IsTopmost(overlay),
                     "visible compact overlay");
+                await Until(() => copies >= 1, "game copy chord");
                 Assert(!IsWindowVisible(desktop), "Game shortcut showed the desktop window.");
                 Assert(GetWindowRect(overlay, out var bounds) && bounds.Bottom - bounds.Top <= 440,
                     "Game overlay was not compact.");
@@ -239,9 +239,14 @@ internal static class Program
 
     private static void SendChord(Keys key)
     {
-        foreach (Keys k in new[] { Keys.ControlKey, Keys.ShiftKey, key }) keybd_event((byte)k, 0, 0, 0);
-        foreach (Keys k in new[] { key, Keys.ShiftKey, Keys.ControlKey }) keybd_event((byte)k, 0, 2, 0);
+        foreach (Keys k in new[] { Keys.LControlKey, Keys.LShiftKey, key }) SendKey(k, 0);
+        foreach (Keys k in new[] { key, Keys.LShiftKey, Keys.LControlKey }) SendKey(k, 2);
     }
+
+    private static void SendKey(Keys key, uint flags) =>
+        keybd_event((byte)key, (byte)MapVirtualKeyW((uint)key, 0), flags, 0);
+
+    [DllImport("user32.dll")] private static extern uint MapVirtualKeyW(uint code, uint mapType);
 
     private static bool IsTopmost(nint window) => (GetWindowLongW(window, -20) & 8) != 0;
     private delegate bool WindowCallback(nint window, nint data);
