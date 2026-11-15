@@ -385,7 +385,7 @@ internal sealed class PriceWindow : Form
         currentListings = [];
         Render();
         string? text;
-        try { text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key); }
+        try { text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key, preferences.UsePlainCopy); }
         finally
         {
             if (!IsDisposed && GameHotkey.ForegroundGame() == game)

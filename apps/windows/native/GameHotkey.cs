@@ -113,7 +113,7 @@ internal sealed class GameHotkey : IDisposable
         return folder is null ? null : Path.Combine(folder, "logs", "Client.txt");
     }
 
-    public static async Task<string?> CopyItemAsync(nint game, Keys trigger)
+    public static async Task<string?> CopyItemAsync(nint game, Keys trigger, bool plainCopy)
     {
         // Never forward a copy command if the game lost focus after WM_HOTKEY.
         if (game == 0 || ForegroundGame() != game) return null;
@@ -125,7 +125,9 @@ internal sealed class GameHotkey : IDisposable
         if (ForegroundGame() != game || Down(Keys.ControlKey) || Down(Keys.Menu) ||
             Down(Keys.ShiftKey) || Down(Keys.LWin) || Down(Keys.RWin) || Down(trigger)) return null;
         uint start = GetClipboardSequenceNumber();
-        Input[] input = [
+        Input[] input = plainCopy
+            ? [Key(Keys.ControlKey, false), Key(Keys.C, false), Key(Keys.C, true), Key(Keys.ControlKey, true)]
+            : [
             Key(Keys.ControlKey, false), Key(Keys.Menu, false), Key(Keys.C, false),
             Key(Keys.C, true), Key(Keys.Menu, true), Key(Keys.ControlKey, true)
         ];

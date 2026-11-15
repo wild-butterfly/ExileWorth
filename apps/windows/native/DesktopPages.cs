@@ -395,13 +395,13 @@ internal sealed class DesktopPages : IDisposable
             "Messages for the Thanks and Reply buttons on trade whispers.",
             thanksLabel, thanksField, repliesLabel, repliesHint, repliesList, addReply));
 
-        // Item copy.
+        var plainCopy = new Toggle { Checked = current.UsePlainCopy, AccessibleName = "Copy without Alt" };
+        plainCopy.CheckedChanged += (_, _) => Apply(current with { UsePlainCopy = plainCopy.Checked });
         stack.Add(Ui.Section("Item copy",
-            "Path of Exile copies the advanced item description with Ctrl + Alt + C. If you rebound Highlight (Alt) " +
-            "in the game's options, set it back for the shortcut to work. You can also copy an item yourself and use " +
-            "Check clipboard on the Price Check page. If the game pins its own item tooltip when you price-check, " +
-            "open Options → Input in Path of Exile and move the Pin Popups binding off Alt. ExileWorth never sends " +
-            "Escape to close game windows for you."));
+            "If the game pins its own tooltip, move Pin Popups off Alt under Path of Exile’s Options → Input. " +
+            "To avoid Alt entirely, use a Ctrl + Shift price-check shortcut and turn on Copy without Alt.",
+            SwitchRow(plainCopy, "Copy without Alt",
+                "Uses Ctrl + C. Advanced copy may provide more item details for matching modifiers.")));
 
         // Data.
         var folder = new FlatButton(ButtonKind.Secondary, "Open settings folder");

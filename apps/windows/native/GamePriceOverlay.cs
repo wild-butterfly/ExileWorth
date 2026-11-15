@@ -69,18 +69,22 @@ internal sealed class GamePriceOverlay : Form
     private Point? drag;
     private MouseHook? mouseCallback;
     private nint mouseHook;
+    private MouseHook? keyboardCallback;
+    private nint keyboardHook;
 
     protected override void OnVisibleChanged(EventArgs e)
     {
         base.OnVisibleChanged(e);
         if (!Visible)
         {
-            StopWatchingClicks();
+            StopWatchingInput();
             return;
         }
-        if (mouseHook != 0) return; // Never stack a second hook on a repeated show.
         mouseCallback ??= ObserveClick;
-        mouseHook = SetWindowsHookEx(14, mouseCallback, GetModuleHandle(null), 0); // WH_MOUSE_LL
+        keyboardCallback ??= ObserveEscape;
+        nint module = GetModuleHandle(null);
+        if (mouseHook == 0) mouseHook = SetWindowsHookEx(14, mouseCallback, module, 0); // WH_MOUSE_LL
+        if (keyboardHook == 0) keyboardHook = SetWindowsHookEx(13, keyboardCallback, module, 0); // WH_KEYBOARD_LL
     }
 
     /// <summary>
@@ -102,11 +106,18 @@ internal sealed class GamePriceOverlay : Form
         return CallNextHookEx(0, code, message, data);
     }
 
-    private void StopWatchingClicks()
+    private nint ObserveEscape(int code, nint message, nint data)
     {
-        if (mouseHook == 0) return;
-        UnhookWindowsHookEx(mouseHook);
-        mouseHook = 0;
+        if (code >= 0 && message == 0x0100 && Marshal.ReadInt32(data) == (int)Keys.Escape && IsHandleCreated)
+            BeginInvoke(() => { if (Visible) Hide(); });
+        return CallNextHookEx(0, code, message, data);
+    }
+
+    private void StopWatchingInput()
+    {
+        if (mouseHook != 0) UnhookWindowsHookEx(mouseHook);
+        if (keyboardHook != 0) UnhookWindowsHookEx(keyboardHook);
+        mouseHook = keyboardHook = 0;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -448,8 +459,7 @@ internal sealed class GamePriceOverlay : Form
     {
         if (disposing)
         {
-            StopWatchingClicks();
-            StopWatchingClicks();
+            StopWatchingInput();
             CurrencyIcons.Changed -= ShowCurrency;
             WindowTheme.ThemeChanged -= OnThemeChanged;
             tradeWorker.Dispose();
