@@ -4,6 +4,7 @@ interface VLOverlayNative {
   setContentHeight(height: number): void;
   hide(): void;
   beginDrag(): void;
+  positionForTrades(trades: boolean): void;
   setPinned(pinned: boolean): void;
 }
 
@@ -40,4 +41,8 @@ export function setOverlayPinned(pinned: boolean): void {
  */
 export function beginOverlayDrag(): void {
   native.beginDrag();
+}
+
+export function positionOverlayForTrades(trades: boolean): void {
+  native.positionForTrades(trades);
 }

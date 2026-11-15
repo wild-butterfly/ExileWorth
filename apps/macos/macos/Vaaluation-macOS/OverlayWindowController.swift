@@ -16,13 +16,8 @@ final class OverlayWindowController: NSWindowController, NSWindowDelegate {
     case topRight
   }
 
-  /// Set once the user drags the panel; their placement then wins over both
-  /// defaults, and is remembered across launches.
-  private var userPlacedKey = "vaaluation.overlay.userPlaced"
-  private var hasUserPlacement: Bool {
-    get { UserDefaults.standard.bool(forKey: userPlacedKey) }
-    set { UserDefaults.standard.set(newValue, forKey: userPlacedKey) }
-  }
+  private let tradesPositionKey = "vaaluation.overlay.tradesPosition"
+  private var anchor: Anchor = .cursor
 
   private var clickOutsideMonitor: Any?
   private var escapeMonitor: Any?
@@ -85,7 +80,6 @@ final class OverlayWindowController: NSWindowController, NSWindowDelegate {
     super.init(window: panel)
     panel.delegate = self
     VLOverlayModule.controller = self
-    panel.setFrameAutosaveName("VaaluationOverlayPanel")
   }
 
   @available(*, unavailable)
@@ -93,18 +87,11 @@ final class OverlayWindowController: NSWindowController, NSWindowDelegate {
     fatalError("init(coder:) is not supported")
   }
 
-  /// Shows the overlay, placed according to `anchor` unless the user has
-  /// already dragged it somewhere of their own choosing.
+  /// Opens the overlay at the position for the requested tab.
   func show(pinned: Bool, anchor: Anchor = .cursor) {
     guard let panel = window as? OverlayPanel else { return }
     isPinned = pinned
-
-    if !hasUserPlacement {
-      switch anchor {
-      case .cursor: positionNearCursor(panel)
-      case .topRight: positionTopRight(panel)
-      }
-    }
+    position(for: anchor)
     panel.orderFrontRegardless()
     panel.makeKey()
 
@@ -123,7 +110,7 @@ final class OverlayWindowController: NSWindowController, NSWindowDelegate {
     if window?.isVisible == true {
       hide()
     } else {
-      show(pinned: pinned)
+      show(pinned: pinned, anchor: anchor)
     }
   }
 
@@ -161,9 +148,39 @@ final class OverlayWindowController: NSWindowController, NSWindowDelegate {
     panel.setFrameOrigin(origin)
   }
 
-  /// Docks the panel to the top-right of the active screen, inset far enough
-  /// to clear the minimap.
-  private func positionTopRight(_ panel: NSWindow) {
+  func position(for anchor: Anchor) {
+    self.anchor = anchor
+    guard let panel = window else { return }
+    switch anchor {
+    case .cursor: positionNearCursor(panel)
+    case .topRight: positionTrades(panel)
+    }
+  }
+
+  func beginDrag(with event: NSEvent) {
+    guard let panel = window else { return }
+    let start = panel.frame.origin
+    let wasTrades = anchor == .topRight
+    panel.performDrag(with: event)
+    let frame = panel.frame
+    guard wasTrades, anchor == .topRight, frame.origin != start else { return }
+    let topLeft = NSPoint(x: frame.minX, y: frame.maxY)
+    UserDefaults.standard.set(NSStringFromPoint(topLeft), forKey: tradesPositionKey)
+  }
+
+  /// Restores the dragged position, or opens near the upper-right corner.
+  private func positionTrades(_ panel: NSWindow) {
+    if let saved = UserDefaults.standard.string(forKey: tradesPositionKey) {
+      let topLeft = NSPointFromString(saved)
+      let pointInsidePanel = NSPoint(x: topLeft.x, y: topLeft.y - 1)
+      if let screen = NSScreen.screens.first(where: { $0.frame.contains(pointInsidePanel) }) {
+        let visible = screen.visibleFrame
+        let x = max(visible.minX, min(topLeft.x, visible.maxX - panel.frame.width))
+        let y = max(visible.minY + panel.minSize.height, min(topLeft.y, visible.maxY))
+        panel.setFrameTopLeftPoint(NSPoint(x: x, y: y))
+        return
+      }
+    }
     let mouse = NSEvent.mouseLocation
     guard
       let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) })
@@ -222,18 +239,6 @@ final class OverlayWindowController: NSWindowController, NSWindowDelegate {
       NSEvent.removeMonitor(escapeMonitor)
       self.escapeMonitor = nil
     }
-  }
-
-  /// A drag is the user placing the panel deliberately, so stop moving it
-  /// for them afterwards.
-  func windowDidMove(_ notification: Notification) {
-    guard window?.isVisible == true else { return }
-    hasUserPlacement = true
-  }
-
-  /// Forgets a manual placement, so the panel returns to its default corner.
-  func resetPlacement() {
-    hasUserPlacement = false
   }
 
   deinit {

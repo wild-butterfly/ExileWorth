@@ -40,6 +40,13 @@ final class VLOverlayModule: NSObject {
     }
   }
 
+  @objc(positionForTrades:)
+  func positionForTrades(_ trades: NSNumber) {
+    DispatchQueue.main.async {
+      VLOverlayModule.controller?.position(for: trades.boolValue ? .topRight : .cursor)
+    }
+  }
+
   /// Starts dragging the panel from the current mouse-down.
   ///
   /// The panel is `isMovableByWindowBackground`, but the React root view sits
@@ -52,10 +59,11 @@ final class VLOverlayModule: NSObject {
   func beginDrag() {
     DispatchQueue.main.async {
       guard
-        let window = VLOverlayModule.controller?.window,
-        let event = NSApp.currentEvent
+        let controller = VLOverlayModule.controller,
+        let event = NSApp.currentEvent, event.type == .leftMouseDown,
+        event.window === controller.window
       else { return }
-      window.performDrag(with: event)
+      controller.beginDrag(with: event)
     }
   }
 }

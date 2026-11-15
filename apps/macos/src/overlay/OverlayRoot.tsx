@@ -21,6 +21,7 @@ import { onItemCopied, onShowTrades } from '../native/VLEvents';
 import { consumePendingShowTrades } from '../native/VLTrade';
 import {
   beginOverlayDrag,
+  positionOverlayForTrades,
   hideOverlay,
   setOverlayContentHeight,
   setOverlayPinned,
@@ -94,7 +95,10 @@ function Shell() {
         <Mark size={19} on="#120c0e" />
         <Pressable
           style={[styles.pill, tab === 'price' && styles.pillActive]}
-          onPress={() => setTab('price')}
+          onPress={() => {
+            if (tab !== 'price') positionOverlayForTrades(false);
+            setTab('price');
+          }}
         >
           <Text style={[styles.pillText, tab === 'price' && styles.pillTextActive]}>
             Price
@@ -102,7 +106,10 @@ function Shell() {
         </Pressable>
         <Pressable
           style={[styles.pill, tab === 'trades' && styles.pillActive]}
-          onPress={() => setTab('trades')}
+          onPress={() => {
+            if (tab !== 'trades') positionOverlayForTrades(true);
+            setTab('trades');
+          }}
         >
           <Text style={[styles.pillText, tab === 'trades' && styles.pillTextActive]}>
             Trades

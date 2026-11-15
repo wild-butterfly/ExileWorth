@@ -67,6 +67,7 @@ RCT_EXTERN_METHOD(setContentHeight : (nonnull NSNumber *)height)
 RCT_EXTERN_METHOD(hide)
 
 RCT_EXTERN_METHOD(beginDrag)
+RCT_EXTERN_METHOD(positionForTrades : (nonnull NSNumber *)trades)
 
 RCT_EXTERN_METHOD(setPinned : (nonnull NSNumber *)pinned)
 
