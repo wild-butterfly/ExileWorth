@@ -62,6 +62,14 @@ internal static class Program
 
                 // The fixture process is recognized as the game, so use the app's desktop
                 // window to exercise the transition out of the game.
+                Rectangle screen = Screen.FromHandle(game.Handle).WorkingArea;
+                int clickX = bounds.Left > screen.Left + 40 ? screen.Left + 20 : screen.Right - 20;
+                Cursor.Position = new Point(clickX, screen.Top + 65);
+                mouse_event(0x0002, 0, 0, 0, 0);
+                mouse_event(0x0004, 0, 0, 0, 0);
+                await Until(() => !IsWindowVisible(overlay), "overlay dismissed by game click");
+                Assert(GetForegroundWindow() == game.Handle, "Outside click changed game focus.");
+
                 ShowWindow(desktop, 4);
                 Foreground(desktop);
                 await Until(() => GetForegroundWindow() == desktop && !IsWindowVisible(overlay),
@@ -182,5 +190,6 @@ internal static class Program
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint pid);
     [DllImport("user32.dll")] private static extern int GetWindowLongW(nint window, int index);
+    [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint x, uint y, uint data, nuint extra);
     [DllImport("user32.dll")] private static extern void keybd_event(byte key, byte scan, uint flags, nuint extra);
 }
