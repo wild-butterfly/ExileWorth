@@ -177,13 +177,16 @@ internal sealed class FlatButton : Button
             content = Rectangle.FromLTRB(bounds.Left + this.Px(12), bounds.Top, bounds.Right - this.Px(10), bounds.Bottom);
             if (Glyph is not null)
             {
-                var glyphBox = new Rectangle(content.Left, content.Top, this.Px(18), content.Height);
-                WindowTheme.Text(g, Glyph, WindowTheme.Sans(10f), glyphBox,
-                    selected ? WindowTheme.AccentSoftText : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
-                content = Rectangle.FromLTRB(glyphBox.Right + this.Px(10), content.Top, content.Right, content.Bottom);
+                // Drawn rather than typed: symbol characters fell back to a wider
+                // font and were cut to "…" in a fixed-width slot.
+                int size = this.Px(16);
+                var iconBox = new Rectangle(content.Left, content.Top + (content.Height - size) / 2, size, size);
+                LineIcons.Draw(g, Glyph, iconBox,
+                    selected ? WindowTheme.AccentSoftText : hovered ? WindowTheme.Body : WindowTheme.Dim, DeviceDpi);
+                content = Rectangle.FromLTRB(iconBox.Right + this.Px(12), content.Top, content.Right, content.Bottom);
             }
             Font label = selected ? WindowTheme.Sans(9.5f, FontStyle.Bold) : WindowTheme.Sans(9.5f);
-            if (Hint is not null)
+            if (Hint is not null && (selected || hovered))
             {
                 WindowTheme.Text(g, Hint, WindowTheme.Mono(7.5f), content,
                     selected ? WindowTheme.AccentSoftText : WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
@@ -225,6 +228,56 @@ internal sealed class FlatButton : Button
         WindowTheme.FillRounded(g, pill, height / 2, Color.FromArgb(235, 230, 228));
         WindowTheme.Text(g, badge, WindowTheme.Mono(7f, FontStyle.Bold), pill, Color.FromArgb(120, 6, 15),
             TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+    }
+}
+
+/// <summary>Small outline icons for the sidebar, drawn as vectors so they never clip.</summary>
+internal static class LineIcons
+{
+    public static void Draw(Graphics g, string name, Rectangle box, Color color, int dpi)
+    {
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        using var pen = new Pen(color, 1.6f * dpi / 96) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+        float x = box.Left, y = box.Top, w = box.Width;
+        PointF P(float px, float py) => new(x + px * w, y + py * w);
+        RectangleF R(float left, float top, float right, float bottom) =>
+            RectangleF.FromLTRB(x + left * w, y + top * w, x + right * w, y + bottom * w);
+        switch (name)
+        {
+            case "search":
+                g.DrawEllipse(pen, R(0.08f, 0.08f, 0.68f, 0.68f));
+                g.DrawLine(pen, P(0.6f, 0.6f), P(0.92f, 0.92f));
+                break;
+            case "trades":
+                g.DrawLine(pen, P(0.08f, 0.32f), P(0.88f, 0.32f));
+                g.DrawLines(pen, [P(0.68f, 0.12f), P(0.88f, 0.32f), P(0.68f, 0.52f)]);
+                g.DrawLine(pen, P(0.92f, 0.7f), P(0.12f, 0.7f));
+                g.DrawLines(pen, [P(0.32f, 0.5f), P(0.12f, 0.7f), P(0.32f, 0.9f)]);
+                break;
+            case "currency":
+                g.DrawEllipse(pen, R(0.06f, 0.06f, 0.94f, 0.94f));
+                g.DrawEllipse(pen, R(0.3f, 0.3f, 0.7f, 0.7f));
+                break;
+            case "settings":
+                g.DrawEllipse(pen, R(0.36f, 0.36f, 0.64f, 0.64f));
+                for (int tooth = 0; tooth < 8; tooth++)
+                {
+                    double angle = tooth * Math.PI / 4;
+                    float cos = (float)Math.Cos(angle), sin = (float)Math.Sin(angle);
+                    g.DrawLine(pen, P(0.5f + cos * 0.3f, 0.5f + sin * 0.3f), P(0.5f + cos * 0.44f, 0.5f + sin * 0.44f));
+                }
+                g.DrawEllipse(pen, R(0.2f, 0.2f, 0.8f, 0.8f));
+                break;
+            case "about":
+                g.DrawEllipse(pen, R(0.06f, 0.06f, 0.94f, 0.94f));
+                g.DrawLine(pen, P(0.5f, 0.46f), P(0.5f, 0.72f));
+                using (var dot = new SolidBrush(color))
+                {
+                    float r = 0.07f * w;
+                    g.FillEllipse(dot, x + 0.5f * w - r, y + 0.3f * w - r, r * 2, r * 2);
+                }
+                break;
+        }
     }
 }
 
@@ -1051,6 +1104,29 @@ internal sealed class PriceHeader : Control
         CurrencyIcons.Changed += Invalidate;
     }
 
+    private Font PriceFont => WindowTheme.Mono(compact ? 14f : 20f, FontStyle.Bold);
+    private Font DetailFont => WindowTheme.Mono(compact ? 7.5f : 8f);
+    private Font TitleFont => compact ? WindowTheme.Display(12f) : WindowTheme.Display(17f);
+    private Font MetaFont => WindowTheme.Sans(compact ? 8.5f : 9.5f);
+
+    private static int Line(Font font) =>
+        TextRenderer.MeasureText("Ag01", font, Size.Empty, TextFormatFlags.NoPadding).Height;
+
+    /// <summary>
+    /// The height both the title block and the price block need at this DPI.
+    /// A fixed row height clipped the "typical · listings" line at 125–150 % scaling.
+    /// </summary>
+    public int MeasuredHeight
+    {
+        get
+        {
+            int top = this.Px(compact ? 8 : 6);
+            int price = top + Line(PriceFont) + this.Px(4) + Line(DetailFont);
+            int text = this.Px(compact ? 8 : 4) + Line(TitleFont) + this.Px(3) + Line(MetaFont);
+            return Math.Max(price, text) + this.Px(compact ? 8 : 6);
+        }
+    }
+
     public void Show(string title, string meta, TypicalPrice? typical, int total)
     {
         this.title = title;
@@ -1088,7 +1164,7 @@ internal sealed class PriceHeader : Control
         if (typical is not null)
         {
             string amount = WindowTheme.Amount(typical.Amount);
-            var big = WindowTheme.Mono(compact ? 15f : 20f, FontStyle.Bold);
+            var big = PriceFont;
             var unitFont = WindowTheme.Sans(compact ? 9f : 10.5f);
             string unit = typical.Currency;
             Size amountSize = TextRenderer.MeasureText(g, amount, big, Size.Empty, TextFormatFlags.NoPadding);
@@ -1099,6 +1175,7 @@ internal sealed class PriceHeader : Control
             priceWidth = iconSpace + amountSize.Width + this.Px(4) + unitSize.Width;
             int right = Width - pad;
             int top = this.Px(compact ? 8 : 6);
+            int amountHeight = Line(big);
             int x = right - priceWidth;
             if (image is not null)
             {
@@ -1112,21 +1189,22 @@ internal sealed class PriceHeader : Control
                 WindowTheme.Muted, TextFormatFlags.NoPadding);
             string detail = $"typical · {total:N0} listing{(total == 1 ? "" : "s")}";
             if (typical.Chaos is { } chaos) detail = $"{WindowTheme.Amount(chaos)} chaos · " + detail;
-            var detailFont = WindowTheme.Mono(compact ? 7.5f : 8f);
+            var detailFont = DetailFont;
             Size detailSize = TextRenderer.MeasureText(g, detail, detailFont, Size.Empty, TextFormatFlags.NoPadding);
-            TextRenderer.DrawText(g, detail, detailFont, new Point(right - detailSize.Width, top + amountSize.Height + this.Px(3)),
+            TextRenderer.DrawText(g, detail, detailFont, new Point(right - detailSize.Width, top + amountHeight + this.Px(4)),
                 WindowTheme.UpText, TextFormatFlags.NoPadding);
             priceWidth = Math.Max(priceWidth, detailSize.Width) + this.Px(16);
         }
 
-        var titleFont = compact ? WindowTheme.Display(12f) : WindowTheme.Display(17f);
+        var titleFont = TitleFont;
         int titleTop = this.Px(compact ? 8 : 4);
-        int titleHeight = titleFont.Height + this.Px(2);
-        var titleBox = new Rectangle(pad, titleTop, Math.Max(0, Width - pad * 2 - priceWidth), titleHeight);
-        WindowTheme.Text(g, title, titleFont, titleBox, WindowTheme.Foreground, TextFormatFlags.Top);
+        var titleBox = new Rectangle(pad, titleTop, Math.Max(0, Width - pad * 2 - priceWidth), Line(titleFont) + this.Px(2));
+        WindowTheme.Text(g, title, titleFont, titleBox, WindowTheme.Foreground, TextFormatFlags.Top | TextFormatFlags.NoPadding);
         var metaBox = new Rectangle(pad, titleBox.Bottom + this.Px(1), titleBox.Width, Math.Max(0, Height - titleBox.Bottom - this.Px(1)));
-        TextRenderer.DrawText(g, meta, WindowTheme.Sans(compact ? 8.5f : 9.5f), metaBox, WindowTheme.Secondary,
-            TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+        // The compact panel has room for one line; the desktop card may wrap to two.
+        TextRenderer.DrawText(g, meta, MetaFont, metaBox, WindowTheme.Secondary,
+            (compact ? TextFormatFlags.SingleLine : TextFormatFlags.WordBreak) |
+            TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }
 
     protected override void Dispose(bool disposing)

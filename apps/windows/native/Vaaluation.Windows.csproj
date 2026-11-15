@@ -6,7 +6,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>0.1.12</Version>
+    <Version>0.1.13</Version>
     <ApplicationIcon>ExileWorth.ico</ApplicationIcon>
     <AssemblyName>ExileWorth</AssemblyName>
     <!-- Controls are built in code; there is no designer to serialize properties for. -->

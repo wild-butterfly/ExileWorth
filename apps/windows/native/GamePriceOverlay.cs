@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace ExileWorth.Windows;
 
@@ -66,6 +67,45 @@ internal sealed class GamePriceOverlay : Form
     private Uri? tradeUrl;
     private bool loadingTrades, sending, busy, hasItem;
     private Point? drag;
+    private MouseHook? mouseCallback;
+    private nint mouseHook;
+
+    protected override void OnVisibleChanged(EventArgs e)
+    {
+        base.OnVisibleChanged(e);
+        if (!Visible)
+        {
+            StopWatchingClicks();
+            return;
+        }
+
+        mouseCallback ??= ObserveClick;
+        mouseHook = SetWindowsHookEx(14, mouseCallback, GetModuleHandle(null), 0); // WH_MOUSE_LL
+    }
+
+    private nint ObserveClick(int code, nint message, nint data)
+    {
+        if (code >= 0 && (message == 0x0201 || message == 0x0204 || message == 0x0207))
+        {
+            var point = new Point(Marshal.ReadInt32(data), Marshal.ReadInt32(data, sizeof(int)));
+            if (!Bounds.Contains(point) && IsHandleCreated)
+                BeginInvoke(() => { if (Visible && !Bounds.Contains(point)) Hide(); });
+        }
+        return CallNextHookEx(0, code, message, data);
+    }
+
+    private void StopWatchingClicks()
+    {
+        if (mouseHook == 0) return;
+        UnhookWindowsHookEx(mouseHook);
+        mouseHook = 0;
+    }
+
+    private delegate nint MouseHook(int code, nint message, nint data);
+    [DllImport("user32.dll")] private static extern nint SetWindowsHookEx(int id, MouseHook callback, nint module, uint thread);
+    [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(nint hook);
+    [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hook, int code, nint message, nint data);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern nint GetModuleHandle(string? name);
 
     protected override bool ShowWithoutActivation => true;
 
@@ -167,7 +207,7 @@ internal sealed class GamePriceOverlay : Form
         listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
 
         priceLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(54)));
+        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, header.MeasuredHeight));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(30)));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -290,6 +330,7 @@ internal sealed class GamePriceOverlay : Form
         busy = view.Busy;
         hasItem = view.HasItem;
         header.Show(view.Title, view.Meta, view.Typical, view.Total);
+        if (priceLayout.RowStyles[0].Height != header.MeasuredHeight) priceLayout.RowStyles[0].Height = header.MeasuredHeight;
         league.Text = leagueName ?? "";
         if (!ReferenceEquals(listings.Listings, view.Listings)) listings.Listings = view.Listings;
         listings.Placeholder = view.Busy ? "Searching…" : message;
@@ -395,6 +436,7 @@ internal sealed class GamePriceOverlay : Form
     {
         if (disposing)
         {
+            StopWatchingClicks();
             CurrencyIcons.Changed -= ShowCurrency;
             WindowTheme.ThemeChanged -= OnThemeChanged;
             tradeWorker.Dispose();
