@@ -267,7 +267,7 @@ internal sealed class DesktopPages : IDisposable
         plus.Margin = new Padding(0, 0, 8, 0);
         stack.Add(Ui.Section("Price-check shortcut",
             "Press it while hovering an item in Path of Exile. It only works while the game is in front, " +
-            "and ExileWorth then sends the game's own Ctrl + Alt + C once to copy the item.",
+            "and ExileWorth copies the item once. Shortcuts that use Alt may trigger the game’s Pin Popups binding.",
             Ui.Row(modifier, plus, key, reset)));
 
         // Accent colour.
@@ -395,13 +395,12 @@ internal sealed class DesktopPages : IDisposable
             "Messages for the Thanks and Reply buttons on trade whispers.",
             thanksLabel, thanksField, repliesLabel, repliesHint, repliesList, addReply));
 
-        var plainCopy = new Toggle { Checked = current.UsePlainCopy, AccessibleName = "Copy without Alt" };
-        plainCopy.CheckedChanged += (_, _) => Apply(current with { UsePlainCopy = plainCopy.Checked });
+        var advancedCopy = new Toggle { Checked = current.AdvancedItemCopy == true, AccessibleName = "Use advanced item copy" };
+        advancedCopy.CheckedChanged += (_, _) => Apply(current with { AdvancedItemCopy = advancedCopy.Checked });
         stack.Add(Ui.Section("Item copy",
-            "If the game pins its own tooltip, move Pin Popups off Alt under Path of Exile’s Options → Input. " +
-            "To avoid Alt entirely, use a Ctrl + Shift price-check shortcut and turn on Copy without Alt.",
-            SwitchRow(plainCopy, "Copy without Alt",
-                "Uses Ctrl + C. Advanced copy may provide more item details for matching modifiers.")));
+            "Standard copy uses Ctrl + C. The default Ctrl + Shift + D shortcut keeps Alt out of the price check.",
+            SwitchRow(advancedCopy, "Use advanced item copy",
+                "Uses Ctrl + Alt + C for extra modifier details. This may pin the game’s tooltip if Pin Popups uses Alt.")));
 
         // Data.
         var folder = new FlatButton(ButtonKind.Secondary, "Open settings folder");

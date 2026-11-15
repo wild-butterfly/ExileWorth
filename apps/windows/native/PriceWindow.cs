@@ -91,7 +91,7 @@ internal sealed class PriceWindow : Form
 
         paste.Click += async (_, _) => await RunAsync(async () =>
         {
-            if (!Clipboard.ContainsText()) throw new InvalidOperationException("Copy item text from Path of Exile first (Ctrl + Alt + C).");
+            if (!Clipboard.ContainsText()) throw new InvalidOperationException("Copy item text from Path of Exile first (Ctrl + C).");
             await CheckAsync(Clipboard.GetText(), null);
         });
         search.Click += async (_, _) => await RunAsync(() => CheckAsync(null, filters.Selected));
@@ -385,7 +385,7 @@ internal sealed class PriceWindow : Form
         currentListings = [];
         Render();
         string? text;
-        try { text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key, preferences.UsePlainCopy); }
+        try { text = await GameHotkey.CopyItemAsync(game, preferences.Shortcut.Key, preferences.AdvancedItemCopy != true); }
         finally
         {
             if (!IsDisposed && GameHotkey.ForegroundGame() == game)

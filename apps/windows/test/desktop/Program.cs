@@ -181,7 +181,7 @@ internal static class Program
         {
             if ((m.Msg == 0x0100 || m.Msg == 0x0104) &&
                 m.WParam == (nint)Keys.C && GetKeyState((int)Keys.ControlKey) < 0 &&
-                GetKeyState((int)Keys.Menu) < 0)
+                GetKeyState((int)Keys.Menu) >= 0 && GetKeyState((int)Keys.ShiftKey) >= 0)
             {
                 ItemCopied?.Invoke();
                 return;
@@ -229,8 +229,8 @@ internal static class Program
 
     private static void SendChord(Keys key)
     {
-        foreach (Keys k in new[] { Keys.ControlKey, Keys.Menu, key }) keybd_event((byte)k, 0, 0, 0);
-        foreach (Keys k in new[] { key, Keys.Menu, Keys.ControlKey }) keybd_event((byte)k, 0, 2, 0);
+        foreach (Keys k in new[] { Keys.ControlKey, Keys.ShiftKey, key }) keybd_event((byte)k, 0, 0, 0);
+        foreach (Keys k in new[] { key, Keys.ShiftKey, Keys.ControlKey }) keybd_event((byte)k, 0, 2, 0);
     }
 
     private static bool IsTopmost(nint window) => (GetWindowLongW(window, -20) & 8) != 0;
