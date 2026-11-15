@@ -177,28 +177,27 @@ internal static class Program
     private sealed class GameFixture : Form
     {
         public event Action? ItemCopied;
-        protected override bool ProcessCmdKey(ref Message message, Keys keyData)
+        // Observe ordinary Ctrl+C before WinForms routes it to focused
+        // controls or runs its dialog-key preprocessing.
+        protected override void OnShown(EventArgs e)
         {
-            if (keyData == (Keys.Control | Keys.C))
-            {
-                ItemCopied?.Invoke();
-                return true;
-            }
-            return base.ProcessCmdKey(ref message, keyData);
+            Application.AddMessageFilter(new CopyMessageFilter(this));
+            base.OnShown(e);
         }
 
-        protected override void WndProc(ref Message m)
+        private sealed class CopyMessageFilter(GameFixture game) : IMessageFilter
         {
-            if ((m.Msg == 0x0100 || m.Msg == 0x0104) &&
-                m.WParam == (nint)Keys.C && GetKeyState((int)Keys.ControlKey) < 0 &&
-                GetKeyState((int)Keys.Menu) >= 0 && GetKeyState((int)Keys.ShiftKey) >= 0)
+            public bool PreFilterMessage(ref Message message)
             {
-                ItemCopied?.Invoke();
-                return;
+                if (message.Msg != 0x0100 || message.WParam != (nint)Keys.C)
+                    return false;
+                var modifiers = Control.ModifierKeys;
+                Console.WriteLine($"Fixture received C with {modifiers}.");
+                if (modifiers != Keys.Control || GetForegroundWindow() != game.Handle) return false;
+                game.ItemCopied?.Invoke();
+                return true;
             }
-            base.WndProc(ref m);
         }
-        [DllImport("user32.dll")] private static extern short GetKeyState(int key);
     }
 
     private static void Assert(bool condition, string message)
