@@ -126,7 +126,7 @@ internal sealed class GameHotkey : IDisposable
             Down(Keys.ShiftKey) || Down(Keys.LWin) || Down(Keys.RWin) || Down(trigger)) return null;
         uint start = GetClipboardSequenceNumber();
         Input[] input = plainCopy
-            ? [ScanKey(0x1D, false), ScanKey(0x2E, false), ScanKey(0x2E, true), ScanKey(0x1D, true)]
+            ? [Key(Keys.ControlKey, false), Key(Keys.C, false), Key(Keys.C, true), Key(Keys.ControlKey, true)]
             : [
             Key(Keys.ControlKey, false), Key(Keys.Menu, false), Key(Keys.C, false),
             Key(Keys.C, true), Key(Keys.Menu, true), Key(Keys.ControlKey, true)
@@ -182,14 +182,6 @@ internal sealed class GameHotkey : IDisposable
     };
 
     private static bool Down(Keys key) => GetAsyncKeyState((int)key) < 0;
-
-    // Left Ctrl and C use hardware scan codes so the game receives the
-    // same input path as the physical chord.
-    private static Input ScanKey(ushort scan, bool up) => new()
-    {
-        Type = 1,
-        Data = new InputData { Keyboard = new KeyboardInput { Scan = scan, Flags = up ? 0xAu : 0x8u } }
-    };
 
     private static Input Key(Keys key, bool up) => new()
     {

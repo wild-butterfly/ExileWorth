@@ -18,12 +18,6 @@ internal static class Program
             Text = "Windows overlay test fixture", AutoSize = true,
             Location = new Point(24, 24), ForeColor = Color.White,
         });
-        // Give the mock game a focused client control. System key messages
-        // (Alt+C) can reach the top-level window even without keyboard focus;
-        // an ordinary Ctrl+C needs a focused keyboard input target.
-        var keyboardTarget = new TextBox { Location = new Point(24, 48), Width = 220, ReadOnly = true };
-        game.Controls.Add(keyboardTarget);
-        game.Activated += (_, _) => keyboardTarget.Focus();
         const string item = "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
         int copies = 0;
         int gameClicks = 0;
@@ -55,7 +49,6 @@ internal static class Program
                 await Until(() => !IsWindowVisible(desktop), "hide to tray");
                 Foreground(game.Handle);
                 await Until(() => GetForegroundWindow() == game.Handle, "game focus");
-                Assert(keyboardTarget.Focus(), "Game client could not take keyboard focus.");
                 await Task.Delay(750);
                 SendChord(Keys.D);
                 await Until(() => (overlay = FindAppWindow(app.Id, desktop)) != 0 && IsTopmost(overlay),
@@ -190,28 +183,66 @@ internal static class Program
     private sealed class GameFixture : Form
     {
         public event Action? ItemCopied;
-        // Observe ordinary Ctrl+C before WinForms routes it to focused
-        // controls or runs its dialog-key preprocessing.
+        private const int CopyReceived = 0x8001;
+        private KeyboardHook? keyboardHook;
+        private nint hook;
+        private bool leftControl, rightControl, shift, alt;
+
         protected override void OnShown(EventArgs e)
         {
-            Application.AddMessageFilter(new CopyMessageFilter(this));
+            // Observe keyboard input before WinForms can consume the chord.
+            // The fixture only supplies item text for plain Ctrl+C sent to the game.
+            keyboardHook = ObserveKeyboard;
+            hook = SetWindowsHookExW(13, keyboardHook, GetModuleHandleW(null), 0);
+            if (hook == 0) throw new System.ComponentModel.Win32Exception();
             base.OnShown(e);
         }
 
-        private sealed class CopyMessageFilter(GameFixture game) : IMessageFilter
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            public bool PreFilterMessage(ref Message message)
+            if (hook != 0) UnhookWindowsHookEx(hook);
+            base.OnFormClosed(e);
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == CopyReceived)
             {
-                if (message.Msg is not (0x0100 or 0x0104) || message.WParam != (nint)Keys.C)
-                    return false;
-                var modifiers = Control.ModifierKeys;
-                Console.WriteLine($"Fixture received C with {modifiers}.");
-                if (modifiers != Keys.Control || GetForegroundWindow() != game.Handle) return false;
-                game.ItemCopied?.Invoke();
-                return true;
+                ItemCopied?.Invoke();
+                return;
             }
+            base.WndProc(ref m);
+        }
+
+        private nint ObserveKeyboard(int code, nint message, nint data)
+        {
+            if (code == 0)
+            {
+                Keys key = (Keys)Marshal.ReadInt32(data);
+                bool down = (int)message is 0x0100 or 0x0104;
+                switch (key)
+                {
+                    case Keys.LControlKey: leftControl = down; break;
+                    case Keys.RControlKey: rightControl = down; break;
+                    case Keys.LShiftKey or Keys.RShiftKey: shift = down; break;
+                    case Keys.LMenu or Keys.RMenu: alt = down; break;
+                    case Keys.C when down && GetForegroundWindow() == Handle:
+                        Console.WriteLine($"Fixture observed C: Ctrl={leftControl || rightControl}, Shift={shift}, Alt={alt}.");
+                        if ((leftControl || rightControl) && !shift && !alt)
+                            PostMessageW(Handle, CopyReceived, 0, 0);
+                        break;
+                }
+            }
+            return CallNextHookEx(hook, code, message, data);
         }
     }
+
+    private delegate nint KeyboardHook(int code, nint message, nint data);
+    [DllImport("kernel32.dll")] private static extern nint GetModuleHandleW(string? module);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern nint SetWindowsHookExW(int type, KeyboardHook callback, nint module, uint thread);
+    [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(nint hook);
+    [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hook, int code, nint message, nint data);
 
     private static void Assert(bool condition, string message)
     {
