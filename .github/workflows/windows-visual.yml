@@ -1,0 +1,62 @@
+name: Windows visual check
+
+# Screenshots the packaged Windows sidebar for review: the two previous
+# releases next to this branch, plus the sidebar painter at emulated
+# 100/125/150 % scale. Emulated scaling draws on a 96-DPI bitmap; it does not
+# change the runner's Windows display setting.
+on:
+  pull_request:
+    paths:
+      - 'apps/windows/**'
+      - '.github/workflows/windows-visual.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sidebar:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: npm ci
+      - run: npm run package:windows
+      - name: Capture released and branch builds
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $out = New-Item -ItemType Directory -Force dist/visual
+          dotnet build apps/windows/test/desktop/DesktopTest.csproj -c Release
+          $builds = @{ 'branch' = 'dist/ExileWorth-Windows-x64.zip' }
+          foreach ($tag in 'v0.1.12', 'v0.1.13') {
+            gh release download $tag --repo $env:GITHUB_REPOSITORY --pattern '*Windows-x64.zip' --dir "dist/$tag"
+            $builds[$tag] = (Get-ChildItem "dist/$tag/*.zip").FullName
+          }
+          foreach ($name in $builds.Keys) {
+            Expand-Archive -Path $builds[$name] -DestinationPath "dist/run-$name" -Force
+            $app = (Get-ChildItem "dist/run-$name" -Recurse -Filter ExileWorth.exe).DirectoryName
+            # Deterministic league and results; no network calls from the app.
+            Copy-Item apps/windows/test/desktop/worker-fixture.cjs "$app/worker.cjs"
+            dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -c Release --no-build -- `
+              --capture "$app/ExileWorth.exe" "$($out.FullName)/desktop-$name.png"
+            if ($LASTEXITCODE -ne 0) { throw "Capture failed for $name" }
+          }
+          $branch = (Get-ChildItem dist/run-branch -Recurse -Filter ExileWorth.exe).FullName
+          $render = Start-Process $branch -ArgumentList '--render-sidebar', "$($out.FullName)/render" -Wait -PassThru
+          Get-Content "$($out.FullName)/render/sidebar-fit.csv"
+          if ($render.ExitCode -ne 0) { throw 'A sidebar label does not fit at some scale' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Windows-sidebar-screenshots
+          path: dist/visual
+          if-no-files-found: error

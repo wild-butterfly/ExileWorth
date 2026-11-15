@@ -1,15 +1,20 @@
 const console = require('node:console');
 
 const { createInterface } = require('node:readline');
+const { setTimeout } = require('node:timers');
 
 const leagues = [{ id: 'Covens', text: 'Covens' }];
 const lines = createInterface({ input: process.stdin });
+let checks = 0;
+// Later lookups answer late, so the test can dismiss the overlay mid-search.
+const reply = (body) => setTimeout(() => console.log(body), checks > 1 ? 2500 : 0);
 lines.on('line', (line) => {
   const request = JSON.parse(line);
+  if (request.action === 'check') checks += 1;
   if (request.action === 'leagues') {
     console.log(JSON.stringify({ result: { leagues, selected: 'Covens' } }));
   } else if (request.text?.includes('Divine Orb')) {
-    console.log(
+    reply(
       JSON.stringify({
         result: {
           leagues,
@@ -32,6 +37,6 @@ lines.on('line', (line) => {
       }),
     );
   } else {
-    console.log(JSON.stringify({ error: 'The expected copy did not reach the worker.' }));
+    reply(JSON.stringify({ error: 'The expected copy did not reach the worker.' }));
   }
 });

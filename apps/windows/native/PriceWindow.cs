@@ -141,7 +141,8 @@ internal sealed class PriceWindow : Form
         brand.SetRowSpan(mark, 2);
         var name = Ui.Label("ExileWorth", WindowTheme.Sans(11f, FontStyle.Bold), WindowTheme.Foreground);
         name.Margin = new Padding(0, S(1), 0, 0);
-        var sub = Ui.Label("PRICE CHECK", WindowTheme.Mono(6.5f), WindowTheme.Dim);
+        // The version makes a stale copy left running in the tray easy to spot.
+        var sub = Ui.Label($"PRICE CHECK · v{Program.Version}", WindowTheme.Mono(6.5f), WindowTheme.Dim);
         sub.Margin = Padding.Empty;
         brand.Controls.Add(name, 1, 0);
         brand.Controls.Add(sub, 1, 1);

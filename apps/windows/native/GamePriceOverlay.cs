@@ -78,18 +78,26 @@ internal sealed class GamePriceOverlay : Form
             StopWatchingClicks();
             return;
         }
-
+        if (mouseHook != 0) return; // Never stack a second hook on a repeated show.
         mouseCallback ??= ObserveClick;
         mouseHook = SetWindowsHookEx(14, mouseCallback, GetModuleHandle(null), 0); // WH_MOUSE_LL
     }
 
+    /// <summary>
+    /// Watches clicks anywhere on screen without consuming them, so a click on
+    /// the game both closes this panel and still reaches the game.
+    /// </summary>
     private nint ObserveClick(int code, nint message, nint data)
     {
-        if (code >= 0 && (message == 0x0201 || message == 0x0204 || message == 0x0207))
+        if (code >= 0 && (message == 0x0201 || message == 0x0204 || message == 0x0207) && IsHandleCreated)
         {
-            var point = new Point(Marshal.ReadInt32(data), Marshal.ReadInt32(data, sizeof(int)));
-            if (!Bounds.Contains(point) && IsHandleCreated)
-                BeginInvoke(() => { if (Visible && !Bounds.Contains(point)) Hide(); });
+            // Low-level hook points are physical pixels. Asking which window is
+            // under the point stays correct when monitors use different scaling,
+            // where comparing them with Bounds (logical pixels) would not.
+            var point = new NativePoint(Marshal.ReadInt32(data), Marshal.ReadInt32(data, sizeof(int)));
+            nint target = WindowFromPhysicalPoint(point);
+            bool inside = target != 0 && GetAncestor(target, 2) == Handle; // GA_ROOT
+            if (!inside) BeginInvoke(() => { if (Visible) Hide(); });
         }
         return CallNextHookEx(0, code, message, data);
     }
@@ -101,6 +109,10 @@ internal sealed class GamePriceOverlay : Form
         mouseHook = 0;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly record struct NativePoint(int X, int Y);
+    [DllImport("user32.dll")] private static extern nint WindowFromPhysicalPoint(NativePoint point);
+    [DllImport("user32.dll")] private static extern nint GetAncestor(nint window, uint flags);
     private delegate nint MouseHook(int code, nint message, nint data);
     [DllImport("user32.dll")] private static extern nint SetWindowsHookEx(int id, MouseHook callback, nint module, uint thread);
     [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(nint hook);
@@ -436,6 +448,7 @@ internal sealed class GamePriceOverlay : Form
     {
         if (disposing)
         {
+            StopWatchingClicks();
             StopWatchingClicks();
             CurrencyIcons.Changed -= ShowCurrency;
             WindowTheme.ThemeChanged -= OnThemeChanged;

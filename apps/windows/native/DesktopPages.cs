@@ -399,7 +399,9 @@ internal sealed class DesktopPages : IDisposable
         stack.Add(Ui.Section("Item copy",
             "Path of Exile copies the advanced item description with Ctrl + Alt + C. If you rebound Highlight (Alt) " +
             "in the game's options, set it back for the shortcut to work. You can also copy an item yourself and use " +
-            "Check clipboard on the Price Check page."));
+            "Check clipboard on the Price Check page. If the game pins its own item tooltip when you price-check, " +
+            "open Options → Input in Path of Exile and move the Pin Popups binding off Alt. ExileWorth never sends " +
+            "Escape to close game windows for you."));
 
         // Data.
         var folder = new FlatButton(ButtonKind.Secondary, "Open settings folder");
