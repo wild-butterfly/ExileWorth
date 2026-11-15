@@ -18,7 +18,7 @@ import { isAppRoute, onItemCopied, onNavigate } from './native/VLEvents';
 import { SettingsProvider, useSettings } from './state/SettingsContext';
 import { usePermissions } from './hooks/usePermissions';
 import { Mark } from './components/Mark';
-import { openSystemSettings, requestAccessibility } from './native/VLPermissions';
+import { requestAccessibility } from './native/VLPermissions';
 import { AboutScreen } from './screens/AboutScreen';
 import { LogsScreen } from './screens/LogsScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
@@ -110,7 +110,6 @@ function Shell({ initialRoute }: { initialRoute: AppRoute }) {
           onPress={() => {
             if (armed) return;
             requestAccessibility().catch(() => {});
-            openSystemSettings('accessibility');
           }}
         >
           <View style={styles.statusHead}>

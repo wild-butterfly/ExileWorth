@@ -22,7 +22,7 @@ import {
 } from '@vaaluation/ui';
 import type { TrackedRequest } from '../hooks/useTradeRequests';
 import { sendChatCommand } from '../native/VLTrade';
-import { openSystemSettings, requestAccessibility } from '../native/VLPermissions';
+import { requestAccessibility } from '../native/VLPermissions';
 import { usePermissions } from '../hooks/usePermissions';
 
 function ageOf(iso: string): string {
@@ -109,7 +109,6 @@ export function TradeOverlay({
             style={styles.fixButton}
             onPress={() => {
               requestAccessibility().catch(() => {});
-              openSystemSettings('accessibility');
             }}
           >
             <Text style={styles.fixButtonText}>Grant…</Text>
@@ -127,7 +126,6 @@ export function TradeOverlay({
               style={styles.fixButton}
               onPress={() => {
                 requestAccessibility().catch(() => {});
-                openSystemSettings('accessibility');
               }}
             >
               <Text style={styles.fixButtonText}>Grant…</Text>

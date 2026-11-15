@@ -8,9 +8,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private var activationObserver: NSObjectProtocol?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
-    // Menu-bar app: no Dock icon, no app switcher entry (LSUIElement is also
-    // set in Info.plist; this keeps behavior correct when run from Xcode).
-    NSApp.setActivationPolicy(.accessory)
+    let mainMenu = NSMenu()
+    let appMenuItem = NSMenuItem()
+    let appMenu = NSMenu(title: "ExileWorth")
+    appMenu.addItem(
+      withTitle: "Quit ExileWorth",
+      action: #selector(NSApplication.terminate(_:)),
+      keyEquivalent: "q"
+    )
+    appMenuItem.submenu = appMenu
+    mainMenu.addItem(appMenuItem)
+    NSApp.mainMenu = mainMenu
 
     let host = ReactHost()
     reactHost = host
@@ -39,6 +47,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       queue: .main
     ) { [weak self] _ in
       self?.syncShortcutContext()
+      if let game = GameLocator.runningGame(), game.isActive {
+        AppDelegate.syncLogWatcher()
+      }
     }
     syncShortcutContext()
     let hotkeyErrors = HotkeyCenter.shared.applyFromSettings()
@@ -68,15 +79,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     AppDelegate.syncLogWatcher()
 
-    if !SettingsStore.shared.onboardingCompleted {
-      showSettingsWindow(route: "onboarding")
-    }
+    let route = SettingsStore.shared.onboardingCompleted ? "price-check" : "onboarding"
+    showSettingsWindow(route: route)
   }
 
-  /// Clicking the app in Finder, Launchpad or Spotlight while it is already
-  /// running would otherwise do nothing at all: there is no Dock icon and no
-  /// window to bring forward, so the app looks broken while working fine.
-  /// Opening the main window gives that click a visible result.
+  /// Reopen the desktop window when the user clicks the Dock icon.
   func applicationShouldHandleReopen(
     _ sender: NSApplication,
     hasVisibleWindows flag: Bool

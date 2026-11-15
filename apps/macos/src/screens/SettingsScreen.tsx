@@ -21,7 +21,7 @@ import {
   cancelCapture,
   captureNextKeyCombo,
 } from '../native/VLHotkeys';
-import { openSystemSettings, requestAccessibility } from '../native/VLPermissions';
+import { requestAccessibility } from '../native/VLPermissions';
 
 function formatCombo(combo: KeyCombo | null): string {
   if (combo === null) {
@@ -131,7 +131,6 @@ export function SettingsScreen() {
               style={styles.smallButton}
               onPress={() => {
                 requestAccessibility().catch(() => {});
-                openSystemSettings('accessibility');
               }}
             >
               <Text style={styles.smallButtonText}>Open System Settings</Text>

@@ -7,37 +7,11 @@ import { requestAccessibility } from '../native/VLPermissions';
 
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const { update } = useSettings();
-  const { status } = usePermissions();
-
-  const steps = [
-    {
-      title: 'ExileWorth lives in your menu bar',
-      body: 'There is no Dock icon. Click the scales icon in the menu bar to open settings, test parsing, or view logs.',
-    },
-    {
-      title: 'Price check with a shortcut',
-      body: 'Hover an item in Path of Exile and press ⌃D. ExileWorth copies the item (a single keystroke, exactly as if you pressed the game’s copy binding), parses it, and shows comparable listings.',
-    },
-    {
-      title: 'One permission, explained',
-      body: 'Sending that single keystroke requires the macOS Accessibility permission. ExileWorth never requests Screen Recording or Input Monitoring.',
-    },
-    {
-      title: 'Private by design',
-      body: 'No telemetry, no accounts. Network requests go only to official Path of Exile services, and your clipboard is never recorded or uploaded.',
-    },
-  ];
+  const { status, refresh } = usePermissions();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.heading}>Welcome to ExileWorth</Text>
-      {steps.map((step) => (
-        <View key={step.title} style={styles.step}>
-          <Text style={styles.stepTitle}>{step.title}</Text>
-          <Text style={styles.stepBody}>{step.body}</Text>
-        </View>
-      ))}
-
       <View style={styles.step}>
         <Text style={styles.stepTitle}>Accessibility permission</Text>
         {status?.accessibility === 'granted' ? (
@@ -47,9 +21,10 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         ) : (
           <View>
             <Text style={styles.stepBody}>
-              Grant it now, or later from Settings. macOS will show ExileWorth in System
-              Settings → Privacy &amp; Security → Accessibility; this screen updates
-              automatically once you return.
+              Allow ExileWorth to send the item-copy keystroke when you use the
+              price-check shortcut. In System Settings → Privacy &amp; Security, turn on
+              ExileWorth under Accessibility (called Device Control and Data Access on
+              newer macOS versions).
             </Text>
             <Pressable
               style={styles.secondaryButton}
@@ -57,11 +32,19 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
                 requestAccessibility().catch(() => {});
               }}
             >
-              <Text style={styles.secondaryButtonText}>Grant Accessibility…</Text>
+              <Text style={styles.secondaryButtonText}>Set Up Accessibility…</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryButton} onPress={refresh}>
+              <Text style={styles.secondaryButtonText}>Check Permission Again</Text>
             </Pressable>
           </View>
         )}
       </View>
+
+      <Text style={styles.stepBody}>
+        Hover over an item in Path of Exile and press Control + D to check its price. You
+        can also paste an item into the desktop app to check it manually.
+      </Text>
 
       <Pressable
         style={styles.button}
@@ -70,7 +53,11 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           onDone();
         }}
       >
-        <Text style={styles.buttonText}>Get Started</Text>
+        <Text style={styles.buttonText}>
+          {status?.accessibility === 'granted'
+            ? 'Get Started'
+            : 'Continue Without Shortcut'}
+        </Text>
       </Pressable>
     </ScrollView>
   );

@@ -12,6 +12,7 @@ final class GameLogWatcher {
   private static let candidatePaths: [String] = [
     "~/Library/Application Support/Path of Exile/Cache/Logs/Client.txt",
     "~/Library/Application Support/Path of Exile/logs/Client.txt",
+    "~/Library/Application Support/Steam/steamapps/common/Path of Exile/Cache/Logs/Client.txt",
     "~/Library/Application Support/Steam/steamapps/common/Path of Exile/logs/Client.txt",
   ]
 
@@ -43,13 +44,24 @@ final class GameLogWatcher {
     {
       return override
     }
-    for path in candidatePaths {
-      let expanded = (path as NSString).expandingTildeInPath
-      if FileManager.default.isReadableFile(atPath: expanded) {
-        return expanded
+    if let folder = GameLocator.runningGame()?.bundleURL?.deletingLastPathComponent() {
+      for relativePath in ["Cache/Logs/Client.txt", "logs/Client.txt"] {
+        let path = folder.appendingPathComponent(relativePath).path
+        if FileManager.default.isReadableFile(atPath: path) {
+          return path
+        }
       }
     }
-    return nil
+    return candidatePaths
+      .map { ($0 as NSString).expandingTildeInPath }
+      .compactMap { path -> (path: String, modified: Date)? in
+        guard FileManager.default.isReadableFile(atPath: path),
+          let attributes = try? FileManager.default.attributesOfItem(atPath: path),
+          let modified = attributes[.modificationDate] as? Date
+        else { return nil }
+        return (path, modified)
+      }
+      .max { $0.modified < $1.modified }?.path
   }
 
   private(set) var currentPath: String?
@@ -57,7 +69,6 @@ final class GameLogWatcher {
 
   @discardableResult
   func start() -> Bool {
-    guard source == nil else { return true }
     guard let path = Self.resolveLogPath() else {
       LogStore.shared.append(
         level: "warn",
@@ -67,6 +78,7 @@ final class GameLogWatcher {
       return false
     }
 
+    if source != nil && currentPath == path { return true }
     guard let handle = FileHandle(forReadingAtPath: path) else {
       LogStore.shared.append(
         level: "warn",
@@ -76,6 +88,7 @@ final class GameLogWatcher {
       return false
     }
 
+    if source != nil { stop() }
     currentPath = path
     self.handle = handle
     // Start at the end: past conversations are not ours to read.
@@ -90,10 +103,7 @@ final class GameLogWatcher {
     source.setEventHandler { [weak self] in
       self?.readAppendedLines()
     }
-    source.setCancelHandler { [weak self] in
-      try? self?.handle?.close()
-      self?.handle = nil
-    }
+    source.setCancelHandler { try? handle.close() }
     source.resume()
     self.source = source
 
@@ -106,9 +116,14 @@ final class GameLogWatcher {
   }
 
   func stop() {
-    source?.cancel()
-    source = nil
-    partial = ""
+    guard let source else { return }
+    source.cancel()
+    self.source = nil
+    currentPath = nil
+    queue.sync {
+      handle = nil
+      partial = ""
+    }
     LogStore.shared.append(
       level: "info",
       scope: "gamelog",
