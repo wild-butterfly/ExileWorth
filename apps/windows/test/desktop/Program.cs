@@ -113,6 +113,12 @@ internal static class Program
             {
                 Console.Error.WriteLine($"copies={copies}; foreground={GetForegroundWindow()}; game={game.Handle}; app={app?.Id}; exited={app?.HasExited}; exitCode={(app?.HasExited == true ? app.ExitCode : null)}");
                 Console.Error.WriteLine(error);
+                if (args.Length > 1 && app is { HasExited: false })
+                {
+                    nint shown = FindAppWindow(app.Id);
+                    if (shown != 0)
+                        CaptureOverlay(shown, Path.Combine(Path.GetDirectoryName(args[1])!, "windows-overlay-failure.png"));
+                }
                 Environment.ExitCode = 1;
             }
             finally
@@ -189,7 +195,7 @@ internal static class Program
         {
             public bool PreFilterMessage(ref Message message)
             {
-                if (message.Msg != 0x0100 || message.WParam != (nint)Keys.C)
+                if (message.Msg is not (0x0100 or 0x0104) || message.WParam != (nint)Keys.C)
                     return false;
                 var modifiers = Control.ModifierKeys;
                 Console.WriteLine($"Fixture received C with {modifiers}.");

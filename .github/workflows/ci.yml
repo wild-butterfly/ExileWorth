@@ -83,3 +83,9 @@ jobs:
             dist/windows-overlay.png
             dist/windows-desktop.png
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Windows-overlay-failure
+          path: dist/windows-overlay-failure.png
+          if-no-files-found: ignore
