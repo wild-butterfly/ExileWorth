@@ -159,8 +159,9 @@
               <strong>Applications</strong>.
             </li>
             <li>
-              Launch ExileWorth from Applications. It runs as a menu-bar app, so look in
-              the macOS menu bar rather than the Dock.
+              Open ExileWorth from Applications. If you already opened it from Downloads,
+              quit that copy first. You can quit it from Activity Monitor if its menu bar
+              icon is hidden.
             </li>
           </ol>
           <p>
@@ -177,14 +178,43 @@
           </p>
           <ol>
             <li>
-              Open
-              <strong>System Settings → Privacy &amp; Security → Accessibility</strong>.
+              Click <strong>Permission needed</strong> in ExileWorth. In
+              <strong>System Settings → Privacy &amp; Security</strong>, open
+              <strong>Accessibility</strong> or
+              <strong>Device Control and Data Access</strong>, depending on your macOS
+              version.
             </li>
             <li>
-              Add <code>/Applications/ExileWorth.app</code> if it is not listed, and
-              switch its permission on.
+              Turn on ExileWorth. If it is missing, click <strong>+</strong> below the app
+              list and choose <strong>ExileWorth.app</strong> from Applications.
             </li>
-            <li>Quit and reopen ExileWorth so it re-reads the permission.</li>
+            <li>
+              Return to ExileWorth and check that
+              <strong>Settings → Permissions</strong> shows <strong>Granted</strong>.
+            </li>
+          </ol>
+          <h3 id="permission-already-on">ExileWorth still says “Permission needed”</h3>
+          <p>
+            If the switch is already on, macOS may still have permission saved for a
+            different copy of ExileWorth. Give permission to the copy you actually open.
+          </p>
+          <ol>
+            <li>Quit ExileWorth. If it is hard to find, quit it in Activity Monitor.</li>
+            <li>
+              In the same System Settings list, select the ExileWorth row and click
+              <strong>−</strong> below the list.
+            </li>
+            <li>
+              Click <strong>+</strong> and select <strong>ExileWorth.app</strong> from
+              Applications. If you moved it into your personal Applications folder, press
+              <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd> in the picker and enter
+              <code>~/Applications</code>.
+            </li>
+            <li>
+              Turn on the switch, reopen that copy of ExileWorth, and confirm
+              <strong>Granted</strong> before testing <kbd>Control</kbd> + <kbd>D</kbd>
+              in Path of Exile.
+            </li>
           </ol>
           <p>The app does not require Screen Recording or Input Monitoring permission.</p>
         </section>
