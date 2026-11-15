@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Windows.Automation;
 
 internal static class Program
 {
@@ -34,7 +36,15 @@ internal static class Program
             Process? app = null;
             try
             {
-                app = Process.Start(args[0]) ?? throw new Exception("App could not start.");
+                string logFolder = Path.Combine(AppContext.BaseDirectory, "logs");
+                Directory.CreateDirectory(logFolder);
+                File.WriteAllText(Path.Combine(logFolder, "Client.txt"),
+                    "2026/11/15 21:00:00 123456 cffb0716 [INFO Client 1234] @From FixtureBuyer: Hi, I would like to buy your Goldrim listed for 1 chaos in Covens");
+                string verifiedReplies = Path.Combine(logFolder, "replies-verified");
+                File.Delete(verifiedReplies);
+                var start = new ProcessStartInfo(args[0]);
+                start.Environment["EXILEWORTH_TEST_REPLIES"] = verifiedReplies;
+                app = Process.Start(start) ?? throw new Exception("App could not start.");
                 await Until(() => FindAppWindow(app.Id) != 0, "app window");
                 nint desktop = FindAppWindow(app.Id);
                 nint overlay = 0;
@@ -44,6 +54,13 @@ internal static class Program
                 SendChord(Keys.D);
                 await Task.Delay(750);
                 Assert(copies == 0 && !IsTopmost(desktop), "Shortcut ran outside the game.");
+
+                InvokeButton(desktop, "Settings");
+                InvokeButton(desktop, "+ Add reply");
+                await Until(() => FindButton(desktop, "Remove reply 4") is not null, "added reply in Settings");
+                InvokeButton(desktop, "Remove reply 1");
+                await Until(() => FindButton(desktop, "Remove reply 4") is null, "removed reply in Settings");
+                InvokeButton(desktop, "Price Check");
 
                 PostMessageW(desktop, 0x0112, 0xF060, 0); // Close-to-tray must keep the shortcut registered.
                 await Until(() => !IsWindowVisible(desktop), "hide to tray");
@@ -91,13 +108,21 @@ internal static class Program
                 Assert(!IsWindowVisible(overlay), "A pending lookup reopened the dismissed overlay.");
                 Assert(GetForegroundWindow() == game.Handle, "The pending lookup took game focus.");
 
+                SendChord(Keys.D);
+                await Until(() => copies >= 3 && IsWindowVisible(overlay), "price overlay before opening Trades");
+                InvokeButton(overlay, "Trades");
+                await Until(() => File.Exists(verifiedReplies), "edited replies reaching the overlay trade worker");
+                Console.WriteLine("PASS: Settings add and remove propagated to the Trades overlay.");
+                Click(GameBackground(game.Handle));
+                await Until(() => !IsWindowVisible(overlay), "dismiss the Trades overlay");
+
                 ShowWindow(desktop, 4);
                 Foreground(desktop);
                 await Until(() => GetForegroundWindow() == desktop && !IsWindowVisible(overlay),
                     "overlay hidden after switching away");
                 SendChord(Keys.D);
                 await Task.Delay(750);
-                Assert(copies == 2, "Shortcut fired outside the game.");
+                Assert(copies == 3, "Shortcut fired outside the game.");
                 if (args.Length > 2)
                 {
                     // Hover the second sidebar row so the capture shows hovered and selected states.
@@ -243,6 +268,17 @@ internal static class Program
     private static extern nint SetWindowsHookExW(int type, KeyboardHook callback, nint module, uint thread);
     [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(nint hook);
     [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hook, int code, nint message, nint data);
+
+    private static AutomationElement? FindButton(nint window, string name) =>
+        AutomationElement.FromHandle(window).FindFirst(TreeScope.Descendants, new AndCondition(
+            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
+            new PropertyCondition(AutomationElement.NameProperty, name)));
+
+    private static void InvokeButton(nint window, string name)
+    {
+        var button = FindButton(window, name) ?? throw new InvalidOperationException($"Missing button: {name}");
+        ((InvokePattern)button.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+    }
 
     private static void Assert(bool condition, string message)
     {

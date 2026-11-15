@@ -73,7 +73,7 @@ internal static class Program
 internal static class SidebarRender
 {
     private static readonly (string Label, string Glyph)[] Rows =
-        [("Price Check", "search"), ("Trades", "trades"), ("Currency", "currency"), ("Settings", "settings"), ("About", "about")];
+        [("Price Check", "search"), ("Trades", "trades"), ("Currency", "currency"), ("Settings", "settings")];
 
     public static int Run(string folder)
     {

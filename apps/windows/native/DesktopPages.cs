@@ -43,7 +43,6 @@ internal sealed class DesktopPages : IDisposable
     public Control Settings { get; }
     public Control Currency { get; }
     public Control Trades { get; }
-    public Control About { get; }
     public League[] Available { get; private set; } = [];
 
     public DesktopPages(DesktopPreferences preferences, Action<DesktopPreferences> save,
@@ -57,7 +56,6 @@ internal sealed class DesktopPages : IDisposable
         Currency = BuildCurrency();
         Trades = BuildTrades();
         Settings = BuildSettings();
-        About = BuildAbout();
     }
 
     // ── Shared page frame ────────────────────────────────────────────────
@@ -270,60 +268,6 @@ internal sealed class DesktopPages : IDisposable
             "and ExileWorth copies the item once. Shortcuts that use Alt may trigger the game’s Pin Popups binding.",
             Ui.Row(modifier, plus, key, reset)));
 
-        // Accent colour.
-        var swatches = Ui.Row();
-        swatches.WrapContents = true;
-        swatches.MaximumSize = new Size(700, 0);
-        foreach (var theme in WindowTheme.Themes)
-        {
-            var chip = new FlatButton(ButtonKind.Chip, theme.Label)
-            {
-                Tag = theme.Id, Icon = WindowTheme.Swatch(theme.Accent, 16),
-                Selected = theme.Id == WindowTheme.ThemeName, Margin = new Padding(0, 0, 6, 6),
-            };
-            chip.Click += (_, _) =>
-            {
-                Apply(current with { Theme = theme.Id });
-                foreach (var other in swatches.Controls.OfType<FlatButton>()) other.Selected = Equals(other.Tag, theme.Id);
-            };
-            swatches.Controls.Add(chip);
-        }
-        stack.Add(Ui.Section("Accent colour",
-            "Tints buttons, tabs and highlights in this window and the in-game overlay. The ExileWorth mark stays red.",
-            swatches));
-
-        // League.
-        stack.Add(Ui.Section("Trade league",
-            "Prices come from this league's public trade listings. Private leagues need a sign-in, which ExileWorth deliberately does not ask for.",
-            leagueChips));
-        leagueChips.WrapContents = true;
-        leagueChips.MaximumSize = new Size(700, 0);
-
-        // Overlay.
-        var nearCursor = new Toggle { Checked = current.NearCursor, AccessibleName = "Open the overlay next to the cursor" };
-        nearCursor.CheckedChanged += (_, _) => Apply(current with { NearCursor = nearCursor.Checked });
-        stack.Add(Ui.Section("In-game overlay", null,
-            SwitchRow(nearCursor, "Open next to the cursor", "Otherwise the panel opens in the top-right corner of the game's screen."),
-            Ui.Label("The overlay never takes focus from the game, and hides itself when you switch to another app. " +
-                "Drag its top bar to move it.", WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true)));
-
-        // Startup.
-        var startup = new Toggle { Checked = StartsWithWindows(), AccessibleName = "Start with Windows" };
-        startup.CheckedChanged += (_, _) =>
-        {
-            try
-            {
-                SetStartsWithWindows(startup.Checked);
-                ShowFeedback(startup.Checked ? "ExileWorth will start in the tray when you sign in." : "Start with Windows turned off.");
-            }
-            catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
-            {
-                ShowFeedback("Windows did not allow changing the startup setting.", error: true);
-            }
-        };
-        stack.Add(Ui.Section("Startup", null,
-            SwitchRow(startup, "Start with Windows", "Opens quietly in the notification area, ready for the shortcut.")));
-
         // Trade replies.
         var thanksField = new TextField(DesktopPreferences.DefaultThanks) { Width = 420 };
         thanksField.Input.Text = current.ThanksMessage ?? "";
@@ -384,7 +328,7 @@ internal sealed class DesktopPages : IDisposable
             BuildReplies();
         });
         BuildReplies();
-        var repliesLabel = Ui.Label("Prepared replies", WindowTheme.Sans(9.5f), WindowTheme.Body);
+        var repliesLabel = Ui.Label("Quick replies", WindowTheme.Sans(9.5f), WindowTheme.Body);
         repliesLabel.Margin = new Padding(0, 14, 0, 2);
         var repliesHint = Ui.Label("Shown under Reply on each trade whisper. One press sends one message.",
             WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true);
@@ -392,8 +336,62 @@ internal sealed class DesktopPages : IDisposable
         var thanksLabel = Ui.Label("Thanks button", WindowTheme.Sans(9.5f), WindowTheme.Body);
         thanksLabel.Margin = new Padding(0, 0, 0, 6);
         stack.Add(Ui.Section("Trade replies",
-            "Messages for the Thanks and Reply buttons on trade whispers.",
+            "Edit, add, or remove replies used in the desktop Trades tab and the in-game overlay.",
             thanksLabel, thanksField, repliesLabel, repliesHint, repliesList, addReply));
+
+        // Accent colour.
+        var swatches = Ui.Row();
+        swatches.WrapContents = true;
+        swatches.MaximumSize = new Size(700, 0);
+        foreach (var theme in WindowTheme.Themes)
+        {
+            var chip = new FlatButton(ButtonKind.Chip, theme.Label)
+            {
+                Tag = theme.Id, Icon = WindowTheme.Swatch(theme.Accent, 16),
+                Selected = theme.Id == WindowTheme.ThemeName, Margin = new Padding(0, 0, 6, 6),
+            };
+            chip.Click += (_, _) =>
+            {
+                Apply(current with { Theme = theme.Id });
+                foreach (var other in swatches.Controls.OfType<FlatButton>()) other.Selected = Equals(other.Tag, theme.Id);
+            };
+            swatches.Controls.Add(chip);
+        }
+        stack.Add(Ui.Section("Accent colour",
+            "Tints buttons, tabs and highlights in this window and the in-game overlay. The ExileWorth mark stays red.",
+            swatches));
+
+        // League.
+        stack.Add(Ui.Section("Trade league",
+            "Prices come from this league's public trade listings. Private leagues need a sign-in, which ExileWorth deliberately does not ask for.",
+            leagueChips));
+        leagueChips.WrapContents = true;
+        leagueChips.MaximumSize = new Size(700, 0);
+
+        // Overlay.
+        var nearCursor = new Toggle { Checked = current.NearCursor, AccessibleName = "Open the overlay next to the cursor" };
+        nearCursor.CheckedChanged += (_, _) => Apply(current with { NearCursor = nearCursor.Checked });
+        stack.Add(Ui.Section("In-game overlay", null,
+            SwitchRow(nearCursor, "Open next to the cursor", "Otherwise the panel opens in the top-right corner of the game's screen."),
+            Ui.Label("The overlay never takes focus from the game, and hides itself when you switch to another app. " +
+                "Drag its top bar to move it.", WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true)));
+
+        // Startup.
+        var startup = new Toggle { Checked = StartsWithWindows(), AccessibleName = "Start with Windows" };
+        startup.CheckedChanged += (_, _) =>
+        {
+            try
+            {
+                SetStartsWithWindows(startup.Checked);
+                ShowFeedback(startup.Checked ? "ExileWorth will start in the tray when you sign in." : "Start with Windows turned off.");
+            }
+            catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+            {
+                ShowFeedback("Windows did not allow changing the startup setting.", error: true);
+            }
+        };
+        stack.Add(Ui.Section("Startup", null,
+            SwitchRow(startup, "Start with Windows", "Opens quietly in the notification area, ready for the shortcut.")));
 
         var advancedCopy = new Toggle { Checked = current.AdvancedItemCopy == true, AccessibleName = "Use advanced item copy" };
         advancedCopy.CheckedChanged += (_, _) => Apply(current with { AdvancedItemCopy = advancedCopy.Checked });
@@ -413,6 +411,13 @@ internal sealed class DesktopPages : IDisposable
         stack.Add(Ui.Section("Data",
             "Settings are stored on this PC only. ExileWorth reads the public trade API and your game's chat log; nothing is uploaded.",
             folder));
+        var github = new FlatButton(ButtonKind.Secondary, "GitHub ↗");
+        var issue = new FlatButton(ButtonKind.Ghost, "Report an issue ↗");
+        github.Click += (_, _) => Process.Start(new ProcessStartInfo(RepositoryUrl) { UseShellExecute = true });
+        issue.Click += (_, _) => Process.Start(new ProcessStartInfo($"{RepositoryUrl}/issues/new/choose") { UseShellExecute = true });
+        stack.Add(Ui.Section("Help", $"ExileWorth {Program.Version} for Path of Exile on Windows.",
+            Ui.Row(github, issue)));
+
         feedback.Margin = new Padding(2, 4, 0, 0);
         stack.Add(feedback);
 
@@ -478,38 +483,6 @@ internal sealed class DesktopPages : IDisposable
         else key.DeleteValue("ExileWorth", throwOnMissingValue: false);
     }
 
-    // ── About ────────────────────────────────────────────────────────────
-
-    private static Control BuildAbout()
-    {
-        var page = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill, ColumnCount = 1, BackColor = WindowTheme.Background,
-            Padding = new Padding(24, 28, 24, 20), AutoScroll = true,
-        };
-        page.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        var mark = page.Add(new BrandMark(64));
-        mark.Margin = new Padding(0, 0, 0, 12);
-        page.Add(Ui.Label("ExileWorth", WindowTheme.Display(20f), WindowTheme.Foreground)).Margin = Padding.Empty;
-        string version = Application.ProductVersion.Split('+')[0];
-        page.Add(Ui.Label($"Version {version} · Item price checking for Path of Exile on Windows.",
-            WindowTheme.Sans(9.5f), WindowTheme.Muted)).Margin = new Padding(0, 2, 0, 16);
-        page.Add(Ui.Section("How prices are found",
-            "ExileWorth searches the official trade site for items like yours and shows what sellers are asking, " +
-            "cheapest first. The typical price is the median of those asks. It is a guide, not a sale price."));
-        page.Add(Ui.Section("Privacy",
-            "No account, no sign-in, no telemetry. Requests go only to pathofexile.com and its image CDN, " +
-            "throttled to stay inside GGG's published rate limits. One key press sends at most one game action."));
-        var github = new FlatButton(ButtonKind.Secondary, "GitHub ↗");
-        var issue = new FlatButton(ButtonKind.Ghost, "Report an issue ↗");
-        github.Click += (_, _) => Process.Start(new ProcessStartInfo(RepositoryUrl) { UseShellExecute = true });
-        issue.Click += (_, _) => Process.Start(new ProcessStartInfo($"{RepositoryUrl}/issues/new/choose") { UseShellExecute = true });
-        page.Add(Ui.Row(github, issue)).Margin = new Padding(0, 4, 0, 16);
-        page.Add(Ui.Label("This product isn't affiliated with or endorsed by Grinding Gear Games in any way.",
-            WindowTheme.Sans(8f), WindowTheme.Faint, wrap: true));
-        return page;
-    }
-
     // ── League ───────────────────────────────────────────────────────────
 
     public void SetLeagues(League[] available, string? selected)
@@ -550,7 +523,6 @@ internal sealed class DesktopPages : IDisposable
         Settings.Dispose();
         Currency.Dispose();
         Trades.Dispose();
-        About.Dispose();
     }
 }
 

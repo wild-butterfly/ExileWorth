@@ -1,5 +1,6 @@
 const console = require('node:console');
 
+const { writeFileSync } = require('node:fs');
 const { createInterface } = require('node:readline');
 const { setTimeout } = require('node:timers');
 
@@ -13,6 +14,19 @@ lines.on('line', (line) => {
   if (request.action === 'check') checks += 1;
   if (request.action === 'leagues') {
     console.log(JSON.stringify({ result: { leagues, selected: 'Covens' } }));
+  } else if (request.action === 'trades') {
+    const expected = [
+      'Hi, one moment please.',
+      'Sorry, that one is already sold.',
+      'Hi, are you still interested?',
+    ];
+    if (
+      request.lines.some((line) => line.includes('@From FixtureBuyer:')) &&
+      JSON.stringify(request.replies) === JSON.stringify(expected)
+    ) {
+      writeFileSync(process.env.EXILEWORTH_TEST_REPLIES, 'verified');
+    }
+    console.log(JSON.stringify({ result: [] }));
   } else if (request.text?.includes('Divine Orb')) {
     reply(
       JSON.stringify({

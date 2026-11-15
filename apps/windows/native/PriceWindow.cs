@@ -102,7 +102,7 @@ internal sealed class PriceWindow : Form
         KeyDown += (_, e) =>
         {
             if (e.KeyCode == Keys.Escape) { Hide(); e.SuppressKeyPress = true; }
-            else if (e.Control && e.KeyCode is >= Keys.D1 and <= Keys.D5 && (int)(e.KeyCode - Keys.D1) < navigation.Count)
+            else if (e.Control && e.KeyCode is >= Keys.D1 and <= Keys.D9 && (int)(e.KeyCode - Keys.D1) < navigation.Count)
             {
                 ShowPage(navigation[e.KeyCode - Keys.D1].Page);
                 e.SuppressKeyPress = true;
@@ -153,13 +153,13 @@ internal sealed class PriceWindow : Form
         foreach (var (label, glyph, page) in new (string, string, Control)[]
         {
             ("Price Check", "search", pricePage), ("Trades", "trades", pages.Trades), ("Currency", "currency", pages.Currency),
-            ("Settings", "settings", pages.Settings), ("About", "about", pages.About),
+            ("Settings", "settings", pages.Settings),
         })
         {
             var button = new FlatButton(ButtonKind.Nav, label)
             {
                 Glyph = glyph, Dock = DockStyle.Top, Height = S(38),
-                Hint = navigation.Count < 5 ? $"Ctrl+{navigation.Count + 1}" : null,
+                Hint = $"Ctrl+{navigation.Count + 1}",
             };
             button.Click += (_, _) => ShowPage(page);
             navigation.Add((button, page));
@@ -293,7 +293,7 @@ internal sealed class PriceWindow : Form
         WindowTheme.Repaint(this);
         // Hidden pages are not children of the window, so repaint them too.
         WindowTheme.Repaint(pricePage);
-        foreach (var page in new[] { pages.Trades, pages.Currency, pages.Settings, pages.About }) WindowTheme.Repaint(page);
+        foreach (var page in new[] { pages.Trades, pages.Currency, pages.Settings }) WindowTheme.Repaint(page);
     }
 
     private void ShowPage(Control page)
