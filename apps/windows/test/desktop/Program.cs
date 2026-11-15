@@ -177,6 +177,16 @@ internal static class Program
     private sealed class GameFixture : Form
     {
         public event Action? ItemCopied;
+        protected override bool ProcessCmdKey(ref Message message, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.C))
+            {
+                ItemCopied?.Invoke();
+                return true;
+            }
+            return base.ProcessCmdKey(ref message, keyData);
+        }
+
         protected override void WndProc(ref Message m)
         {
             if ((m.Msg == 0x0100 || m.Msg == 0x0104) &&
