@@ -24,7 +24,7 @@ function ageOf(iso: string): string {
   return `${Math.round(minutes / 60)}h ago`;
 }
 
-export function TradeScreen() {
+export function TradeScreen({ onHistory }: { onHistory: () => void }) {
   const { settings, update } = useSettings();
   const enabled = settings.tradeWhispersEnabled;
   const { requests, error, watching, markDone, clear } = useTradeRequests(enabled);
@@ -54,6 +54,9 @@ export function TradeScreen() {
               : 'Turn on to see incoming trade whispers.'}
           </Text>
         </View>
+        <Pressable style={styles.button} onPress={onHistory}>
+          <Text style={styles.buttonText}>History</Text>
+        </Pressable>
         <Pressable
           style={[styles.button, enabled && styles.buttonActive]}
           onPress={() => update({ tradeWhispersEnabled: !enabled })}

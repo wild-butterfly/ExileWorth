@@ -39,10 +39,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { route: 'price-check', label: 'Price Check', glyph: '◈', key: '⌘1' },
   { route: 'trade', label: 'Trades', glyph: '⇄', key: '⌥2' },
   { route: 'currency', label: 'Currency', glyph: '◆', key: '◆3' },
-  { route: 'history', label: 'History', glyph: '↺', key: '↺4' },
   { route: 'settings', label: 'Settings', glyph: '⚙', key: '' },
-  { route: 'logs', label: 'Logs', glyph: '≡', key: '' },
-  { route: 'about', label: 'About', glyph: '◍', key: '' },
 ];
 
 function Shell({ initialRoute }: { initialRoute: AppRoute }) {
@@ -128,7 +125,7 @@ function Shell({ initialRoute }: { initialRoute: AppRoute }) {
 
       <View style={styles.main}>
         {route === 'price-check' ? <PriceCheckScreen /> : null}
-        {route === 'trade' ? <TradeScreen /> : null}
+        {route === 'trade' ? <TradeScreen onHistory={() => setRoute('history')} /> : null}
         {route === 'currency' ? <CurrencyScreen /> : null}
         {route === 'history' ? <HistoryScreen /> : null}
         {route === 'settings' ? <SettingsScreen /> : null}
