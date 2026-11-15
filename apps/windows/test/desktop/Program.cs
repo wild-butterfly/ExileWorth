@@ -55,6 +55,7 @@ internal static class Program
                 await Until(() => !IsWindowVisible(desktop), "hide to tray");
                 Foreground(game.Handle);
                 await Until(() => GetForegroundWindow() == game.Handle, "game focus");
+                Assert(keyboardTarget.Focus(), "Game client could not take keyboard focus.");
                 await Task.Delay(750);
                 SendChord(Keys.D);
                 await Until(() => (overlay = FindAppWindow(app.Id, desktop)) != 0 && IsTopmost(overlay),
