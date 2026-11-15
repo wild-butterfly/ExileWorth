@@ -69,6 +69,12 @@ internal static class Program
                 SendChord(Keys.D);
                 await Task.Delay(750);
                 Assert(copies == 1, "Shortcut fired outside the game.");
+                if (args.Length > 2)
+                {
+                    // The desktop window now shows the fixture result; capture it for review.
+                    await Task.Delay(400);
+                    CaptureOverlay(desktop, args[2]);
+                }
                 Console.WriteLine("PASS: compact overlay kept game focus and hid after switching away.");
             }
             catch (Exception error)

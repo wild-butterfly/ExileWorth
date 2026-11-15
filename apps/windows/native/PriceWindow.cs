@@ -151,14 +151,14 @@ internal sealed class PriceWindow : Form
         nav.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         foreach (var (label, glyph, page) in new (string, string, Control)[]
         {
-            ("Price Check", "◈", pricePage), ("Trades", "⇄", pages.Trades), ("Currency", "◆", pages.Currency),
-            ("Settings", "⚙", pages.Settings), ("About", "◍", pages.About),
+            ("Price Check", "search", pricePage), ("Trades", "trades", pages.Trades), ("Currency", "currency", pages.Currency),
+            ("Settings", "settings", pages.Settings), ("About", "about", pages.About),
         })
         {
             var button = new FlatButton(ButtonKind.Nav, label)
             {
                 Glyph = glyph, Dock = DockStyle.Top, Height = S(38),
-                Hint = navigation.Count < 5 ? $"Ctrl {navigation.Count + 1}" : null,
+                Hint = navigation.Count < 5 ? $"Ctrl+{navigation.Count + 1}" : null,
             };
             button.Click += (_, _) => ShowPage(page);
             navigation.Add((button, page));

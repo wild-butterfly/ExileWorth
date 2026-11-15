@@ -167,7 +167,7 @@ internal sealed class GamePriceOverlay : Form
         listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
 
         priceLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(54)));
+        priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, header.MeasuredHeight));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, S(30)));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
         priceLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -290,6 +290,7 @@ internal sealed class GamePriceOverlay : Form
         busy = view.Busy;
         hasItem = view.HasItem;
         header.Show(view.Title, view.Meta, view.Typical, view.Total);
+        if (priceLayout.RowStyles[0].Height != header.MeasuredHeight) priceLayout.RowStyles[0].Height = header.MeasuredHeight;
         league.Text = leagueName ?? "";
         if (!ReferenceEquals(listings.Listings, view.Listings)) listings.Listings = view.Listings;
         listings.Placeholder = view.Busy ? "Searching…" : message;

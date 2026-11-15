@@ -20,7 +20,7 @@ import { PriceCheckEngine } from './engine';
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.12 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.13 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
 
