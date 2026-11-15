@@ -110,19 +110,19 @@ internal static class Program
 
                 SendChord(Keys.D);
                 await Until(() => copies >= 3 && IsWindowVisible(overlay), "price overlay before opening Trades");
-                InvokeButton(overlay, "Trades");
+                var tab = FindButton(overlay, "Trades") ?? throw new InvalidOperationException("Missing Trades tab.");
+                var tabBounds = tab.Current.BoundingRectangle;
+                Click(new Point((int)(tabBounds.Left + tabBounds.Width / 2), (int)(tabBounds.Top + tabBounds.Height / 2)));
                 await Until(() => File.Exists(verifiedReplies), "edited replies reaching the overlay trade worker");
                 await Task.Delay(350);
-                var list = AutomationElement.FromHandle(overlay).FindFirst(TreeScope.Descendants,
-                    new PropertyCondition(AutomationElement.NameProperty, "Trade requests"));
-                Assert(list is not null, "The Trades overlay did not show its request list.");
-                var area = list!.Current.BoundingRectangle;
+                Assert(GetForegroundWindow() == game.Handle, "Trades took focus from the game.");
                 int Scale(int points) => (int)Math.Round(points * GetDpiForWindow(overlay) / 96.0);
-                int chip = Math.Min(Scale(72), ((int)area.Width - Scale(8) - 2 * Scale(10) - 5 * Scale(4)) / 6);
-                Click(new Point((int)area.Left + Scale(10) + 4 * (chip + Scale(4)) + chip / 2,
-                    (int)area.Top + Scale(50)));
+                var list = new WindowPoint { X = Scale(8), Y = Scale(38) + Scale(30) + Scale(4) };
+                Assert(ClientToScreen(overlay, ref list), "Could not find the Trades list on screen.");
+                int chip = Math.Min(Scale(72), (Scale(430) - Scale(12) - Scale(8) - 2 * Scale(10) - 5 * Scale(4)) / 6);
+                Click(new Point(list.X + Scale(10) + 4 * (chip + Scale(4)) + chip / 2, list.Y + Scale(50)));
                 await Task.Delay(250);
-                Click(new Point((int)area.Left + Scale(40), (int)area.Top + Scale(72 - 4 + 2 * 24 + 10)));
+                Click(new Point(list.X + Scale(40), list.Y + Scale(72 - 4 + 2 * 24 + 10)));
                 await Until(() => game.SubmittedChat.Count > 0, "added reply typed and submitted to the game fixture");
                 Assert(game.SubmittedChat.SequenceEqual(["@FixtureBuyer Hi, are you still interested?"]),
                     "The overlay did not send exactly the added reply.");

@@ -8,7 +8,7 @@ const leagues = [{ id: 'Covens', text: 'Covens' }];
 const lines = createInterface({ input: process.stdin });
 let checks = 0;
 // Later lookups answer late, so the test can dismiss the overlay mid-search.
-const reply = (body) => setTimeout(() => console.log(body), checks > 1 ? 2500 : 0);
+const reply = (body) => setTimeout(() => console.log(body), checks === 2 ? 2500 : 0);
 lines.on('line', (line) => {
   const request = JSON.parse(line);
   if (request.action === 'check') checks += 1;
