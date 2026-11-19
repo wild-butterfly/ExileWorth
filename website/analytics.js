@@ -1,6 +1,7 @@
 /* global document, window, URL */
 (() => {
   const measurementId = 'G-1EXW8M182D';
+  const containerId = 'GTM-T2HCNTCG';
   const preferenceKey = 'exileworth-website-analytics';
   const scriptUrl = document.currentScript?.src;
   const privacyUrl = new URL('privacy/', scriptUrl || window.location.href).href;
@@ -27,15 +28,17 @@
       ad_user_data: 'denied',
       ad_personalization: 'denied',
     });
-    window.gtag('js', new Date());
-    window.gtag('config', measurementId, {
+    window.gtag('set', {
       allow_google_signals: false,
       allow_ad_personalization_signals: false,
       page_location: window.location.origin + window.location.pathname,
     });
+    // This property's Google tag was provisioned as a Tag Manager container.
+    // The published container initializes GA4 and its internal-traffic rule.
+    window.gtag('js', new Date());
     const script = document.createElement('script');
     script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${containerId}`;
     document.head.append(script);
   }
 
