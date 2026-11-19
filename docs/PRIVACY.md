@@ -9,6 +9,13 @@ Nothing. ExileWorth has **no telemetry, no analytics, no crash reporting, and
 no accounts**. No data about you or your usage is transmitted to the ExileWorth
 project.
 
+## Website analytics
+
+The statements above describe the desktop apps. The ExileWorth website separately
+uses optional Google Analytics to measure visits and download-link clicks, only
+after a visitor accepts analytics. It does not measure app installations or app
+usage. See the [website privacy notice](https://wild-butterfly.github.io/ExileWorth/privacy/).
+
 ## Network requests
 
 ExileWorth talks only to official Path of Exile services:
