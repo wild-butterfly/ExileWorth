@@ -174,7 +174,14 @@
               <p>Price check · in game</p>
             </div>
             <img
-              src="./assets/price-check.png"
+              src="./assets/price-check-1600.webp"
+              srcset="
+                ./assets/price-check-800.webp   800w,
+                ./assets/price-check-1600.webp 1600w
+              "
+              sizes="(max-width: 980px) calc(100vw - 40px), 60vw"
+              fetchpriority="high"
+              decoding="async"
               alt="ExileWorth showing Path of Exile price listings beside a Dusktoe item in the game"
               width="1946"
               height="968"
@@ -375,7 +382,10 @@
               </div>
               <img
                 class="secondary-shot"
-                src="./assets/trades.png?v=ingame"
+                src="./assets/trades-1600.webp"
+                srcset="./assets/trades-800.webp 800w, ./assets/trades-1600.webp 1600w"
+                sizes="(max-width: 980px) calc(100vw - 40px), 60vw"
+                decoding="async"
                 alt="ExileWorth Trades overlay in Path of Exile showing a simulated Goldrim whisper and trade controls"
                 width="1804"
                 height="1020"

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <script defer src="../../analytics.js?v=2"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Install the PoE Price Checker on Windows | ExileWorth</title>
+    <title>Install the PoE 1 Price Checker on Windows | ExileWorth</title>
     <meta
       name="description"
       content="Download and install ExileWorth on Windows 11 x64 to check Path of Exile 1 item prices and filter trade listings."
@@ -27,7 +27,7 @@
     <meta property="og:site_name" content="ExileWorth" />
     <meta
       property="og:title"
-      content="Install the PoE Price Checker on Windows | ExileWorth"
+      content="Install the PoE 1 Price Checker on Windows | ExileWorth"
     />
     <meta
       property="og:description"
@@ -50,7 +50,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="Install the PoE Price Checker on Windows | ExileWorth"
+      content="Install the PoE 1 Price Checker on Windows | ExileWorth"
     />
     <meta
       name="twitter:description"
@@ -127,7 +127,15 @@
             Set up the portable Path of Exile 1 price checker on Windows 11 x64.
           </p>
         </header>
-        <section>
+        <nav class="guide-toc" aria-label="On this page">
+          <strong>On this page</strong>
+          <ul>
+            <li><a href="#download">Download the Windows preview</a></li>
+            <li><a href="#price-check">Check an item price</a></li>
+            <li><a href="#troubleshooting">Windows troubleshooting</a></li>
+          </ul>
+        </nav>
+        <section id="download">
           <h2>Download and run the preview</h2>
           <p>
             Download the
@@ -139,7 +147,7 @@
             Microsoft Defender SmartScreen may show a warning.
           </p>
         </section>
-        <section>
+        <section id="price-check">
           <h2>Check an item price</h2>
           <ol>
             <li>
@@ -184,7 +192,67 @@
             for your prepared replies. Close game chat before using a trade action.
           </p>
         </section>
+        <section id="troubleshooting">
+          <h2>Windows troubleshooting</h2>
+          <h3>The app does not open from the ZIP</h3>
+          <p>
+            Extract the entire archive first and launch <code>ExileWorth.exe</code> from
+            that folder. Keep the bundled runtime and worker files beside it. The portable
+            preview is not an installer, and launching it inside the compressed-folder
+            view can leave required files unavailable.
+          </p>
+          <h3>The shortcut does not show a price</h3>
+          <p>
+            Bring the English PoE 1 client to the foreground, use Windowed or Windowed
+            Fullscreen mode, and hover an inventory item. Check the binding in Settings;
+            the Windows default is <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>,
+            rather than the Mac shortcut. Run both programs at the same privilege level.
+            Use Check clipboard to distinguish a shortcut problem from a search problem.
+          </p>
+          <h3>The window disappeared after closing it</h3>
+          <p>
+            Closing the desktop window hides ExileWorth to the system tray. Reopen it from
+            the tray before starting another copy.
+          </p>
+          <h3>The search is empty or prices look unexpected</h3>
+          <p>
+            Confirm the league, currency filter and modifier ranges. Empty results do not
+            prove that an item has no value. Read
+            <a href="../price-check/#example">the worked price-check example</a> for a
+            comparison method; its market advice applies to both platforms.
+          </p>
+          <figure class="guide-shot">
+            <img
+              src="../../assets/windows-desktop.webp"
+              alt="ExileWorth Windows desktop showing the league picker, modifier panel, asking prices and Check clipboard button"
+              width="1024"
+              height="747"
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>
+              The Windows price-check screen, using demonstration listings rather than
+              current market prices.
+            </figcaption>
+          </figure>
+          <p>
+            If the issue continues,
+            <a href="https://github.com/wild-butterfly/ExileWorth/issues/new/choose"
+              >report it on GitHub</a
+            >
+            with your Windows version, ExileWorth version, league, exact error and steps
+            to reproduce.
+          </p>
+        </section>
       </article>
+      <aside class="related-guides" aria-label="Related guides">
+        <h2>More guides</h2>
+        <ul>
+          <li><a href="../price-check/">How to compare PoE 1 item prices</a></li>
+          <li><a href="../install/">Install ExileWorth on Mac</a></li>
+          <li><a href="../">All ExileWorth guides</a></li>
+        </ul>
+      </aside>
     </main>
     <footer>
       <div class="shell footer-inner">
@@ -193,14 +261,12 @@
             <img src="../../assets/app-icon.png" alt="" width="34" height="34" />
             <span>ExileWorth</span>
           </a>
-          <p>Path of Exile price checking for macOS.</p>
+          <p>Path of Exile price checking for Mac and Windows.</p>
         </div>
         <div class="footer-links">
           <a href="../../privacy/">Website privacy</a>
           <button type="button" class="analytics-settings">Analytics choices</button>
-          <a href="https://github.com/wild-butterfly/ExileWorth/releases/latest"
-            >Download</a
-          >
+          <a href="../../#install">Download</a>
           <a href="../">Guides</a>
           <a href="https://github.com/wild-butterfly/ExileWorth/issues">Support</a>
           <a href="https://github.com/wild-butterfly/ExileWorth">Source</a>

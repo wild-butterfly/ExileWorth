@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - website/**
+      - scripts/check-website.py
       - assets/app-icon.svg
       - apps/macos/macos/Vaaluation-macOS/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png
       - docs/screenshots/**
@@ -37,9 +38,12 @@ jobs:
           mkdir -p _site/assets
           cp -R website/. _site/
           cp apps/macos/macos/Vaaluation-macOS/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png _site/assets/app-icon.png
+          # Keep PNG URLs available for older cached pages and external image links.
           cp docs/screenshots/price-check.png _site/assets/price-check.png
           cp docs/screenshots/trades.png _site/assets/trades.png
           cp docs/social-preview.jpg _site/assets/social-preview.jpg
+      - name: Validate website SEO and internal links
+        run: python3 scripts/check-website.py _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

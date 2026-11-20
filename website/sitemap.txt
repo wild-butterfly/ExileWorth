@@ -4,3 +4,4 @@ https://wild-butterfly.github.io/ExileWorth/guides/install/
 https://wild-butterfly.github.io/ExileWorth/guides/price-check/
 https://wild-butterfly.github.io/ExileWorth/guides/troubleshooting/
 https://wild-butterfly.github.io/ExileWorth/guides/windows/
+https://wild-butterfly.github.io/ExileWorth/privacy/
