@@ -487,7 +487,7 @@ internal abstract class ScrollList : Control
     private int ViewHeight => Math.Max(0, Height - HeaderHeight);
     private int MaxOffset => Math.Max(0, ContentHeight - ViewHeight);
 
-    private int TopOf(int index)
+    protected int TopOf(int index)
     {
         int top = 0;
         for (int row = 0; row < index; row++) top += HeightOf(row);
@@ -745,6 +745,55 @@ internal sealed class ModifierView : ScrollList
 {
     private readonly List<(Modifier Modifier, bool Enabled)> items = [];
     private readonly bool compact;
+    private readonly List<Modifier> sourceItems = [];
+    private readonly ToolTip modifierTip = new() { InitialDelay = 250, ShowAlways = true };
+    private bool combined;
+    public bool HasCombinedResistance => sourceItems.Any(item => item.CombinedKeys is { Length: > 0 });
+    public bool CombinedResistance => combined;
+
+    private void Snapshot()
+    {
+        foreach (var (modifier, enabled) in items)
+        {
+            int index = sourceItems.FindIndex(item => item.Key == modifier.Key);
+            if (index >= 0) sourceItems[index] = modifier with { Enabled = enabled };
+        }
+    }
+
+    public void ToggleCombinedResistance()
+    {
+        Snapshot();
+        var group = sourceItems.FirstOrDefault(item => item.CombinedKeys is { Length: > 0 });
+        if (group is null) return;
+        bool wasEnabled = combined ? group.Enabled : sourceItems.Any(item => group.CombinedKeys!.Contains(item.Key) && item.Enabled);
+        combined = !combined;
+        for (int index = 0; index < sourceItems.Count; index++)
+        {
+            var item = sourceItems[index];
+            if (item.Key == group.Key) sourceItems[index] = item with { Enabled = combined && wasEnabled };
+            else if (group.CombinedKeys!.Contains(item.Key)) sourceItems[index] = item with { Enabled = !combined && wasEnabled };
+        }
+        RebuildRows();
+        Changed?.Invoke();
+    }
+
+    public void ApplyPreset(int percent)
+    {
+        foreach (var (row, field) in inputs)
+        {
+            var (modifier, enabled) = items[row];
+            if (!enabled || modifier.Value is not double value) continue;
+            field.Input.Text = Math.Round(value - Math.Abs(value) * percent / 100, 2, MidpointRounding.AwayFromZero).ToString("0.########", Numbers);
+        }
+        Changed?.Invoke();
+    }
+
+    public bool MatchesPreset(int percent) => items.Any(item => item.Enabled && item.Modifier.Value is not null) &&
+        items.Where(item => item.Enabled && item.Modifier.Value is not null).All(item =>
+            Math.Abs((item.Modifier.Min ?? item.Modifier.Value!.Value) - Math.Round(item.Modifier.Value!.Value - Math.Abs(item.Modifier.Value.Value) * percent / 100, 2, MidpointRounding.AwayFromZero)) < 0.000001);
+
+    private readonly List<(int Row, TextField Field)> inputs = [];
+    private static readonly System.Globalization.CultureInfo Numbers = System.Globalization.CultureInfo.InvariantCulture;
 
     public ModifierView(bool compact = false)
     {
@@ -760,19 +809,112 @@ internal sealed class ModifierView : ScrollList
     }
 
     public event Action? Changed;
+    public event Action? EditingFinished;
+    public bool Editing => inputs.Any(entry => entry.Field.ContainsFocus);
+    public bool InputAtCursor => inputs.Any(entry => entry.Field.Visible &&
+        entry.Field.RectangleToScreen(entry.Field.ClientRectangle).Contains(Cursor.Position));
+    public bool HasValidMinimums => inputs.All(entry => TryMinimum(entry.Field.Input.Text, out _));
+    private static bool TryMinimum(string text, out double value) =>
+        double.TryParse(text, System.Globalization.NumberStyles.Float, Numbers, out value) && double.IsFinite(value);
 
     public void SetItems(IEnumerable<Modifier> modifiers)
     {
+        sourceItems.Clear();
+        sourceItems.AddRange(modifiers);
+        combined = sourceItems.Any(item => item.CombinedKeys is { Length: > 0 } && item.Enabled);
+        RebuildRows();
+    }
+
+    private void RebuildRows()
+    {
+        foreach (var entry in inputs) entry.Field.Dispose();
+        inputs.Clear();
         items.Clear();
-        items.AddRange(modifiers.Select(modifier => (modifier, modifier.Enabled)));
+        var group = sourceItems.FirstOrDefault(item => item.CombinedKeys is { Length: > 0 });
+        items.AddRange(sourceItems.Where(item => group is null ||
+            (combined ? !group.CombinedKeys!.Contains(item.Key) : item.Key != group.Key))
+            .Select(modifier => (modifier, modifier.Enabled)));
+        for (int row = 0; row < items.Count; row++)
+        {
+            int index = row;
+            var modifier = items[index].Modifier;
+            if (modifier.Value is not double original) continue;
+            var field = new TextField
+            {
+                Padding = new Padding(this.Px(6), this.Px(3), this.Px(6), 0),
+                TabIndex = index,
+            };
+            var input = field.Input;
+            input.Font = WindowTheme.Mono(compact ? 8.5f : 9f);
+            input.TextAlign = HorizontalAlignment.Right;
+            input.AccessibleName = $"Minimum {modifier.Label}";
+            input.AccessibleDescription = "Type a trade search minimum. Enter confirms; Escape restores the item value.";
+            modifierTip.SetToolTip(input, modifier.Tooltip ?? $"Minimum for {modifier.Label}. Item value: {original:0.##}. Enter confirms; Escape restores.");
+            input.Text = (modifier.Min ?? original).ToString("0.########", Numbers);
+            input.Enter += (_, _) => input.SelectAll();
+            input.TextChanged += (_, _) =>
+            {
+                bool valid = TryMinimum(input.Text, out double minimum);
+                input.ForeColor = valid ? WindowTheme.Foreground : WindowTheme.Down;
+                if (valid) items[index] = (items[index].Modifier with { Min = minimum }, true);
+                Invalidate();
+                Changed?.Invoke();
+            };
+            input.KeyDown += (_, e) =>
+            {
+                if (e.KeyCode is not (Keys.Enter or Keys.Escape)) return;
+                e.SuppressKeyPress = true;
+                if (e.KeyCode == Keys.Escape) input.Text = original.ToString("0.########", Numbers);
+                if (HasValidMinimums)
+                {
+                    Parent?.Focus();
+                    EditingFinished?.Invoke();
+                }
+            };
+            inputs.Add((index, field));
+            Controls.Add(field);
+        }
         Reset();
+        LayoutInputs();
+    }
+
+    private void LayoutInputs()
+    {
+        foreach (var (row, field) in inputs)
+        {
+            int top = TopOf(row);
+            field.Visible = top >= 0 && top + RowHeight <= Height;
+            field.SetBounds(Width - this.Px(87), top + this.Px(2), this.Px(72), RowHeight - this.Px(4));
+        }
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+        LayoutInputs();
     }
 
     public string[] Selected => items.Where(item => item.Enabled).Select(item => item.Modifier.Key).ToArray();
+    public Dictionary<string, double> Minimums => items
+        .Where(item => item.Modifier.Value is not null)
+        .ToDictionary(item => item.Modifier.Key, item => item.Modifier.Min ?? item.Modifier.Value!.Value);
     public int ItemCount => items.Count;
 
     protected override int Count => items.Count;
     protected override int RowHeight => this.Px(compact ? 24 : 30);
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        string? tooltip = HoverIndex >= 0 ? items[HoverIndex].Modifier.Tooltip : null;
+        if (modifierTip.GetToolTip(this) != tooltip) modifierTip.SetToolTip(this, tooltip);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) modifierTip.Dispose();
+        base.Dispose(disposing);
+    }
 
     protected override bool IsClickable(int index, Point local) => true;
 
@@ -794,9 +936,10 @@ internal sealed class ModifierView : ScrollList
             ]);
         }
         else WindowTheme.FillRounded(g, box, this.Px(4), WindowTheme.Sunken, WindowTheme.BorderStrong);
-        WindowTheme.Text(g, modifier.Label, WindowTheme.Sans(compact ? 8.5f : 9f),
-            Rectangle.FromLTRB(box.Right + this.Px(10), chip.Top, chip.Right - this.Px(8), chip.Bottom),
+        WindowTheme.Text(g, modifier.Key.StartsWith("property:") ? $"{modifier.Label}: {modifier.Value:0.##}" : modifier.Label, WindowTheme.Sans(compact ? 8.5f : 9f),
+            Rectangle.FromLTRB(box.Right + this.Px(10), chip.Top, chip.Right - this.Px(modifier.Value is null ? 8 : 94), chip.Bottom),
             enabled ? WindowTheme.Body : WindowTheme.Muted);
+
     }
 }
 

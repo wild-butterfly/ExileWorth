@@ -8,10 +8,10 @@ ExileWorth was formerly called Vaaluation.
 
 ## Download
 
-| Platform | Build | Default price check | Setup |
-| --- | --- | --- | --- |
-| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.6-macos/ExileWorth-0.1.6-macOS.zip) | <kbd>Control</kbd> + <kbd>D</kbd> | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/) |
-| Windows 11 x64 · Preview | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.17/ExileWorth-0.1.17-Windows-x64.zip) | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
+| Platform                            | Build                                                                                                                            | Default price check                               | Setup                                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.6-macos/ExileWorth-0.1.6-macOS.zip)       | <kbd>Control</kbd> + <kbd>D</kbd>                 | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/)     |
+| Windows 11 x64 · Preview            | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.17/ExileWorth-0.1.17-Windows-x64.zip) | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
 
 Select **Covens** for Covens of Umbra.
 
@@ -25,22 +25,24 @@ Select **Covens** for Covens of Umbra.
 
 ![ExileWorth's macOS Trades overlay over Path of Exile, showing a sample Goldrim trade whisper and its available actions](docs/screenshots/trades.png)
 
-*The Trades screenshot shows a simulated whisper.*
+_The Trades screenshot shows a simulated whisper._
 
 ## Windows desktop preview
 
 ![ExileWorth for Windows showing the Price Check screen and the Trades, Currency, and Settings tabs](docs/screenshots/windows-desktop.png)
 
-*Windows 0.1.17 running with sample Divine Orb listings in a [Windows CI run](https://github.com/wild-butterfly/ExileWorth/actions/runs/43709975867).*
+_Windows 0.1.17 running with sample Divine Orb listings in a [Windows CI run](https://github.com/wild-butterfly/ExileWorth/actions/runs/43709975867)._
 
 ## Features
 
-| Feature | What you can do |
-| --- | --- |
-| **Price Check** | Compare asking prices from the official trade service and refine the search by modifier. |
-| **Trades** | Enable chat log watching to see incoming trade requests. Send replies, invites, or trade requests with a click. Edit, add, or remove quick replies in Settings. |
-| **Currency** | Compare exchange rates for currencies such as Divine, Chaos, and Exalted Orbs. |
-| **Windows price filters** | Show only listings priced in Alchemy, Chaos, Exalted, or Divine Orbs. |
+| Feature                   | What you can do                                                                                                                                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Price Check**           | Compare asking prices from the official trade service and refine the search by modifier.                                                                                                                                   |
+| **Trades**                | Enable chat log watching to see incoming trade requests. Send replies, invites, or trade requests with a click. Edit, add, or remove quick replies in Settings.                                                            |
+| **Currency**              | Compare exchange rates for currencies such as Divine, Chaos, and Exalted Orbs.                                                                                                                                             |
+| **Mac price filters**     | Edit minimums beside modifiers, choose Exact or a percentage preset, and optionally combine elemental resistances. Manual searches retain the chosen minimums.                                                             |
+| **Currency history**      | Select either side of a currency pair from the supported list and inspect 24-hour, 7-day, or 30-day history from GGG's completed exchange trades. Longer views sample hourly digests daily; unavailable hours remain gaps. |
+| **Windows price filters** | Show only listings priced in Alchemy, Chaos, Exalted, or Divine Orbs.                                                                                                                                                      |
 
 ## First launch
 

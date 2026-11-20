@@ -71,13 +71,13 @@ internal sealed class PriceWindow : Form
         league.Click += (_, _) => leagueMenu.Show(league, new Point(0, league.Height + 4));
         listings.Placeholder = "Listings appear here after a price check.";
         filters.Placeholder = "Modifiers you can match appear here.";
-        filters.Changed += () => search.Enabled = hasItem && !busy;
+        filters.Changed += () => search.Enabled = hasItem && !busy && filters.HasValidMinimums;
         listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
 
         pricePage = BuildPricePage();
         pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague, () => preferences);
-        overlay = new GamePriceOverlay(id => _ = SelectCurrencyAsync(id),
-            selected => _ = RunAsync(() => CheckAsync(null, selected)), () => preferences);
+        overlay = new GamePriceOverlay((id, selected, minimums) => _ = SelectCurrencyAsync(id, selected, minimums),
+            (selected, minimums) => _ = RunAsync(() => CheckAsync(null, selected, minimums)), () => preferences);
 
         Controls.Add(pageHost);
         Controls.Add(BuildRail());
@@ -94,13 +94,14 @@ internal sealed class PriceWindow : Form
             if (!Clipboard.ContainsText()) throw new InvalidOperationException("Copy item text from Path of Exile first (Ctrl + C).");
             await CheckAsync(Clipboard.GetText(), null);
         });
-        search.Click += async (_, _) => await RunAsync(() => CheckAsync(null, filters.Selected));
+        search.Click += async (_, _) => await RunAsync(() => CheckAsync(null, filters.Selected, filters.Minimums));
         open.Click += (_, _) =>
         {
             if (tradeUrl is not null) Process.Start(new ProcessStartInfo(tradeUrl.AbsoluteUri) { UseShellExecute = true });
         };
         KeyDown += (_, e) =>
         {
+            if (filters.Editing) return;
             if (e.KeyCode == Keys.Escape) { Hide(); e.SuppressKeyPress = true; }
             else if (e.Control && e.KeyCode is >= Keys.D1 and <= Keys.D9 && (int)(e.KeyCode - Keys.D1) < navigation.Count)
             {
@@ -358,7 +359,7 @@ internal sealed class PriceWindow : Form
         WindowTheme.ApplyTitleBar(Handle, WindowTheme.Background);
         hotkey = new GameHotkey(Handle, preferences.Shortcut, active =>
         {
-            if (!active) overlay?.Hide();
+            if (!active && overlay is { HasKeyboardFocus: false }) overlay.Hide();
         });
     }
 
@@ -432,7 +433,7 @@ internal sealed class PriceWindow : Form
     {
         league.Enabled = paste.Enabled = !busy;
         currencyFilter.Enabled = !busy;
-        search.Enabled = hasItem && !busy;
+        search.Enabled = hasItem && !busy && filters.HasValidMinimums;
         search.Text = busy && hasItem ? "Searching…" : "Search";
         open.Enabled = tradeUrl is not null && !busy;
     }
@@ -454,12 +455,12 @@ internal sealed class PriceWindow : Form
         }
     }
 
-    private async Task SelectCurrencyAsync(string? id)
+    private async Task SelectCurrencyAsync(string? id, string[]? selected = null, Dictionary<string, double>? minimums = null)
     {
         if (busy || listingCurrency == id) return;
         listingCurrency = id;
         RefreshCurrencyFilter();
-        if (hasItem) await RunAsync(() => CheckAsync(null, filters.Selected));
+        if (hasItem) await RunAsync(() => CheckAsync(null, selected ?? filters.Selected, minimums ?? filters.Minimums));
         else Render();
     }
 
@@ -473,7 +474,7 @@ internal sealed class PriceWindow : Form
         ShowShortcutHint();
     }
 
-    private async Task CheckAsync(string? text, string[]? enabled)
+    private async Task CheckAsync(string? text, string[]? enabled, Dictionary<string, double>? minimums = null)
     {
         tradeUrl = null;
         if (text is not null)
@@ -489,7 +490,7 @@ internal sealed class PriceWindow : Form
         currentListings = [];
         statusText = "Looking up trade listings…";
         Render();
-        var result = await worker.SendAsync<PriceResult>(new { action = "check", preferred, text, enabled, currency = listingCurrency });
+        var result = await worker.SendAsync<PriceResult>(new { action = "check", preferred, text, enabled, minimums, currency = listingCurrency });
         if (IsDisposed) return;
         SetLeagues(result.Leagues, result.Selected);
         hasItem = true;
@@ -557,7 +558,7 @@ internal sealed class PriceWindow : Form
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
         SetLeagues(pages.Available, entry.Id);
-        if (hasItem) await RunAsync(() => CheckAsync(null, filters.Selected));
+        if (hasItem) await RunAsync(() => CheckAsync(null, filters.Selected, filters.Minimums));
     }
 
     private void Reveal()

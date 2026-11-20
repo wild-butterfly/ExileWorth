@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Linking,
   Pressable,
@@ -17,7 +17,7 @@ import type {
   SelectableFilter,
 } from '@vaaluation/trade-client';
 import {
-  buildFilters,
+  buildPriceFilters,
   buildQuery,
   detectPriceWarnings,
   summarize,
@@ -33,6 +33,7 @@ import { getTradeClient } from '../services/trade';
 import { onItemCopied } from '../native/VLEvents';
 import { readClipboardText } from '../native/VLClipboard';
 import { log } from '../native/VLLog';
+import { PriceModifiers, PriceFilterActions } from '../components/PriceModifiers';
 
 type SearchState =
   | { status: 'idle' }
@@ -70,10 +71,14 @@ function itemTitle(item: ParsedItem): string {
 }
 
 export function PriceCheckScreen() {
+  const searchRevision = useRef(0);
   const theme = useTheme();
   const { settings } = useSettings();
   const { leagues } = useLeagues();
   const [text, setText] = useState('');
+  const [combined, setCombined] = useState(false);
+  const [validMinimums, setValidMinimums] = useState(true);
+  const [dirty, setDirty] = useState(false);
   const [filters, setFilters] = useState<SelectableFilter[]>([]);
   const [state, setState] = useState<SearchState>({ status: 'idle' });
 
@@ -81,6 +86,11 @@ export function PriceCheckScreen() {
   const item = parsed.ok ? parsed.item : null;
 
   const league = resolveLeagueId(leagues, settings.leagueId);
+  useEffect(() => {
+    searchRevision.current++;
+    setState({ status: 'idle' });
+    setDirty(false);
+  }, [league]);
 
   // A price-check hotkey fills this screen with the copied item.
   useEffect(
@@ -95,6 +105,10 @@ export function PriceCheckScreen() {
   // Recompute selectable filters whenever the item changes.
   useEffect(() => {
     let cancelled = false;
+    searchRevision.current++;
+    setFilters([]);
+    setCombined(false);
+    setDirty(false);
     if (item === null) {
       setFilters([]);
       return;
@@ -102,7 +116,7 @@ export function PriceCheckScreen() {
     getTradeClient()
       .getStatIndex()
       .then((stats) => {
-        if (!cancelled) setFilters(buildFilters(item, stats));
+        if (!cancelled) setFilters(buildPriceFilters(item, stats));
       })
       .catch(() => {
         if (!cancelled) setFilters([]);
@@ -114,6 +128,7 @@ export function PriceCheckScreen() {
 
   const runSearch = useCallback(async () => {
     if (item === null || league === null) return;
+    const revision = ++searchRevision.current;
     setState({ status: 'searching' });
     try {
       const client = getTradeClient();
@@ -121,7 +136,9 @@ export function PriceCheckScreen() {
       const query = buildQuery(item, filters, { baseTypes });
       const search = await client.search(league, query);
       const results = await client.fetchListings(search.result.slice(0, 10), search.id);
+      if (revision !== searchRevision.current) return;
       const listings = toPricedListings(results);
+      setDirty(false);
       setState({
         status: 'done',
         total: search.total,
@@ -132,6 +149,7 @@ export function PriceCheckScreen() {
       });
       log('info', 'trade', `Search returned ${search.total} listings`);
     } catch (cause: unknown) {
+      if (revision !== searchRevision.current) return;
       const message = cause instanceof Error ? cause.message : 'The trade search failed.';
       const retryAfterMs = (cause as { retryAfterMs?: number } | null)?.retryAfterMs;
       setState({
@@ -143,22 +161,9 @@ export function PriceCheckScreen() {
     }
   }, [item, league, filters]);
 
-  const toggleFilter = (key: string) => {
-    setFilters((current) =>
-      current.map((filter) =>
-        filter.key === key ? { ...filter, selected: !filter.selected } : filter,
-      ),
-    );
-  };
-
-  const setBound = (key: string, bound: 'min' | 'max', raw: string) => {
-    const value = raw.trim() === '' ? null : Number(raw);
-    if (value !== null && Number.isNaN(value)) return;
-    setFilters((current) =>
-      current.map((filter) =>
-        filter.key === key ? { ...filter, [bound]: value } : filter,
-      ),
-    );
+  const editFilters = (next: SelectableFilter[]) => {
+    setFilters(next);
+    setDirty(true);
   };
 
   return (
@@ -211,35 +216,13 @@ export function PriceCheckScreen() {
                 Only a few relevant modifiers are preselected — searching every roll
                 usually returns nothing.
               </Text>
-              {filters.map((filter) => (
-                <View key={filter.key} style={styles.filterRow}>
-                  <Pressable
-                    style={styles.checkboxHit}
-                    onPress={() => toggleFilter(filter.key)}
-                  >
-                    <View
-                      style={[styles.checkbox, filter.selected && styles.checkboxOn]}
-                    />
-                    <Text style={styles.filterLabel} numberOfLines={1}>
-                      {filter.label}
-                    </Text>
-                  </Pressable>
-                  <TextInput
-                    style={styles.bound}
-                    value={filter.min === null ? '' : String(filter.min)}
-                    onChangeText={(value) => setBound(filter.key, 'min', value)}
-                    placeholder="min"
-                    placeholderTextColor={colors.textDisabled}
-                  />
-                  <TextInput
-                    style={styles.bound}
-                    value={filter.max === null ? '' : String(filter.max)}
-                    onChangeText={(value) => setBound(filter.key, 'max', value)}
-                    placeholder="max"
-                    placeholderTextColor={colors.textDisabled}
-                  />
-                </View>
-              ))}
+              <PriceModifiers
+                filters={filters}
+                onChange={editFilters}
+                combined={combined}
+                disabled={state.status === 'searching'}
+                onValidityChange={setValidMinimums}
+              />
             </View>
           ) : null}
 
@@ -249,12 +232,19 @@ export function PriceCheckScreen() {
               onPress={() => {
                 void runSearch();
               }}
-              disabled={state.status === 'searching' || league === null}
+              disabled={state.status === 'searching' || league === null || !validMinimums}
             >
               <Text style={styles.buttonText}>
-                {state.status === 'searching' ? 'Searching…' : 'Search Trade'}
+                {state.status === 'searching' ? 'Searching…' : 'Search'}
               </Text>
             </Pressable>
+            <PriceFilterActions
+              filters={filters}
+              onChange={editFilters}
+              combined={combined}
+              onCombinedChange={setCombined}
+              disabled={state.status === 'searching' || !validMinimums}
+            />
             <Pressable
               style={styles.button}
               onPress={() => {
@@ -338,6 +328,7 @@ export function PriceCheckScreen() {
               <View style={styles.row}>
                 <Pressable
                   style={styles.button}
+                  disabled={dirty}
                   onPress={() => {
                     if (league !== null) {
                       void Linking.openURL(tradeSearchUrl(league, state.queryId));
@@ -347,7 +338,7 @@ export function PriceCheckScreen() {
                   <Text style={styles.buttonText}>Open on Trade Site</Text>
                 </Pressable>
               </View>
-              {league !== null ? (
+              {league !== null && !dirty ? (
                 <Text style={styles.url} selectable>
                   {tradeSearchUrl(league, state.queryId)}
                 </Text>

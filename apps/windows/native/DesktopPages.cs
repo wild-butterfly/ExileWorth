@@ -19,6 +19,7 @@ internal sealed class DesktopPages : IDisposable
 
     // Currency.
     private readonly CurrencyView rates = new() { Dock = DockStyle.Fill };
+    private readonly CurrencyHistoryView currencyHistory = new();
     private Label currencyLabel = null!;
     private readonly FlatButton refresh = new(ButtonKind.Primary, "Refresh");
     private readonly FlatButton denomination = new(ButtonKind.Secondary, "In Chaos  ▾");
@@ -99,6 +100,7 @@ internal sealed class DesktopPages : IDisposable
         disclaimer.MaximumSize = new Size(720, 0);
         disclaimer.Margin = new Padding(0, 0, 0, 12);
         page.Add(disclaimer);
+        page.Add(Fill(currencyHistory), SizeType.Absolute, 290);
         page.Add(Fill(rates, new Padding(10, 6, 6, 6)), SizeType.Percent, 100);
 
         foreach (var (id, label) in Denominations)
@@ -121,12 +123,15 @@ internal sealed class DesktopPages : IDisposable
 
     public void CurrencyShown()
     {
+        currencyHistory.SetLeague(selectedLeague ?? preferred());
         if (ratesLeague != selectedLeague && selectedLeague is not null && !loadingRates) _ = RefreshRatesAsync();
     }
 
     private async Task RefreshRatesAsync()
     {
         if (loadingRates) return;
+        currencyHistory.SetLeague(selectedLeague ?? preferred());
+        currencyHistory.RefreshHistory();
         loadingRates = true;
         refresh.Enabled = false;
         refresh.Text = "Loading…";

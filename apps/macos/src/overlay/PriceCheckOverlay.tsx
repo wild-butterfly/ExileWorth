@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { parseItemText } from '@vaaluation/item-parser';
@@ -18,7 +17,7 @@ import type {
   SelectableFilter,
 } from '@vaaluation/trade-client';
 import {
-  buildFilters,
+  buildPriceFilters,
   buildQuery,
   detectPriceWarnings,
   distribution,
@@ -42,6 +41,7 @@ import {
 import type { Theme } from '@vaaluation/ui';
 import { getTradeClient } from '../services/trade';
 import { onItemCopied } from '../native/VLEvents';
+import { PriceModifiers, PriceFilterActions } from '../components/PriceModifiers';
 
 type SearchState =
   | { status: 'idle' }
@@ -125,6 +125,7 @@ export function PriceCheckOverlay({
   leagueError: string | null;
   onContentHeight: (height: number) => void;
 }) {
+  const searchRevision = useRef(0);
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
   const [item, setItem] = useState<ParsedItem | null>(null);
@@ -133,6 +134,9 @@ export function PriceCheckOverlay({
   const [state, setState] = useState<SearchState>({ status: 'idle' });
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
+  const [combined, setCombined] = useState(false);
+  const [validMinimums, setValidMinimums] = useState(true);
+  const [dirty, setDirty] = useState(false);
 
   // Ask the native panel for the natural height, while keeping the footer
   // outside the scrolling region. If the panel reaches its native height
@@ -147,7 +151,11 @@ export function PriceCheckOverlay({
     () =>
       onItemCopied(({ text }) => {
         const parsed = parseItemText(text);
+        searchRevision.current++;
+        setFilters([]);
         setState({ status: 'idle' });
+        setCombined(false);
+        setDirty(false);
         if (parsed.ok) {
           setItem(parsed.item);
           setParseError(null);
@@ -168,6 +176,11 @@ export function PriceCheckOverlay({
 
   useEffect(() => {
     let cancelled = false;
+    searchRevision.current++;
+    setState({ status: 'idle' });
+    setFilters([]);
+    setCombined(false);
+    setDirty(false);
     if (item === null || league === null) {
       setFilters([]);
       return;
@@ -176,7 +189,7 @@ export function PriceCheckOverlay({
       .getStatIndex()
       .then((stats) => {
         if (cancelled) return;
-        const built = buildFilters(item, stats);
+        const built = buildPriceFilters(item, stats);
         setFilters(built);
         // Price checking is one keypress, so the panel answers rather than
         // asking again: the modifiers it would have preselected are the ones
@@ -193,8 +206,9 @@ export function PriceCheckOverlay({
   }, [item, league]);
 
   const runSearch = useCallback(
-    async (withFilters: SelectableFilter[] = filters) => {
+    async (withFilters: SelectableFilter[] = filters, automatic = false) => {
       if (item === null || league === null) return;
+      const revision = ++searchRevision.current;
       setState({ status: 'searching' });
       try {
         const client = getTradeClient();
@@ -210,13 +224,17 @@ export function PriceCheckOverlay({
           league,
           buildQuery(item, applied, { baseTypes }),
         );
-        for (let relaxations = 0; search.total === 0 && relaxations < MAX_RELAXATIONS;) {
+        for (
+          let relaxations = 0;
+          automatic && search.total === 0 && relaxations < MAX_RELAXATIONS;
+        ) {
           const loosened = relaxWeakest(applied);
           if (loosened === null) break;
           applied = loosened;
           relaxations += 1;
           search = await client.search(league, buildQuery(item, applied, { baseTypes }));
         }
+        if (revision !== searchRevision.current) return;
         // The checkboxes must show what was actually searched, or the panel
         // would be reporting prices for a query it is not displaying.
         if (applied !== withFilters) setFilters(applied);
@@ -226,7 +244,9 @@ export function PriceCheckOverlay({
           search.result.length > 10
             ? await client.fetchListings(search.result.slice(10, 20), search.id)
             : [];
+        if (revision !== searchRevision.current) return;
         const listings = toPricedListings([...first, ...second]);
+        setDirty(false);
         setState({
           status: 'done',
           total: search.total,
@@ -236,6 +256,7 @@ export function PriceCheckOverlay({
           warnings: detectPriceWarnings(listings),
         });
       } catch (cause: unknown) {
+        if (revision !== searchRevision.current) return;
         setState({
           status: 'error',
           message: cause instanceof Error ? cause.message : 'Search failed.',
@@ -246,15 +267,12 @@ export function PriceCheckOverlay({
   );
 
   runSearchRef.current = (withFilters) => {
-    void runSearch(withFilters);
+    void runSearch(withFilters, true);
   };
 
-  const setBound = (key: string, bound: 'min' | 'max', raw: string) => {
-    const value = raw.trim() === '' ? null : Number(raw);
-    if (value !== null && Number.isNaN(value)) return;
-    setFilters((current) =>
-      current.map((f) => (f.key === key ? { ...f, [bound]: value } : f)),
-    );
+  const editFilters = (next: SelectableFilter[]) => {
+    setFilters(next);
+    setDirty(true);
   };
 
   const spread = state.status === 'done' ? state.spread : null;
@@ -389,51 +407,13 @@ export function PriceCheckOverlay({
             </Text>
           ) : (
             <View style={styles.mods}>
-              {filters.map((filter) => (
-                <View key={filter.key} style={styles.modRow}>
-                  <Pressable
-                    style={styles.modHit}
-                    onPress={() =>
-                      setFilters((current) =>
-                        current.map((f) =>
-                          f.key === filter.key ? { ...f, selected: !f.selected } : f,
-                        ),
-                      )
-                    }
-                  >
-                    <View
-                      style={[styles.checkbox, filter.selected && styles.checkboxOn]}
-                    />
-                    <Text
-                      style={[
-                        styles.modText,
-                        // The item's own totals are a different kind of search
-                        // from its modifiers, so they read as headings rather
-                        // than as another roll.
-                        filter.kind === 'property' && styles.propText,
-                        !filter.selected && styles.modTextOff,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {filter.label}
-                    </Text>
-                  </Pressable>
-                  <TextInput
-                    style={styles.input}
-                    value={filter.min === null ? '' : String(filter.min)}
-                    onChangeText={(raw) => setBound(filter.key, 'min', raw)}
-                    placeholder="min"
-                    placeholderTextColor={palette.faint}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.inputDim]}
-                    value={filter.max === null ? '' : String(filter.max)}
-                    onChangeText={(raw) => setBound(filter.key, 'max', raw)}
-                    placeholder="max"
-                    placeholderTextColor={palette.faint}
-                  />
-                </View>
-              ))}
+              <PriceModifiers
+                filters={filters}
+                onChange={editFilters}
+                combined={combined}
+                disabled={state.status === 'searching'}
+                onValidityChange={setValidMinimums}
+              />
 
               {leagueError !== null ? (
                 <Text style={styles.error}>{leagueError}</Text>
@@ -532,7 +512,12 @@ export function PriceCheckOverlay({
           onPress={() => {
             void runSearch();
           }}
-          disabled={item === null || league === null || state.status === 'searching'}
+          disabled={
+            item === null ||
+            league === null ||
+            state.status === 'searching' ||
+            !validMinimums
+          }
         >
           {state.status === 'searching' ? (
             <ActivityIndicator size="small" color={theme.actionText} />
@@ -540,18 +525,26 @@ export function PriceCheckOverlay({
             <Text style={styles.searchText}>Search</Text>
           )}
         </Pressable>
+        <View style={{ marginLeft: 'auto', zIndex: 30 }}>
+          <PriceFilterActions
+            filters={filters}
+            onChange={editFilters}
+            combined={combined}
+            onCombinedChange={setCombined}
+            disabled={state.status === 'searching' || !validMinimums}
+          />
+        </View>
         <Pressable
-          style={[styles.ghost, state.status !== 'done' && styles.disabled]}
+          style={[styles.ghost, (state.status !== 'done' || dirty) && styles.disabled]}
           onPress={() => {
             if (state.status === 'done' && league !== null) {
               void Linking.openURL(tradeSearchUrl(league, state.queryId));
             }
           }}
-          disabled={state.status !== 'done'}
+          disabled={state.status !== 'done' || dirty}
         >
           <Text style={styles.ghostText}>Trade site</Text>
         </Pressable>
-        <Text style={styles.hint}>esc closes</Text>
       </View>
     </View>
   );
@@ -745,8 +738,8 @@ function makeStyles(theme: Theme) {
       flexShrink: 0,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing.md,
-      paddingHorizontal: spacing.xxl,
+      gap: 6,
+      paddingHorizontal: 12,
       paddingVertical: spacing.md,
       borderTopWidth: 1,
       borderTopColor: borders.hairline,
@@ -757,9 +750,9 @@ function makeStyles(theme: Theme) {
       borderRadius: radii.field,
       borderWidth: 1,
       borderColor: 'rgba(232,116,128,0.35)',
-      paddingHorizontal: spacing.h2,
+      paddingHorizontal: 12,
       paddingVertical: 5,
-      minWidth: 72,
+      minWidth: 62,
       alignItems: 'center',
       shadowColor: theme.accent,
       shadowOpacity: 0.45,
@@ -777,7 +770,7 @@ function makeStyles(theme: Theme) {
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.13)',
       borderRadius: radii.field,
-      paddingHorizontal: spacing.xxl,
+      paddingHorizontal: 9,
       paddingVertical: 5,
     },
     ghostText: { fontFamily: fonts.sans, fontSize: scale.small, color: '#e2d8d2' },

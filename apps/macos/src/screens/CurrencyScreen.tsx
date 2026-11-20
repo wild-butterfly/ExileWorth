@@ -31,6 +31,7 @@ import { useSettings } from '../state/SettingsContext';
 import { resolveLeagueId } from '@vaaluation/shared-types';
 import { useLeagues } from '../hooks/useLeagues';
 import { getTradeClient } from '../services/trade';
+import { CurrencyHistoryPanel } from '../components/CurrencyHistoryPanel';
 
 interface RateRow {
   readonly id: string;
@@ -213,6 +214,8 @@ export function CurrencyScreen() {
         Median of the cheapest live bulk offers — what sellers are asking, not what items
         sold for. A wide range or a low offer count means the median is soft.
       </Text>
+
+      <CurrencyHistoryPanel league={league} refreshKey={updatedAt?.getTime() ?? 0} />
 
       <View style={styles.columns}>
         <Text style={[styles.columnLabel, styles.columnName]}>Currency</Text>
