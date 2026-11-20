@@ -112,7 +112,7 @@ internal sealed class GamePriceOverlay : Form
 
     private nint ObserveEscape(int code, nint message, nint data)
     {
-        if (code >= 0 && message == 0x0100 && Marshal.ReadInt32(data) == (int)Keys.Escape && IsHandleCreated && !modifiers.Editing)
+        if (code >= 0 && message == 0x0100 && Marshal.ReadInt32(data) == (int)Keys.Escape && IsHandleCreated && !(HasKeyboardFocus && modifiers.Editing))
             BeginInvoke(() => { if (Visible) Hide(); });
         return CallNextHookEx(0, code, message, data);
     }
