@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Page not found</title>
+    <script>
+      const legacyPages = {
+        '/Vaaluation/': 'https://wild-butterfly.github.io/ExileWorth/',
+        '/Vaaluation/guides/': 'https://wild-butterfly.github.io/ExileWorth/guides/',
+        '/Vaaluation/guides/install/':
+          'https://wild-butterfly.github.io/ExileWorth/guides/install/',
+        '/Vaaluation/guides/price-check/':
+          'https://wild-butterfly.github.io/ExileWorth/guides/price-check/',
+        '/Vaaluation/guides/troubleshooting/':
+          'https://wild-butterfly.github.io/ExileWorth/guides/troubleshooting/',
+        '/Vaaluation/guides/windows/':
+          'https://wild-butterfly.github.io/ExileWorth/guides/windows/',
+        '/Vaaluation/privacy/': 'https://wild-butterfly.github.io/ExileWorth/privacy/',
+      };
+      if (
+        location.pathname === '/Vaaluation' ||
+        location.pathname.startsWith('/Vaaluation/')
+      ) {
+        const path = location.pathname.replace(/index\.html$/, '');
+        const target =
+          legacyPages[path] || 'https://wild-butterfly.github.io/ExileWorth/';
+        location.replace(target + location.search + location.hash);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Page not found</h1>
+    <p><a href="https://wild-butterfly.github.io/ExileWorth/">Visit ExileWorth</a>.</p>
+  </body>
+</html>
