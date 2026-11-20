@@ -810,6 +810,7 @@ internal sealed class ModifierView : ScrollList
 
     public event Action? Changed;
     public event Action? EditingFinished;
+    public event Action? EditingRequested;
     public bool Editing => inputs.Any(entry => entry.Field.ContainsFocus);
     public bool InputAtCursor => inputs.Any(entry => entry.Field.Visible &&
         entry.Field.RectangleToScreen(entry.Field.ClientRectangle).Contains(Cursor.Position));
@@ -852,6 +853,12 @@ internal sealed class ModifierView : ScrollList
             modifierTip.SetToolTip(input, modifier.Tooltip ?? $"Minimum for {modifier.Label}. Item value: {original:0.##}. Enter confirms; Escape restores.");
             input.Text = (modifier.Min ?? original).ToString("0.########", Numbers);
             input.Enter += (_, _) => input.SelectAll();
+            input.MouseDown += (_, e) =>
+            {
+                if (e.Button != MouseButtons.Left) return;
+                EditingRequested?.Invoke();
+                input.Focus();
+            };
             input.TextChanged += (_, _) =>
             {
                 bool valid = TryMinimum(input.Text, out double minimum);

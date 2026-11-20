@@ -152,7 +152,7 @@ internal sealed class GamePriceOverlay : Form
         get
         {
             var parameters = base.CreateParams;
-            parameters.ExStyle |= 0x00000080; // WS_EX_TOOLWINDOW; input clicks may activate.
+            parameters.ExStyle |= 0x08000000 | 0x00000080; // WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW
             parameters.ClassStyle |= 0x00020000; // CS_DROPSHADOW
             return parameters;
         }
@@ -243,6 +243,7 @@ internal sealed class GamePriceOverlay : Form
             if (game != 0) SetForegroundWindow(game);
             runSearch(modifiers.Selected, modifiers.Minimums);
         };
+        modifiers.EditingRequested += () => SetForegroundWindow(Handle);
         modifiers.EditingFinished += () => { if (game != 0) SetForegroundWindow(game); };
         modifiers.Changed += () =>
         {
