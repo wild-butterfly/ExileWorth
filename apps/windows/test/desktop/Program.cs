@@ -44,6 +44,9 @@ internal static class Program
                 File.Delete(verifiedReplies);
                 var start = new ProcessStartInfo(args[0]);
                 start.Environment["EXILEWORTH_TEST_REPLIES"] = verifiedReplies;
+                string verifiedFilters = Path.Combine(logFolder, "filters-verified");
+                File.Delete(verifiedFilters);
+                start.Environment["EXILEWORTH_TEST_FILTERS"] = verifiedFilters;
                 app = Process.Start(start) ?? throw new Exception("App could not start.");
                 await Until(() => FindAppWindow(app.Id) != 0, "app window");
                 nint desktop = FindAppWindow(app.Id);
@@ -89,6 +92,25 @@ internal static class Program
                 await Task.Delay(500);
                 Assert(IsWindowVisible(overlay), "A click inside the overlay closed it.");
                 Assert(GetForegroundWindow() == game.Handle, "A click inside the overlay took game focus.");
+
+                // Only clicking a numeric input may activate the panel. Actual typing
+                // must reach that input, and Enter must return focus to the game.
+                var minimum = AutomationElement.FromHandle(overlay).FindFirst(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.NameProperty, "Minimum +80 to maximum Life"))
+                    ?? throw new InvalidOperationException("Missing modifier minimum input.");
+                var inputBounds = minimum.Current.BoundingRectangle;
+                Click(new Point((int)(inputBounds.Left + inputBounds.Width / 2), (int)(inputBounds.Top + inputBounds.Height / 2)));
+                await Until(() => GetForegroundWindow() == overlay, "input editing focus");
+                SendKey(Keys.LControlKey, 0); SendKey(Keys.A, 0); SendKey(Keys.A, 2); SendKey(Keys.LControlKey, 2);
+                SendKey(Keys.D7, 0); SendKey(Keys.D7, 2); SendKey(Keys.D2, 0); SendKey(Keys.D2, 2);
+                await Until(() => ((ValuePattern)minimum.GetCurrentPattern(ValuePattern.Pattern)).Current.Value == "72", "typed minimum value");
+                SendKey(Keys.Enter, 0); SendKey(Keys.Enter, 2);
+                await Until(() => GetForegroundWindow() == game.Handle, "game focus after editing");
+                InvokeButton(overlay, "Search");
+                await Until(() => File.Exists(verifiedFilters), "edited minimum sent to trade worker");
+                await Task.Delay(250);
+                Assert(GetForegroundWindow() == game.Handle, "Search took focus from the game.");
+                Console.WriteLine("PASS: Numeric editing and minimum search request.");
 
                 int clicksBeforeDismissal = gameClicks;
                 Click(GameBackground(game.Handle));

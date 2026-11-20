@@ -9,9 +9,8 @@ internal sealed record PriceView(
     TypicalPrice? Typical, int Total, string? Currency, bool Busy, bool HasItem, Uri? TradeUrl);
 
 /// <summary>
-/// The compact in-game panel. It never takes focus: every control is painted
-/// or non-focusable, and clicks arrive through MA_NOACTIVATE so the game keeps
-/// the keyboard.
+/// The compact in-game panel. It opens without focus; clicking a minimum input
+/// temporarily activates it for typing. Other clicks keep the game focused.
 /// </summary>
 internal sealed class GamePriceOverlay : Form
 {
@@ -22,6 +21,7 @@ internal sealed class GamePriceOverlay : Form
     ];
 
     private const int MaxModifierRows = 4;
+    public bool HasKeyboardFocus => IsHandleCreated && GetForegroundWindow() == Handle;
 
     private readonly Func<DesktopPreferences> preferences;
     private readonly Worker tradeWorker = new();
@@ -41,6 +41,10 @@ internal sealed class GamePriceOverlay : Form
     };
     private readonly FlatButton currency = new(ButtonKind.Chip, "All  ▾") { TabStop = false, AccessibleName = "Listing currency" };
     private readonly CurrencyPicker picker = new();
+    private readonly FlatButton preset = new(ButtonKind.Chip, "Exact  ▾") { TabStop = false };
+    private readonly PresetPicker presetPicker = new();
+    private readonly FlatButton combinedResistance = new(ButtonKind.Chip, "Total res") { TabStop = false, Visible = false };
+    private int? selectedPreset;
     private readonly FlatButton search = new(ButtonKind.Accent, "Search") { TabStop = false, Enabled = false };
     private readonly FlatButton tradeSite = new(ButtonKind.Chip, "Trade site ↗") { TabStop = false, Enabled = false };
     private readonly Label status = new()
@@ -108,9 +112,18 @@ internal sealed class GamePriceOverlay : Form
 
     private nint ObserveEscape(int code, nint message, nint data)
     {
-        if (code >= 0 && message == 0x0100 && Marshal.ReadInt32(data) == (int)Keys.Escape && IsHandleCreated)
+        if (code >= 0 && message == 0x0100 && Marshal.ReadInt32(data) == (int)Keys.Escape && IsHandleCreated && !(HasKeyboardFocus && modifiers.Editing))
             BeginInvoke(() => { if (Visible) Hide(); });
         return CallNextHookEx(0, code, message, data);
+    }
+
+    protected override void OnDeactivate(EventArgs e)
+    {
+        base.OnDeactivate(e);
+        if (IsHandleCreated) BeginInvoke(() =>
+        {
+            if (Visible && !HasKeyboardFocus && GameHotkey.ForegroundGame() == 0) Hide();
+        });
     }
 
     private void StopWatchingInput()
@@ -122,6 +135,8 @@ internal sealed class GamePriceOverlay : Form
 
     [StructLayout(LayoutKind.Sequential)]
     private readonly record struct NativePoint(int X, int Y);
+    [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
     [DllImport("user32.dll")] private static extern nint WindowFromPhysicalPoint(NativePoint point);
     [DllImport("user32.dll")] private static extern nint GetAncestor(nint window, uint flags);
     private delegate nint MouseHook(int code, nint message, nint data);
@@ -143,7 +158,7 @@ internal sealed class GamePriceOverlay : Form
         }
     }
 
-    public GamePriceOverlay(Action<string?> selectCurrency, Action<string[]> runSearch, Func<DesktopPreferences> preferences)
+    public GamePriceOverlay(Action<string?, string[], Dictionary<string, double>> selectCurrency, Action<string[], Dictionary<string, double>> runSearch, Func<DesktopPreferences> preferences)
     {
         this.preferences = preferences;
         Text = "ExileWorth Price Overlay";
@@ -194,30 +209,50 @@ internal sealed class GamePriceOverlay : Form
         // Toolbar: currency dropdown and Search on the left, trade site on the right.
         var toolbar = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 1, Padding = new Padding(S(10), S(3), S(10), 0),
+            Dock = DockStyle.Fill, ColumnCount = 6, RowCount = 1, Padding = new Padding(S(10), S(3), S(10), 0),
             Margin = Padding.Empty,
         };
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         currency.Anchor = search.Anchor = AnchorStyles.Left;
-        tradeSite.Anchor = AnchorStyles.Right;
+        preset.Anchor = tradeSite.Anchor = AnchorStyles.Right;
+        combinedResistance.Anchor = AnchorStyles.Left;
         toolbar.Controls.Add(currency, 0, 0);
         toolbar.Controls.Add(search, 1, 0);
-        toolbar.Controls.Add(tradeSite, 3, 0);
+        toolbar.Controls.Add(combinedResistance, 2, 0);
+        toolbar.Controls.Add(preset, 4, 0);
+        toolbar.Controls.Add(tradeSite, 5, 0);
         var tip = new ToolTip { InitialDelay = 250, ShowAlways = true };
         tip.SetToolTip(currency, "Only show listings priced in one currency");
         tip.SetToolTip(search, "Search again with the ticked modifiers");
         tip.SetToolTip(tradeSite, "Open this search on pathofexile.com");
         currency.Click += (_, _) =>
         {
+            presetPicker.Visible = false;
             var below = PointToClient(currency.Parent!.PointToScreen(new Point(currency.Left, currency.Bottom + S(4))));
             picker.Toggle(below, selectedCurrency);
         };
-        picker.Chosen += id => selectCurrency(id);
-        search.Click += (_, _) => runSearch(modifiers.Selected);
-        modifiers.Changed += UpdateSearch;
+        picker.Chosen += id => selectCurrency(id, modifiers.Selected, modifiers.Minimums);
+        search.Click += (_, _) =>
+        {
+            if (!modifiers.HasValidMinimums) return;
+            if (game != 0) SetForegroundWindow(game);
+            runSearch(modifiers.Selected, modifiers.Minimums);
+        };
+        modifiers.EditingRequested += () => SetForegroundWindow(Handle);
+        modifiers.EditingFinished += () => { if (game != 0) SetForegroundWindow(game); };
+        modifiers.Changed += () =>
+        {
+            UpdateSearch();
+            UpdateModifierTools();
+            tradeSite.Enabled = false;
+            status.Text = "Filters changed · Search to update prices.";
+        };
+        tip.SetToolTip(modifiers, "Type a minimum beside a modifier, then Search. Enter confirms; Escape restores the item value.");
         tradeSite.Click += (_, _) =>
         {
             if (tradeUrl is not null) Process.Start(new ProcessStartInfo(tradeUrl.AbsoluteUri) { UseShellExecute = true });
@@ -225,6 +260,19 @@ internal sealed class GamePriceOverlay : Form
 
         var modifierHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(S(10), S(4), S(6), 0), Margin = Padding.Empty };
         modifierHost.Controls.Add(modifiers);
+        tip.SetToolTip(preset, "Lower checked search minimums from the original item values");
+        preset.Click += (_, _) =>
+        {
+            picker.Visible = false;
+            var below = PointToClient(preset.Parent!.PointToScreen(new Point(preset.Left, preset.Bottom + S(4))));
+            below.X = Math.Clamp(below.X, 0, Math.Max(0, ClientSize.Width - S(112)));
+            presetPicker.Toggle(below, selectedPreset);
+        };
+        presetPicker.Chosen += percent => modifiers.ApplyPreset(percent);
+        combinedResistance.Font = WindowTheme.Sans(7.5f);
+        combinedResistance.Click += (_, _) => modifiers.ToggleCombinedResistance();
+        tip.SetToolTip(combinedResistance, "Combine fire + cold + lightning into one total elemental resistance filter. Click again for individual filters; hover the combined row for the breakdown.");
+
         var listHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(S(8), S(4), S(4), 0), Margin = Padding.Empty };
         listHost.Controls.Add(listings);
         listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
@@ -274,12 +322,14 @@ internal sealed class GamePriceOverlay : Form
         body.Controls.AddRange([pricePage, tradePage]);
         root.Controls.Add(strip, 0, 0);
         root.Controls.Add(body, 0, 1);
+        Controls.Add(presetPicker);
         Controls.Add(picker);
         Controls.Add(root);
         picker.BringToFront();
+        presetPicker.BringToFront();
         // Any click outside the dropdown closes it.
-        foreach (var control in new Control[] { strip, header, toolbar, modifiers, listings, trades, status })
-            control.MouseDown += (_, _) => picker.Visible = false;
+        foreach (var control in new Control[] { strip, header, toolbar, modifiers, listings, trades, status, search, tradeSite, combinedResistance })
+            control.MouseDown += (_, _) => { picker.Visible = false; presetPicker.Visible = false; };
         ClientSize = new Size(S(430), S(430));
         ShowTrades(false);
         CurrencyIcons.Changed += ShowCurrency;
@@ -309,7 +359,21 @@ internal sealed class GamePriceOverlay : Form
         currency.Selected = entry.Id is not null;
     }
 
-    private void UpdateSearch() => search.Enabled = hasItem && !busy && modifiers.ItemCount > 0;
+    private void UpdateSearch() => search.Enabled = hasItem && !busy && modifiers.ItemCount > 0 && modifiers.HasValidMinimums;
+
+    private void UpdateModifierTools()
+    {
+        preset.Visible = modifiers.ItemCount > 0;
+        preset.Enabled = !busy;
+        combinedResistance.Enabled = !busy;
+        combinedResistance.Visible = modifiers.HasCombinedResistance;
+        combinedResistance.Selected = modifiers.CombinedResistance;
+        selectedPreset = PresetPicker.Percentages.Cast<int?>().FirstOrDefault(percent => modifiers.MatchesPreset(percent!.Value));
+        preset.Text = selectedPreset is 0 ? "Exact  ▾" : selectedPreset is int percent ? $"−{percent}%  ▾" : "Custom  ▾";
+        preset.Selected = selectedPreset is > 0;
+        int rows = Math.Min(modifiers.ItemCount, MaxModifierRows);
+        priceLayout.RowStyles[2].Height = rows == 0 ? 0 : rows * this.Px(24) + this.Px(6);
+    }
 
     private void OnThemeChanged()
     {
@@ -335,6 +399,7 @@ internal sealed class GamePriceOverlay : Form
         game = target;
         ShowTrades(false);
         picker.Visible = false;
+        presetPicker.Visible = false;
         if (Visible) return;
         Point cursor = Cursor.Position;
         Rectangle area = Screen.FromHandle(target).WorkingArea;
@@ -362,8 +427,7 @@ internal sealed class GamePriceOverlay : Form
         {
             shownFilters = view.Filters;
             modifiers.SetItems(view.Filters);
-            int rows = Math.Min(view.Filters.Count, MaxModifierRows);
-            priceLayout.RowStyles[2].Height = rows == 0 ? 0 : rows * this.Px(24) + this.Px(6);
+            UpdateModifierTools();
         }
         status.Text = message;
         status.ForeColor = WindowTheme.Dim;
@@ -371,6 +435,9 @@ internal sealed class GamePriceOverlay : Form
         tradeSite.Enabled = tradeUrl is not null && !view.Busy;
         search.Text = view.Busy && view.HasItem ? "Searching…" : "Search";
         UpdateSearch();
+        modifiers.Enabled = !view.Busy;
+        preset.Enabled = combinedResistance.Enabled = !view.Busy;
+        if (view.Busy) presetPicker.Visible = false;
         currency.Enabled = !view.Busy;
         selectedCurrency = view.Currency;
         ShowCurrency();
@@ -395,7 +462,7 @@ internal sealed class GamePriceOverlay : Form
     {
         if (message.Msg == 0x0021) // WM_MOUSEACTIVATE
         {
-            message.Result = 3; // MA_NOACTIVATE: accept clicks while the game keeps focus.
+            message.Result = modifiers.InputAtCursor ? 1 : 3; // MA_ACTIVATE only for text inputs.
             return;
         }
         base.WndProc(ref message);
@@ -408,6 +475,7 @@ internal sealed class GamePriceOverlay : Form
         pricePage.Visible = !show;
         tradePage.Visible = show;
         picker.Visible = false;
+        presetPicker.Visible = false;
     }
 
     private async Task SendAsync(string command, string description)

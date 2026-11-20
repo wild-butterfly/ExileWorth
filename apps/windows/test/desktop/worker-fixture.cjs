@@ -7,11 +7,22 @@ const { setTimeout } = require('node:timers');
 const leagues = [{ id: 'Covens', text: 'Covens' }];
 const lines = createInterface({ input: process.stdin });
 let checks = 0;
+let copiedText = null;
 // Later lookups answer late, so the test can dismiss the overlay mid-search.
 const reply = (body) => setTimeout(() => console.log(body), checks === 2 ? 2500 : 0);
 lines.on('line', (line) => {
   const request = JSON.parse(line);
-  if (request.action === 'check') checks += 1;
+  if (request.action === 'check' && request.text !== null && request.text !== undefined) {
+    checks += 1;
+    copiedText = request.text;
+  }
+  if (
+    request.action === 'check' &&
+    request.minimums?.['fixture:life'] === 72 &&
+    request.enabled?.includes('fixture:life')
+  ) {
+    writeFileSync(process.env.EXILEWORTH_TEST_FILTERS, 'verified');
+  }
   if (request.action === 'leagues') {
     console.log(JSON.stringify({ result: { leagues, selected: 'Covens' } }));
   } else if (request.action === 'trades') {
@@ -42,7 +53,7 @@ lines.on('line', (line) => {
         ],
       }),
     );
-  } else if (request.text?.includes('Divine Orb')) {
+  } else if (copiedText?.includes('Divine Orb')) {
     reply(
       JSON.stringify({
         result: {
@@ -60,7 +71,15 @@ lines.on('line', (line) => {
               presence: 'online',
             },
           ],
-          filters: [],
+          filters: [
+            {
+              key: 'fixture:life',
+              label: '+80 to maximum Life',
+              enabled: true,
+              value: 80,
+              min: request.minimums?.['fixture:life'] ?? 80,
+            },
+          ],
           tradeUrl: 'https://www.pathofexile.com/trade/search/Covens/fixture',
         },
       }),

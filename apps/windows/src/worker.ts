@@ -3,6 +3,8 @@ import {
   currencyBatches,
   TRACKED_CURRENCIES,
   TradeClient,
+  CurrencyHistoryClient,
+  type HistoryPeriod,
   type CurrencyRate,
 } from '@vaaluation/trade-client';
 import {
@@ -20,9 +22,18 @@ import { PriceCheckEngine } from './engine';
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.17 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.18 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
+const historyClient = new CurrencyHistoryClient({
+  userAgent: 'ExileWorth/0.1.18 (+https://github.com/wild-butterfly/ExileWorth)',
+  fetch: (url, options) =>
+    fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
+});
+const historyCurrencies = [
+  { id: 'chaos', label: 'Chaos Orb' },
+  ...TRACKED_CURRENCIES.map(({ id, label }) => ({ id, label })),
+];
 
 async function currency(preferred: string | null) {
   const { selected } = await engine.leagues(preferred);
@@ -58,11 +69,40 @@ async function run() {
         preferred: string | null;
         text?: string;
         enabled?: string[];
+        give?: string;
+        want?: string;
+        period?: HistoryPeriod;
+        minimums?: Record<string, number>;
         currency?: string;
         lines?: string[];
         thanks?: string;
         replies?: string[];
       };
+      if (request.action === 'historyCurrencies') {
+        process.stdout.write(JSON.stringify({ result: historyCurrencies }) + '\n');
+        continue;
+      }
+      if (request.action === 'history') {
+        const { selected } = await engine.leagues(request.preferred);
+        if (!selected) throw new Error('No PC trade league is available.');
+        const give = request.give ?? 'divine',
+          want = request.want ?? 'chaos';
+        if (
+          ![give, want].every((id) =>
+            historyCurrencies.some((currency) => currency.id === id),
+          )
+        )
+          throw new Error('Unsupported currency.');
+        const period = request.period ?? '7d';
+        if (!['24h', '7d', '30d'].includes(period))
+          throw new Error('Unsupported history period.');
+        process.stdout.write(
+          JSON.stringify({
+            result: await historyClient.history(selected, give, want, period),
+          }) + '\n',
+        );
+        continue;
+      }
       if (request.action === 'icons') {
         const icons = await client.getCurrencyIcons();
         process.stdout.write(
@@ -116,6 +156,7 @@ async function run() {
               request.preferred,
               request.enabled ?? null,
               request.currency,
+              request.minimums,
             );
       process.stdout.write(JSON.stringify({ result }) + '\n');
     } catch (error) {

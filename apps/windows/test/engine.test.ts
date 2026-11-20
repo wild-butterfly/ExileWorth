@@ -93,3 +93,64 @@ describe('Windows price check', () => {
     expect(filtered.tradeUrl).toContain('/Covens/filtered-query');
   });
 });
+
+describe('editable minimums', () => {
+  it('sends edited stat and weapon minimums and retains them for later searches', async () => {
+    const queries: ReturnType<typeof JSON.parse>[] = [];
+    const fetch: FetchLike = async (url, init) => {
+      const path = new URL(url).pathname;
+      let body: unknown = { result: [] };
+      if (path.endsWith('/data/leagues'))
+        body = { result: [{ id: 'Standard', realm: 'pc' }] };
+      if (path.endsWith('/data/items'))
+        body = { result: [{ entries: [{ type: 'Driftwood Wand' }] }] };
+      if (path.endsWith('/data/stats'))
+        body = {
+          result: [
+            {
+              label: 'Explicit',
+              entries: [
+                { id: 'explicit.life', text: '+# to maximum Life', type: 'explicit' },
+              ],
+            },
+          ],
+        };
+      if (path.endsWith('/search/Standard')) {
+        queries.push(JSON.parse(init?.body ?? '{}'));
+        body = { result: [], total: 0, id: 'edited' };
+      }
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        text: async () => JSON.stringify(body),
+      };
+    };
+    const engine = new PriceCheckEngine(new TradeClient({ fetch, userAgent: 'test' }));
+    const initial = await engine.check(
+      'Item Class: Wands\nRarity: Rare\nTest Wand\nDriftwood Wand\n--------\nPhysical Damage: 10-20\nAttacks per Second: 1.50\n--------\n+80 to maximum Life',
+      'Standard',
+      [],
+    );
+    const life = initial.filters.find((f) => f.label.includes('maximum Life'))!;
+    const dps = initial.filters.find((f) => f.key === 'property:pdps')!;
+    expect(life.value).toBe(80);
+    expect(dps.value).toBe(22.5);
+    const edited = await engine.check(null, 'Standard', [life.key, dps.key], undefined, {
+      [life.key]: 70,
+      [dps.key]: 20.25,
+    });
+    expect(queries.at(-1).query.stats[0].filters).toContainEqual({
+      id: 'explicit.life',
+      value: { min: 70 },
+    });
+    expect(queries.at(-1).query.filters.weapon_filters.filters.pdps.min).toBe(20.25);
+    expect(edited.filters.find((f) => f.key === life.key)).toMatchObject({
+      value: 80,
+      min: 70,
+    });
+    expect(edited.tradeUrl).toContain('/Standard/edited');
+    await engine.check(null, 'Standard', [life.key, dps.key]);
+    expect(queries.at(-1).query.stats[0].filters[0].value.min).toBe(70);
+  });
+});

@@ -22,6 +22,8 @@ export type PropertyFilterId =
 export interface SelectableFilter {
   /** Stable key for UI selection. */
   readonly key: string;
+  readonly combinedKeys?: readonly string[];
+  readonly tooltip?: string;
   /**
    * Which search this row drives: a modifier on the item, or one of the
    * item's own totals under the trade site's Armour and Weapon filters.
@@ -270,8 +272,16 @@ export function buildQuery(
 ): TradeQuery {
   const baseTypes = options.baseTypes;
   const onlineOnly = options.onlineOnly ?? true;
+  const replaced = new Set(
+    filters
+      .filter((filter) => filter.selected)
+      .flatMap((filter) => filter.combinedKeys ?? []),
+  );
   const stats: StatFilter[] = filters
-    .filter((filter) => filter.selected && filter.kind !== 'property')
+    .filter(
+      (filter) =>
+        filter.selected && !replaced.has(filter.key) && filter.kind !== 'property',
+    )
     .map((filter) => {
       const value: { min?: number; max?: number } = {};
       if (filter.min !== null) value.min = filter.min;

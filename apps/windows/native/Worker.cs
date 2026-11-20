@@ -76,7 +76,8 @@ internal record PriceResult(League[] Leagues, string Selected, int Total, Listin
 internal record TypicalPrice(double Amount, string Currency, double? Chaos);
 internal record Listing(double Amount, string Currency, string AccountName, int? Ilvl, string Presence,
     string? Indexed = null, string? Whisper = null);
-internal record Modifier(string Key, string Label, bool Enabled)
+internal record Modifier(string Key, string Label, bool Enabled, double? Value = null, double? Min = null,
+    string[]? CombinedKeys = null, string? Tooltip = null)
 {
     public override string ToString() => Label;
 }

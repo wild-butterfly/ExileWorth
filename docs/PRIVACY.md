@@ -20,10 +20,17 @@ usage. See the [website privacy notice](https://wild-butterfly.github.io/ExileWo
 
 ExileWorth talks only to official Path of Exile services:
 
-| Request      | When                                   | What is sent                                                                           |
-| ------------ | -------------------------------------- | -------------------------------------------------------------------------------------- |
-| League list  | On launch and on manual refresh        | Nothing personal — a plain GET request.                                                |
-| Trade search | Only when you run a price check search | The item filters you confirmed (base type, modifiers, ranges) and the selected league. |
+| Request          | When                                                | What is sent                                                                                                                                          |
+| ---------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| League list      | On launch and on manual refresh                     | Nothing personal — a plain GET request.                                                                                                               |
+| Trade search     | Only when you run a price check search              | The item filters you confirmed (base type, modifiers, ranges) and the selected league.                                                                |
+| Currency history | When you open Currency or change its history period | Completed-hour timestamps requested from GGG's public `web.poecdn.com/api/currency-exchange` feed. Currency and league selection are applied locally. |
+
+Currency history uses completed trades from GGG's hourly digests. Digests are
+cached in memory and reused when you change currency pairs. The 7-day and 30-day
+views sample hourly digests once per day and include the latest completed hour;
+missing hours remain gaps. Live currency offers and historical traded averages
+are labelled separately.
 
 Every request carries a descriptive `User-Agent` identifying ExileWorth, as
 required by Grinding Gear Games' developer policy.

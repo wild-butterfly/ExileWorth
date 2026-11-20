@@ -1,22 +1,21 @@
 import { parseItemText } from '@vaaluation/item-parser';
 import { resolveLeagueId } from '@vaaluation/shared-types';
 import {
-  buildFilters,
   buildQuery,
   distribution,
   relaxWeakest,
   toPricedListings,
   tradeSearchUrl,
-  type SelectableFilter,
   type TradeClient,
 } from '@vaaluation/trade-client';
+import { windowsFilters, type WindowsFilter } from './filters';
 
 /** Currencies the listing filter may restrict prices to. */
 const LISTING_CURRENCIES = new Set(['alch', 'chaos', 'divine', 'exalted']);
 
 export class PriceCheckEngine {
   private item: ReturnType<typeof parseItemText> | null = null;
-  private filters: SelectableFilter[] = [];
+  private filters: WindowsFilter[] = [];
 
   constructor(private readonly client: TradeClient) {}
 
@@ -30,6 +29,7 @@ export class PriceCheckEngine {
     preferred: string | null,
     enabled: readonly string[] | null,
     currency?: string,
+    minimums?: Readonly<Record<string, number>>,
   ) {
     if (text !== null) {
       this.item = parseItemText(text);
@@ -42,7 +42,7 @@ export class PriceCheckEngine {
     const stats = await this.client.getStatIndex();
     const baseTypes = await this.client.getBaseTypeIndex();
     if (text !== null || this.filters.length === 0)
-      this.filters = buildFilters(item, stats);
+      this.filters = windowsFilters(item, stats);
     const requested = enabled === null ? null : new Set(enabled);
     let filters =
       requested === null
@@ -51,6 +51,19 @@ export class PriceCheckEngine {
             ...filter,
             selected: requested.has(filter.key),
           }));
+    filters = filters.map((filter) => {
+      const min = minimums?.[filter.key];
+      return typeof min === 'number' && Number.isFinite(min) && filter.value !== null
+        ? { ...filter, min, max: null }
+        : filter;
+    });
+    const combined = filters.find((filter) => filter.selected && filter.combinedKeys);
+    if (combined)
+      filters = filters.map((filter) =>
+        combined.combinedKeys!.includes(filter.key)
+          ? { ...filter, selected: false }
+          : filter,
+      );
     const searchListings = () => {
       const query = buildQuery(item, filters, { baseTypes });
       if (currency !== undefined && LISTING_CURRENCIES.has(currency)) {
@@ -95,11 +108,17 @@ export class PriceCheckEngine {
       listings,
       typical: await this.typical(selected, listings),
       itemName: item.name,
-      filters: filters.map(({ key, label, selected }) => ({
-        key,
-        label,
-        enabled: selected,
-      })),
+      filters: filters.map(
+        ({ key, label, selected, value, min, combinedKeys, tooltip }) => ({
+          key,
+          label,
+          enabled: selected,
+          value,
+          min,
+          combinedKeys,
+          tooltip,
+        }),
+      ),
       tradeUrl: tradeSearchUrl(selected, search.id),
     };
   }

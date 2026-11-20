@@ -54,3 +54,18 @@ export type {
   TradeStatEntry,
   TradeStatGroup,
 } from './types';
+
+export {
+  buildPriceFilters,
+  applyMinimumPreset,
+  matchingMinimumPreset,
+  resistanceMode,
+  visiblePriceFilters,
+} from './priceFilters';
+export {
+  CurrencyHistoryClient,
+  historyHours,
+  parseHistoryDigest,
+  historyPoint,
+} from './history';
+export type { HistoryPeriod, HistoryPoint, CurrencyHistory } from './history';
