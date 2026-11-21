@@ -1,4 +1,5 @@
 import type { ItemProperties, Modifier, ParsedItem } from '@vaaluation/shared-types';
+import { isClusterRadiusReminder } from '@vaaluation/item-parser';
 import type { StatFilter, TradeQuery } from './types';
 import { TradeError } from './types';
 import type { StatIndex } from './stats';
@@ -216,6 +217,8 @@ export function buildFilters(item: ParsedItem, stats: StatIndex): SelectableFilt
   }[] = [];
 
   item.modifiers.forEach((modifier, index) => {
+    // Also protect callers passing a previously parsed item to the matcher.
+    if (cluster && isClusterRadiusReminder(modifier.text)) return;
     const match = stats.match(
       implicitCatalogue && modifier.type === 'explicit' && !modifier.annotation
         ? { ...modifier, type: 'implicit' }
