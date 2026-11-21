@@ -52,7 +52,7 @@ function MinimumInput({
     <TextInput
       ref={inputRef}
       style={[styles.input, !valid && styles.invalid]}
-      accessibilityLabel={`${filter.label} search minimum`}
+      accessibilityLabel={`${filter.label} ${filter.exact ? 'exact count' : 'search minimum'}`}
       value={raw}
       editable={!disabled}
       selectTextOnFocus
@@ -158,7 +158,12 @@ export function PriceModifiers({
                 onChange(
                   filters.map((current) =>
                     current.key === filter.key
-                      ? { ...current, min, max: null, selected: true }
+                      ? {
+                          ...current,
+                          min,
+                          max: current.exact ? min : null,
+                          selected: true,
+                        }
                       : current,
                   ),
                 )

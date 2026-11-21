@@ -196,6 +196,8 @@ internal static class WindowTheme
         : value >= 10 ? value.ToString("0.#")
         : value.ToString("0.##");
 
+    public static string ExchangeAmount(double value) => value.ToString("G4");
+
     /// <summary>Dark title bar whose caption matches the window, with Windows 11 rounding.</summary>
     public static void ApplyTitleBar(nint handle, Color caption)
     {

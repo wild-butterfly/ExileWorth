@@ -1,0 +1,8 @@
+Item Class: Viscera
+Arachnid Egg Sac
+--------
+Torso
+--------
+Minions created Recently have 12% increased Attack and Cast Speed (implicit)
+--------
+Take this to the Wickerman in a town or hideout to attach it.

@@ -633,6 +633,7 @@ internal sealed class ListingView : ScrollList
     }
 
     public bool ShowLevel { get; init; } = true;
+    public bool Exchange { get; set; }
 
     public IReadOnlyList<Listing> Listings
     {
@@ -648,7 +649,7 @@ internal sealed class ListingView : ScrollList
     {
         int pad = this.Px(compact ? 4 : 10);
         int priceWidth = this.Px(compact ? 92 : 112);
-        int levelWidth = ShowLevel ? this.Px(42) : 0;
+        int levelWidth = ShowLevel && !Exchange ? this.Px(42) : 0;
         int ageWidth = this.Px(46);
         var price = new Rectangle(row.Left + pad, row.Top, priceWidth, row.Height);
         var level = new Rectangle(price.Right, row.Top, levelWidth, row.Height);
@@ -662,10 +663,10 @@ internal sealed class ListingView : ScrollList
         var (price, level, account, age) = Columns(new Rectangle(0, 0, Width - this.Px(8), bounds.Height));
         var font = WindowTheme.Mono(7f);
         var flags = TextFormatFlags.VerticalCenter;
-        WindowTheme.Text(g, "PRICE", font, price, WindowTheme.Faint, flags);
-        if (ShowLevel) WindowTheme.Text(g, "ILVL", font, level, WindowTheme.Faint, flags | TextFormatFlags.Right);
+        WindowTheme.Text(g, Exchange ? "CHAOS / EACH" : "PRICE", font, price, WindowTheme.Faint, flags);
+        if (ShowLevel && !Exchange) WindowTheme.Text(g, "ILVL", font, level, WindowTheme.Faint, flags | TextFormatFlags.Right);
         WindowTheme.Text(g, "ACCOUNT", font, Rectangle.FromLTRB(account.Left + this.Px(11), account.Top, account.Right, account.Bottom), WindowTheme.Faint, flags);
-        WindowTheme.Text(g, "LISTED", font, age, WindowTheme.Faint, flags | TextFormatFlags.Right);
+        WindowTheme.Text(g, Exchange ? "STOCK" : "LISTED", font, age, WindowTheme.Faint, flags | TextFormatFlags.Right);
         using var line = new Pen(WindowTheme.Hairline);
         g.DrawLine(line, 0, bounds.Bottom - 1, Width - this.Px(8), bounds.Bottom - 1);
     }
@@ -685,7 +686,7 @@ internal sealed class ListingView : ScrollList
             g.DrawImage(image, new Rectangle(x, bounds.Top + (bounds.Height - icon) / 2, icon, icon));
             x += icon + this.Px(5);
         }
-        string amount = WindowTheme.Amount(listing.Amount);
+        string amount = Exchange ? WindowTheme.ExchangeAmount(listing.Amount) : WindowTheme.Amount(listing.Amount);
         var amountFont = WindowTheme.Mono(compact ? 9f : 9.5f, FontStyle.Bold);
         int amountWidth = TextRenderer.MeasureText(g, amount, amountFont, Size.Empty, TextFormatFlags.NoPadding).Width;
         // Drawn at its natural width: a clipped box turned some prices into "…".
@@ -695,7 +696,7 @@ internal sealed class ListingView : ScrollList
         WindowTheme.Text(g, WindowTheme.ShortCurrency(listing.Currency), WindowTheme.Sans(compact ? 7.5f : 8f),
             Rectangle.FromLTRB(x + amountWidth + this.Px(3), bounds.Top, price.Right, bounds.Bottom), WindowTheme.Dim);
 
-        if (ShowLevel)
+        if (ShowLevel && !Exchange)
             WindowTheme.Text(g, listing.Ilvl?.ToString() ?? "—", WindowTheme.Mono(8.5f), level, WindowTheme.Secondary,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
 
@@ -708,7 +709,7 @@ internal sealed class ListingView : ScrollList
         WindowTheme.Text(g, listing.AccountName, WindowTheme.Sans(compact ? 8.5f : 9f),
             Rectangle.FromLTRB(account.Left + this.Px(11), bounds.Top, account.Right, bounds.Bottom),
             listing.Presence == "offline" ? WindowTheme.Muted : WindowTheme.Body);
-        WindowTheme.Text(g, Age(listing.Indexed), WindowTheme.Mono(8f), age, WindowTheme.Dim,
+        WindowTheme.Text(g, Exchange ? listing.Stock?.ToString("0.##") ?? "—" : Age(listing.Indexed), WindowTheme.Mono(8f), age, WindowTheme.Dim,
             TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
 
         if (!compact && index < listings.Count - 1)
@@ -782,14 +783,14 @@ internal sealed class ModifierView : ScrollList
         foreach (var (row, field) in inputs)
         {
             var (modifier, enabled) = items[row];
-            if (!enabled || modifier.Value is not double value) continue;
+            if (!enabled || modifier.Exact || modifier.Value is not double value) continue;
             field.Input.Text = Math.Round(value - Math.Abs(value) * percent / 100, 2, MidpointRounding.AwayFromZero).ToString("0.########", Numbers);
         }
         Changed?.Invoke();
     }
 
-    public bool MatchesPreset(int percent) => items.Any(item => item.Enabled && item.Modifier.Value is not null) &&
-        items.Where(item => item.Enabled && item.Modifier.Value is not null).All(item =>
+    public bool MatchesPreset(int percent) => items.Any(item => item.Enabled && !item.Modifier.Exact && item.Modifier.Value is not null) &&
+        items.Where(item => item.Enabled && !item.Modifier.Exact && item.Modifier.Value is not null).All(item =>
             Math.Abs((item.Modifier.Min ?? item.Modifier.Value!.Value) - Math.Round(item.Modifier.Value!.Value - Math.Abs(item.Modifier.Value.Value) * percent / 100, 2, MidpointRounding.AwayFromZero)) < 0.000001);
 
     private readonly List<(int Row, TextField Field)> inputs = [];
@@ -848,9 +849,12 @@ internal sealed class ModifierView : ScrollList
             var input = field.Input;
             input.Font = WindowTheme.Mono(compact ? 8.5f : 9f);
             input.TextAlign = HorizontalAlignment.Right;
-            input.AccessibleName = $"Minimum {modifier.Label}";
-            input.AccessibleDescription = "Type a trade search minimum. Enter confirms; Escape restores the item value.";
-            modifierTip.SetToolTip(input, modifier.Tooltip ?? $"Minimum for {modifier.Label}. Item value: {original:0.##}. Enter confirms; Escape restores.");
+            string bound = modifier.Exact ? "Exact count" : "Minimum";
+            input.AccessibleName = $"{bound} {modifier.Label}";
+            input.AccessibleDescription = modifier.Exact
+                ? "Type an exact passive or socket count. Presets leave this count unchanged."
+                : "Type a trade search minimum. Enter confirms; Escape restores the item value.";
+            modifierTip.SetToolTip(input, modifier.Tooltip ?? $"{bound} for {modifier.Label}. Item value: {original:0.##}. Enter confirms; Escape restores.");
             input.Text = (modifier.Min ?? original).ToString("0.########", Numbers);
             input.Enter += (_, _) => input.SelectAll();
             input.MouseDown += (_, e) =>
@@ -1283,6 +1287,7 @@ internal sealed class PriceHeader : Control
     private string meta = "";
     private TypicalPrice? typical;
     private int total;
+    private bool exchange;
     private readonly bool compact;
 
     public PriceHeader(bool compact)
@@ -1317,14 +1322,15 @@ internal sealed class PriceHeader : Control
         }
     }
 
-    public void Show(string title, string meta, TypicalPrice? typical, int total)
+    public void Show(string title, string meta, TypicalPrice? typical, int total, bool exchange = false)
     {
         this.title = title;
         this.meta = meta;
         this.typical = typical;
         this.total = total;
+        this.exchange = exchange;
         AccessibleName = typical is null ? title
-            : $"{title}, typical price {WindowTheme.Amount(typical.Amount)} {typical.Currency}";
+            : $"{title}, {(exchange ? "Exchange rate per item" : "typical price")} {WindowTheme.Amount(typical.Amount)} {typical.Currency}";
         Invalidate();
     }
 
@@ -1353,7 +1359,7 @@ internal sealed class PriceHeader : Control
         int priceWidth = 0;
         if (typical is not null)
         {
-            string amount = WindowTheme.Amount(typical.Amount);
+            string amount = exchange ? WindowTheme.ExchangeAmount(typical.Amount) : WindowTheme.Amount(typical.Amount);
             var big = PriceFont;
             var unitFont = WindowTheme.Sans(compact ? 9f : 10.5f);
             string unit = typical.Currency;
@@ -1377,7 +1383,7 @@ internal sealed class PriceHeader : Control
             TextRenderer.DrawText(g, unit, unitFont,
                 new Point(x + amountSize.Width + this.Px(4), top + amountSize.Height - unitSize.Height - this.Px(1)),
                 WindowTheme.Muted, TextFormatFlags.NoPadding);
-            string detail = $"typical · {total:N0} listing{(total == 1 ? "" : "s")}";
+            string detail = exchange ? "Exchange · bulk offers" : $"Trade · {total:N0} listing{(total == 1 ? "" : "s")}";
             if (typical.Chaos is { } chaos) detail = $"{WindowTheme.Amount(chaos)} chaos · " + detail;
             var detailFont = DetailFont;
             Size detailSize = TextRenderer.MeasureText(g, detail, detailFont, Size.Empty, TextFormatFlags.NoPadding);

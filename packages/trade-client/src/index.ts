@@ -1,4 +1,10 @@
 export { TradeClient } from './client';
+export {
+  ExchangeItemIndex,
+  exchangeQuantity,
+  formatExchangeAmount,
+} from './exchangeItems';
+export type { ExchangeItem, ExchangeQuote } from './exchangeItems';
 export type { FetchLike, TradeClientOptions } from './client';
 export { buildFilters, buildQuery, relaxWeakest, tradeSearchUrl } from './query';
 export type { PropertyFilterId, QueryOptions, SelectableFilter } from './query';

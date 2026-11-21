@@ -1,0 +1,213 @@
+{
+  "leagues": [
+    {
+      "id": "Covens",
+      "text": "Covens",
+      "realm": "pc"
+    }
+  ],
+  "selected": "Covens",
+  "itemName": "Betrayal Thread",
+  "exchange": {
+    "item": {
+      "id": "betrayal-thread",
+      "name": "Betrayal Thread"
+    },
+    "source": "bulk-exchange",
+    "quantity": 20,
+    "perItemChaos": 1,
+    "stackChaos": 20,
+    "offers": [
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 2,
+        "accountName": "Sample seller 1",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 2,
+        "accountName": "Sample seller 2",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 6,
+        "accountName": "Sample seller 3",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 6,
+        "accountName": "Sample seller 4",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 1,
+        "accountName": "Sample seller 5",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 23,
+        "accountName": "Sample seller 6",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 32,
+        "accountName": "Sample seller 7",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 13,
+        "accountName": "Sample seller 8",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 10,
+        "accountName": "Sample seller 9",
+        "online": true
+      },
+      {
+        "wantCurrency": "chaos",
+        "wantAmount": 1,
+        "giveCurrency": "betrayal-thread",
+        "giveAmount": 1,
+        "stock": 15,
+        "accountName": "Sample seller 10",
+        "online": true
+      }
+    ],
+    "rate": {
+      "give": "betrayal-thread",
+      "want": "chaos",
+      "median": 1,
+      "low": 1,
+      "high": 1,
+      "sampleSize": 10
+    },
+    "updatedAt": 1795269762956,
+    "url": "https://www.pathofexile.com/trade/exchange/Covens/H4sIAAAAAAAAAxXIQQqAIBAF0Lv8tV3Aq4SLXw0oyEzoVIR49-gt30B3-tURB-z0YooI01pUMAMyb0FcsWdaRwp4qP7HJt74si6em_BAmh_SOgioSgAAAA"
+  },
+  "filters": [],
+  "total": 10,
+  "listings": [
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 1",
+      "presence": "online",
+      "stock": 2,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 2",
+      "presence": "online",
+      "stock": 2,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 3",
+      "presence": "online",
+      "stock": 6,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 4",
+      "presence": "online",
+      "stock": 6,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 5",
+      "presence": "online",
+      "stock": 1,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 6",
+      "presence": "online",
+      "stock": 23,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 7",
+      "presence": "online",
+      "stock": 32,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 8",
+      "presence": "online",
+      "stock": 13,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 9",
+      "presence": "online",
+      "stock": 10,
+      "minimum": 1
+    },
+    {
+      "amount": 1,
+      "currency": "chaos",
+      "accountName": "Sample seller 10",
+      "presence": "online",
+      "stock": 15,
+      "minimum": 1
+    }
+  ],
+  "typical": {
+    "amount": 1,
+    "currency": "chaos",
+    "chaos": null
+  },
+  "tradeUrl": "https://www.pathofexile.com/trade/exchange/Covens/H4sIAAAAAAAAAxXIQQqAIBAF0Lv8tV3Aq4SLXw0oyEzoVIR49-gt30B3-tURB-z0YooI01pUMAMyb0FcsWdaRwp4qP7HJt74si6em_BAmh_SOgioSgAAAA"
+}

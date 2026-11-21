@@ -79,7 +79,7 @@ export interface FetchResponse {
 export interface StatFilter {
   readonly id: string;
   readonly disabled?: boolean;
-  readonly value?: { min?: number; max?: number };
+  readonly value?: { min?: number; max?: number; option?: number };
 }
 
 export interface TradeQuery {

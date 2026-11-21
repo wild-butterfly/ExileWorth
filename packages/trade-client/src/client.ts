@@ -1,4 +1,5 @@
 import type { League } from '@vaaluation/shared-types';
+import type { ParsedItem } from '@vaaluation/shared-types';
 import type { FetchResult, SearchResponse, TradeQuery } from './types';
 import { TradeError } from './types';
 import {
@@ -13,6 +14,7 @@ import { BaseTypeIndex, parseItemCatalog } from './baseTypes';
 import type { CurrencyRate, ExchangeOffer } from './exchange';
 import { parseExchangeResponse, summarizeBatch, summarizeRates } from './exchange';
 import { parseStaticIcons } from './icons';
+import { ExchangeItemIndex, exchangeQuantity, type ExchangeQuote } from './exchangeItems';
 
 const BASE = 'https://www.pathofexile.com/api/trade';
 
@@ -68,6 +70,9 @@ export class TradeClient {
   private statIndex: StatIndex | null = null;
   private baseTypeIndex: BaseTypeIndex | null = null;
   private currencyIcons: Map<string, string> | null = null;
+  private staticData: Promise<unknown> | null = null;
+  private exchangeItems: ExchangeItemIndex | null = null;
+  private readonly exchangeUrls = new Map<string, string>();
   private readonly now: () => number;
   private readonly cacheTtlMs: number;
 
@@ -211,9 +216,73 @@ export class TradeClient {
    */
   async getCurrencyIcons(): Promise<Map<string, string>> {
     if (this.currencyIcons !== null) return this.currencyIcons;
-    const body = await this.request(`${BASE}/data/static`, undefined, this.dataPolicy);
+    const body = await this.getStaticData();
     this.currencyIcons = parseStaticIcons(body);
     return this.currencyIcons;
+  }
+
+  private getStaticData(): Promise<unknown> {
+    this.staticData ??= this.request(
+      `${BASE}/data/static`,
+      undefined,
+      this.dataPolicy,
+    ).catch((error) => {
+      this.staticData = null;
+      throw error;
+    });
+    return this.staticData;
+  }
+
+  /** Returns null only when this item is not an exact exchange-catalogue match. */
+  async quoteExchangeItem(
+    item: ParsedItem,
+    league: string,
+  ): Promise<ExchangeQuote | null> {
+    if (item.kind === 'gem' || (item.kind === 'equipment' && item.rarity !== 'normal'))
+      return null;
+    this.exchangeItems ??= new ExchangeItemIndex(await this.getStaticData());
+    const entry = this.exchangeItems.resolve(item);
+    if (!entry) return null;
+    const quantity = exchangeQuantity(item);
+    const key = `exchange:${league}:${entry.id}:chaos`;
+    const offers =
+      entry.id === 'chaos'
+        ? []
+        : (await this.exchange(league, entry.id, 'chaos'))
+            .filter(
+              (offer) =>
+                offer.giveCurrency === entry.id &&
+                offer.wantCurrency === 'chaos' &&
+                offer.online &&
+                Number.isFinite(offer.giveAmount) &&
+                offer.giveAmount > 0 &&
+                Number.isFinite(offer.wantAmount) &&
+                offer.wantAmount > 0 &&
+                Number.isFinite(offer.stock) &&
+                offer.stock >= offer.giveAmount,
+            )
+            .sort((a, b) => a.wantAmount / a.giveAmount - b.wantAmount / b.giveAmount)
+            // Compare the best normalized offers, not a tail of overpriced
+            // listings or nominal lot prices sorted without unit conversion.
+            .slice(0, 10);
+    const rate = summarizeRates(offers, entry.id, 'chaos');
+    const perItemChaos = entry.id === 'chaos' ? 1 : (rate?.median ?? null);
+    return {
+      item: entry,
+      source: 'bulk-exchange',
+      quantity,
+      perItemChaos,
+      stackChaos:
+        perItemChaos === null || !Number.isFinite(perItemChaos * quantity)
+          ? null
+          : perItemChaos * quantity,
+      offers,
+      rate,
+      updatedAt: this.cache.get(key)?.at ?? this.now(),
+      url:
+        this.exchangeUrls.get(key) ??
+        `https://www.pathofexile.com/trade/exchange/${encodeURIComponent(league)}`,
+    };
   }
 
   async search(league: string, query: TradeQuery): Promise<SearchResponse> {
@@ -260,6 +329,12 @@ export class TradeClient {
       options,
     );
     const offers = parseExchangeResponse(response);
+    const id = (response as { id?: unknown } | null)?.id;
+    if (typeof id === 'string' && id)
+      this.exchangeUrls.set(
+        key,
+        `https://www.pathofexile.com/trade/exchange/${encodeURIComponent(league)}/${encodeURIComponent(id)}`,
+      );
     this.store(key, offers);
     return offers;
   }

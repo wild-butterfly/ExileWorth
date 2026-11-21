@@ -1,0 +1,28 @@
+{
+  "result": [
+    {
+      "label": "Accessories",
+      "entries": [
+        {
+          "type": "Leather Belt",
+          "text": "Headhunter Leather Belt",
+          "name": "Headhunter",
+          "flags": {
+            "unique": true
+          }
+        }
+      ]
+    },
+    {
+      "label": "Viscera",
+      "entries": [
+        {
+          "type": "Arachnid Egg Sac"
+        },
+        {
+          "type": "Golden Ankh"
+        }
+      ]
+    }
+  ]
+}

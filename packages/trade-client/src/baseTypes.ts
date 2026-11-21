@@ -22,6 +22,7 @@ export interface ItemGroup {
 
 export class BaseTypeIndex {
   private readonly exact = new Set<string>();
+  private readonly named = new Map<string, { type: string; name: string }>();
   /** Base types bucketed by word count, longest first for greedy matching. */
   private readonly byLength: { words: number; types: string[] }[] = [];
 
@@ -30,6 +31,9 @@ export class BaseTypeIndex {
     for (const group of groups) {
       for (const entry of group.entries) {
         if (typeof entry.type !== 'string' || entry.type === '') continue;
+        if (entry.name && !this.named.has(entry.name)) {
+          this.named.set(entry.name, { type: entry.type, name: entry.name });
+        }
         if (this.exact.has(entry.type)) continue;
         this.exact.add(entry.type);
         const words = entry.type.split(' ').length;
@@ -49,6 +53,14 @@ export class BaseTypeIndex {
 
   isKnown(type: string): boolean {
     return this.exact.has(type);
+  }
+
+  /** Exact identities for items without a rarity header; never a substring guess. */
+  identity(name: string): { type: string; name?: string } | null {
+    const trimmed = name.trim();
+    return (
+      this.named.get(trimmed) ?? (this.exact.has(trimmed) ? { type: trimmed } : null)
+    );
   }
 
   /**

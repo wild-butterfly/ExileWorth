@@ -15,6 +15,7 @@ import type {
   PriceWarning,
   PricedListing,
   SelectableFilter,
+  ExchangeQuote,
 } from '@vaaluation/trade-client';
 import {
   buildPriceFilters,
@@ -43,10 +44,12 @@ import { getTradeClient } from '../services/trade';
 import { onItemCopied } from '../native/VLEvents';
 import { useTradeCooldown } from '../hooks/useTradeCooldown';
 import { PriceModifiers, PriceFilterActions } from '../components/PriceModifiers';
+import { ExchangePriceCard } from '../components/ExchangePriceCard';
 
 type SearchState =
   | { status: 'idle' }
   | { status: 'searching' }
+  | { status: 'exchange'; quote: ExchangeQuote }
   | {
       status: 'done';
       total: number;
@@ -177,7 +180,6 @@ export function PriceCheckOverlay({
   const runSearchRef = useRef<((withFilters: SelectableFilter[]) => void) | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
     searchRevision.current++;
     setState({ status: 'idle' });
     setFilters([]);
@@ -187,32 +189,9 @@ export function PriceCheckOverlay({
       setFilters([]);
       return;
     }
-    getTradeClient()
-      .getStatIndex()
-      .then((stats) => {
-        if (cancelled) return;
-        const built = buildPriceFilters(item, stats);
-        setFilters(built);
-        // Price checking is one keypress, so the panel answers rather than
-        // asking again: the modifiers it would have preselected are the ones
-        // it searches with, and a unique has none to choose in the first
-        // place. Adjusting a filter and pressing Search still works.
-        runSearchRef.current?.(built);
-      })
-      .catch((cause: unknown) => {
-        if (!cancelled) {
-          setFilters([]);
-          const rateLimited = cooldown.start(cause);
-          setState({
-            status: 'error',
-            rateLimited,
-            message:
-              cause instanceof Error ? cause.message : 'Could not load modifier filters.',
-          });
-        }
-      });
+    runSearchRef.current?.([]);
     return () => {
-      cancelled = true;
+      searchRevision.current++;
     };
   }, [item, league, cooldown.start]);
 
@@ -223,6 +202,14 @@ export function PriceCheckOverlay({
       setState({ status: 'searching' });
       try {
         const client = getTradeClient();
+        const quote = await client.quoteExchangeItem(item, league);
+        if (revision !== searchRevision.current) return;
+        if (quote) {
+          setFilters([]);
+          setDirty(false);
+          setState({ status: 'exchange', quote });
+          return;
+        }
         // A cooldown may have interrupted the initial modifier lookup.
         // Retry that lookup before searching, so recovery keeps the item rolls.
         let applied = withFilters;
@@ -415,13 +402,14 @@ export function PriceCheckOverlay({
                 run 1 to 11 chaos beside a divine, and a mean would answer
                 with a price nobody is asking. */}
               <Text style={styles.priceMeta}>
-                typical · {listingCount} listing{listingCount === 1 ? '' : 's'}
+                Trade · {listingCount} listing{listingCount === 1 ? '' : 's'}
               </Text>
             </View>
           ) : null}
         </View>
 
         <View style={styles.body}>
+          {state.status === 'exchange' ? <ExchangePriceCard quote={state.quote} /> : null}
           {item === null ? (
             <Text style={styles.empty}>
               {parseError ?? 'Hover an item in Path of Exile and press Ctrl+D.'}
@@ -549,29 +537,41 @@ export function PriceCheckOverlay({
             <ActivityIndicator size="small" color={theme.actionText} />
           ) : (
             <Text style={styles.searchText}>
-              {cooldown.seconds > 0 ? `Wait ${cooldown.seconds}s` : 'Search'}
+              {cooldown.seconds > 0
+                ? `Wait ${cooldown.seconds}s`
+                : state.status === 'exchange'
+                  ? 'Refresh'
+                  : 'Search'}
             </Text>
           )}
         </Pressable>
         <View style={{ marginLeft: 'auto', zIndex: 30 }}>
-          <PriceFilterActions
-            filters={filters}
-            onChange={editFilters}
-            combined={combined}
-            onCombinedChange={setCombined}
-            disabled={state.status === 'searching' || !validMinimums}
-          />
+          {state.status !== 'exchange' ? (
+            <PriceFilterActions
+              filters={filters}
+              onChange={editFilters}
+              combined={combined}
+              onCombinedChange={setCombined}
+              disabled={state.status === 'searching' || !validMinimums}
+            />
+          ) : null}
         </View>
         <Pressable
-          style={[styles.ghost, (state.status !== 'done' || dirty) && styles.disabled]}
+          style={[
+            styles.ghost,
+            ((state.status !== 'done' && state.status !== 'exchange') || dirty) &&
+              styles.disabled,
+          ]}
           onPress={() => {
             if (state.status === 'done' && league !== null) {
               void Linking.openURL(tradeSearchUrl(league, state.queryId));
-            }
+            } else if (state.status === 'exchange') void Linking.openURL(state.quote.url);
           }}
-          disabled={state.status !== 'done' || dirty}
+          disabled={(state.status !== 'done' && state.status !== 'exchange') || dirty}
         >
-          <Text style={styles.ghostText}>Trade site</Text>
+          <Text style={styles.ghostText}>
+            {state.status === 'exchange' ? 'Exchange site' : 'Trade site'}
+          </Text>
         </Pressable>
       </View>
     </View>
