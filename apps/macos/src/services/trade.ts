@@ -1,7 +1,7 @@
 import { TradeClient, CurrencyHistoryClient } from '@vaaluation/trade-client';
 import type { FetchLike } from '@vaaluation/trade-client';
 
-export const APP_VERSION = '0.1.10';
+export const APP_VERSION = '0.1.11';
 export const PROJECT_URL = 'https://github.com/wild-butterfly/ExileWorth';
 
 /**

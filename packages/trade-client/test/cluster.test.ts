@@ -33,6 +33,38 @@ function parsed(source = text) {
 const queryFilters = (query: TradeQuery) => query.query.stats[0]!.filters;
 
 describe('cluster jewel modifier searches', () => {
+  it.each([
+    '(Added Passive Skills are never considered to be in Radius by other Jewels) (enchant)',
+    'Added Passive Skills are never considered to be in Radius by other Jewels',
+    '(Added Passive Skills are never considered to be in Radius by other Jewels.)',
+    '(Added Passive Skills are never considered to be in Radius by other Jewels). (enchant)',
+    '(Added Passive Skills are never considered to be in Radius by other Jewels) (implicit)',
+    '(Added Passive Skills are never considered to be in Radius by other Jewels)'.replaceAll(
+      ' ',
+      '\u00a0',
+    ),
+    '(Added Passive Skills are never considered to be in Radius by other Jewels)'.replace(
+      'Radius',
+      '\u200bRadius',
+    ),
+  ])('retains all real filters when the radius reminder is copied as %s', (reminder) => {
+    const source = readFileSync(
+      join(__dirname, '../../item-parser/test/fixtures/cluster-jewel-small-advanced.txt'),
+      'utf8',
+    );
+    const original =
+      '(Added Passive Skills are never considered to be in Radius by other Jewels)';
+    const item = parsed(source.replace(original, reminder));
+    const expected = buildQuery(parsed(source), buildPriceFilters(parsed(source), stats));
+    expect(buildQuery(item, buildPriceFilters(item, stats))).toEqual(expected);
+    // The query boundary must also handle an already parsed reminder.
+    if (item.kind !== 'equipment') throw new Error('Expected cluster jewel');
+    const stale = {
+      ...item,
+      modifiers: [...item.modifiers, { text: reminder, type: 'explicit' as const }],
+    };
+    expect(buildQuery(stale, buildPriceFilters(stale, stats))).toEqual(expected);
+  });
   it('ignores the reported cluster radius reminder and unnamed advanced headings while retaining every real filter', () => {
     const plain = parsed(
       readFileSync(

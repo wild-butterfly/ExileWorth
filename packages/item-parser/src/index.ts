@@ -1,4 +1,5 @@
 export { parseItemText } from './parse';
+export { isClusterRadiusReminder } from './reminders';
 export {
   splitSections,
   parseKeyValue,

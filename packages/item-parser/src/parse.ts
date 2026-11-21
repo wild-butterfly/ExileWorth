@@ -26,6 +26,7 @@ import {
   splitSections,
 } from './sections';
 import { isAnnotationLine, parseAnnotation, stripRanges } from './advanced';
+import { isClusterRadiusReminder } from './reminders';
 
 const RARITIES: Record<string, ItemRarity | 'currency' | 'gem' | 'divination'> = {
   Normal: 'normal',
@@ -258,11 +259,7 @@ function scanSections(
 
       // This reminder is copied with cluster enchants, including advanced
       // copy. It describes jewel behaviour; it is not a selectable stat.
-      if (
-        /^\(Added Passive Skills are never considered to be in Radius by other Jewels\)$/i.test(
-          trimmed,
-        )
-      ) {
+      if (isClusterRadiusReminder(trimmed)) {
         state.unknownLines.push(trimmed);
         continue;
       }
