@@ -6,7 +6,7 @@ namespace ExileWorth.Windows;
 /// <summary>What the compact overlay shows for the current price check.</summary>
 internal sealed record PriceView(
     string Title, string Meta, IReadOnlyList<Listing> Listings, IReadOnlyList<Modifier> Filters,
-    TypicalPrice? Typical, int Total, string? Currency, bool Busy, bool HasItem, Uri? TradeUrl);
+    TypicalPrice? Typical, int Total, string? Currency, bool Busy, bool HasItem, Uri? TradeUrl, int CooldownSeconds = 0);
 
 /// <summary>
 /// The compact in-game panel. It opens without focus; clicking a minimum input
@@ -70,6 +70,7 @@ internal sealed class GamePriceOverlay : Form
     private nint game;
     private Uri? tradeUrl;
     private bool loadingTrades, sending, busy, hasItem;
+    private int cooldownSeconds;
     private Point? drag;
     private MouseHook? mouseCallback;
     private nint mouseHook;
@@ -359,7 +360,7 @@ internal sealed class GamePriceOverlay : Form
         currency.Selected = entry.Id is not null;
     }
 
-    private void UpdateSearch() => search.Enabled = hasItem && !busy && modifiers.ItemCount > 0 && modifiers.HasValidMinimums;
+    private void UpdateSearch() => search.Enabled = hasItem && !busy && cooldownSeconds == 0 && modifiers.HasValidMinimums;
 
     private void UpdateModifierTools()
     {
@@ -416,6 +417,7 @@ internal sealed class GamePriceOverlay : Form
     public void Present(PriceView view, string message, string? leagueName)
     {
         busy = view.Busy;
+        cooldownSeconds = view.CooldownSeconds;
         hasItem = view.HasItem;
         header.Show(view.Title, view.Meta, view.Typical, view.Total);
         if (priceLayout.RowStyles[0].Height != header.MeasuredHeight) priceLayout.RowStyles[0].Height = header.MeasuredHeight;
@@ -433,12 +435,12 @@ internal sealed class GamePriceOverlay : Form
         status.ForeColor = WindowTheme.Dim;
         tradeUrl = view.TradeUrl;
         tradeSite.Enabled = tradeUrl is not null && !view.Busy;
-        search.Text = view.Busy && view.HasItem ? "Searching…" : "Search";
+        search.Text = cooldownSeconds > 0 ? $"Wait {cooldownSeconds}s" : view.Busy && view.HasItem ? "Searching…" : "Search";
         UpdateSearch();
         modifiers.Enabled = !view.Busy;
         preset.Enabled = combinedResistance.Enabled = !view.Busy;
         if (view.Busy) presetPicker.Visible = false;
-        currency.Enabled = !view.Busy;
+        currency.Enabled = !view.Busy && cooldownSeconds == 0;
         selectedCurrency = view.Currency;
         ShowCurrency();
     }

@@ -62,6 +62,8 @@ export class TradeClient {
   private readonly searchPolicy: RateLimitPolicy;
   private readonly fetchPolicy: RateLimitPolicy;
   private readonly exchangePolicy: RateLimitPolicy;
+  private readonly dataPolicy: RateLimitPolicy;
+  private cooldownUntil = 0;
   private readonly cache = new Map<string, CacheEntry>();
   private statIndex: StatIndex | null = null;
   private baseTypeIndex: BaseTypeIndex | null = null;
@@ -75,6 +77,7 @@ export class TradeClient {
     this.searchPolicy = new RateLimitPolicy(this.now);
     this.fetchPolicy = new RateLimitPolicy(this.now);
     this.exchangePolicy = new RateLimitPolicy(this.now);
+    this.dataPolicy = new RateLimitPolicy(this.now);
   }
 
   private cached<T>(key: string, ttlMs = this.cacheTtlMs): T | null {
@@ -97,14 +100,14 @@ export class TradeClient {
     policy: RateLimitPolicy,
     options: { waitForCapacity?: boolean } = {},
   ): Promise<unknown> {
-    let waitMs = policy.retryAfterMs();
+    let waitMs = Math.max(policy.retryAfterMs(), this.cooldownUntil - this.now());
     if (waitMs > 0) {
       // Batch callers (the currency table) would rather wait out the window
       // than fail half their rows, so they opt into blocking. Interactive
       // callers still get an immediate, typed error.
       if (options.waitForCapacity === true && waitMs <= MAX_WAIT_MS) {
         await sleep(waitMs + 100);
-        waitMs = policy.retryAfterMs();
+        waitMs = Math.max(policy.retryAfterMs(), this.cooldownUntil - this.now());
       }
       if (waitMs > 0) {
         throw new TradeError(
@@ -137,8 +140,12 @@ export class TradeClient {
 
     if (response.status === 429) {
       const retryAfter = Number(response.headers.get('retry-after') ?? '60');
-      const retryMs = (Number.isFinite(retryAfter) ? retryAfter : 60) * 1000;
+      const retryMs = Math.max(
+        policy.retryAfterMs(),
+        (Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60) * 1000,
+      );
       policy.blockUntil(this.now() + retryMs);
+      this.cooldownUntil = Math.max(this.cooldownUntil, this.now() + retryMs);
       throw new TradeError(
         'rate_limited',
         `Rate limited by the trade API. Try again in ${Math.ceil(retryMs / 1000)}s.`,
@@ -173,10 +180,10 @@ export class TradeClient {
 
   async getLeagues(): Promise<League[]> {
     const key = 'leagues';
-    const hit = this.cached<League[]>(key);
+    const hit = this.cached<League[]>(key, 15 * 60_000);
     if (hit !== null) return hit;
 
-    const body = await this.request(`${BASE}/data/leagues`, undefined, this.searchPolicy);
+    const body = await this.request(`${BASE}/data/leagues`, undefined, this.dataPolicy);
     const leagues = parseLeagues(body);
     this.store(key, leagues);
     return leagues;
@@ -185,7 +192,7 @@ export class TradeClient {
   /** Loads and caches the stat catalog needed to map modifiers to stat ids. */
   async getStatIndex(): Promise<StatIndex> {
     if (this.statIndex !== null) return this.statIndex;
-    const body = await this.request(`${BASE}/data/stats`, undefined, this.searchPolicy);
+    const body = await this.request(`${BASE}/data/stats`, undefined, this.dataPolicy);
     this.statIndex = new StatIndex(parseStatGroups(body));
     return this.statIndex;
   }
@@ -193,7 +200,7 @@ export class TradeClient {
   /** Loads and caches the catalog of searchable item base types. */
   async getBaseTypeIndex(): Promise<BaseTypeIndex> {
     if (this.baseTypeIndex !== null) return this.baseTypeIndex;
-    const body = await this.request(`${BASE}/data/items`, undefined, this.searchPolicy);
+    const body = await this.request(`${BASE}/data/items`, undefined, this.dataPolicy);
     this.baseTypeIndex = new BaseTypeIndex(parseItemCatalog(body));
     return this.baseTypeIndex;
   }
@@ -204,7 +211,7 @@ export class TradeClient {
    */
   async getCurrencyIcons(): Promise<Map<string, string>> {
     if (this.currencyIcons !== null) return this.currencyIcons;
-    const body = await this.request(`${BASE}/data/static`, undefined, this.searchPolicy);
+    const body = await this.request(`${BASE}/data/static`, undefined, this.dataPolicy);
     this.currencyIcons = parseStaticIcons(body);
     return this.currencyIcons;
   }

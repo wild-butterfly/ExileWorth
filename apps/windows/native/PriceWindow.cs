@@ -34,6 +34,10 @@ internal sealed class PriceWindow : Form
     private readonly Label statusMeta = Ui.Label("", WindowTheme.Mono(7.5f), WindowTheme.Muted);
     private readonly Panel statusDot = new() { Size = new Size(7, 7), Margin = new Padding(0, 6, 7, 0) };
     private readonly System.Windows.Forms.Timer gameWatch = new() { Interval = 3000 };
+    private readonly System.Windows.Forms.Timer cooldownTimer = new() { Interval = 1000 };
+    private long cooldownUntil;
+    private string? copiedItem;
+    private int CooldownSeconds => (int)Math.Max(0, (cooldownUntil - Environment.TickCount64 + 999) / 1000);
     private GameHotkey? hotkey;
     private string? preferred;
     private string leagueName = "";
@@ -71,13 +75,13 @@ internal sealed class PriceWindow : Form
         league.Click += (_, _) => leagueMenu.Show(league, new Point(0, league.Height + 4));
         listings.Placeholder = "Listings appear here after a price check.";
         filters.Placeholder = "Modifiers you can match appear here.";
-        filters.Changed += () => search.Enabled = hasItem && !busy && filters.HasValidMinimums;
+        filters.Changed += () => search.Enabled = hasItem && !busy && CooldownSeconds == 0 && filters.HasValidMinimums;
         listings.RowClicked += (index, _) => CopyWhisper(listings.Listings[index]);
 
         pricePage = BuildPricePage();
         pages = new DesktopPages(preferences, SavePreferences, () => preferred, SelectLeague, () => preferences);
         overlay = new GamePriceOverlay((id, selected, minimums) => _ = SelectCurrencyAsync(id, selected, minimums),
-            (selected, minimums) => _ = RunAsync(() => CheckAsync(null, selected, minimums)), () => preferences);
+            (selected, minimums) => _ = RunAsync(() => CheckAsync(null, currentFilters.Length == 0 ? null : selected, minimums)), () => preferences);
 
         Controls.Add(pageHost);
         Controls.Add(BuildRail());
@@ -94,7 +98,7 @@ internal sealed class PriceWindow : Form
             if (!Clipboard.ContainsText()) throw new InvalidOperationException("Copy item text from Path of Exile first (Ctrl + C).");
             await CheckAsync(Clipboard.GetText(), null);
         });
-        search.Click += async (_, _) => await RunAsync(() => CheckAsync(null, filters.Selected, filters.Minimums));
+        search.Click += async (_, _) => await RunAsync(() => CheckAsync(null, filters.ItemCount == 0 ? null : filters.Selected, filters.Minimums));
         open.Click += (_, _) =>
         {
             if (tradeUrl is not null) Process.Start(new ProcessStartInfo(tradeUrl.AbsoluteUri) { UseShellExecute = true });
@@ -111,6 +115,15 @@ internal sealed class PriceWindow : Form
         };
         gameWatch.Tick += (_, _) => { if (Visible) UpdateGameStatus(); };
         gameWatch.Start();
+        cooldownTimer.Tick += (_, _) =>
+        {
+            int seconds = CooldownSeconds;
+            statusText = seconds > 0 ? $"Trade API cooldown · {seconds}s remaining. Requests are paused."
+                : "Cooldown finished. Press Search or use the price-check shortcut again.";
+            if (seconds == 0) cooldownTimer.Stop();
+            SetControlsEnabled();
+            Render();
+        };
         CurrencyIcons.Changed += RefreshCurrencyFilter;
         WindowTheme.ThemeChanged += OnThemeChanged;
         UpdateGameStatus();
@@ -375,7 +388,7 @@ internal sealed class PriceWindow : Form
         if (m.Msg == GameHotkey.Message && m.WParam == GameHotkey.Id)
         {
             nint game = GameHotkey.ForegroundGame();
-            if (game != 0 && !busy) _ = CaptureAsync(game);
+            if (game != 0 && !busy && CooldownSeconds == 0) _ = CaptureAsync(game);
         }
         base.WndProc(ref m);
     }
@@ -406,7 +419,7 @@ internal sealed class PriceWindow : Form
 
     private async Task RunAsync(Func<Task> operation)
     {
-        if (busy) return;
+        if (busy || CooldownSeconds > 0) return;
         busy = true;
         SetControlsEnabled();
         try
@@ -416,7 +429,16 @@ internal sealed class PriceWindow : Form
         catch (Exception error)
         {
             if (IsDisposed) return;
-            statusText = error.Message;
+            if (error is TradeException { Code: "rate_limited", RetryAfterMs: > 0 } limited)
+            {
+                cooldownUntil = Environment.TickCount64 + (long)Math.Ceiling(limited.RetryAfterMs.Value);
+                // The engine parses the copied item before contacting the API and
+                // retains it, so Search can retry even if the first lookup failed.
+                if (copiedItem is not null) hasItem = true;
+                statusText = $"Trade API cooldown · {CooldownSeconds}s remaining. Requests are paused.";
+                cooldownTimer.Start();
+            }
+            else statusText = error.Message;
         }
         finally
         {
@@ -431,10 +453,10 @@ internal sealed class PriceWindow : Form
 
     private void SetControlsEnabled()
     {
-        league.Enabled = paste.Enabled = !busy;
-        currencyFilter.Enabled = !busy;
-        search.Enabled = hasItem && !busy && filters.HasValidMinimums;
-        search.Text = busy && hasItem ? "Searching…" : "Search";
+        league.Enabled = paste.Enabled = !busy && CooldownSeconds == 0;
+        currencyFilter.Enabled = !busy && CooldownSeconds == 0;
+        search.Enabled = hasItem && !busy && CooldownSeconds == 0 && filters.HasValidMinimums;
+        search.Text = CooldownSeconds > 0 ? $"Wait {CooldownSeconds}s" : busy && hasItem ? "Searching…" : "Search";
         open.Enabled = tradeUrl is not null && !busy;
     }
 
@@ -451,7 +473,7 @@ internal sealed class PriceWindow : Form
         if (overlay.Visible)
         {
             overlay.Present(new PriceView(itemName ?? "ExileWorth", meta.Length > 0 ? meta : statusText, currentListings,
-                currentFilters, typical, total, listingCurrency, busy, hasItem, tradeUrl), statusText, leagueName);
+                currentFilters, typical, total, listingCurrency, busy, hasItem, tradeUrl, CooldownSeconds), statusText, leagueName);
         }
     }
 
@@ -479,6 +501,7 @@ internal sealed class PriceWindow : Form
         tradeUrl = null;
         if (text is not null)
         {
+            copiedItem = text;
             hasItem = false;
             itemName = null;
             filters.SetItems([]);
@@ -558,7 +581,7 @@ internal sealed class PriceWindow : Form
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
         SetLeagues(pages.Available, entry.Id);
-        if (hasItem) await RunAsync(() => CheckAsync(null, filters.Selected, filters.Minimums));
+        if (hasItem) await RunAsync(() => CheckAsync(null, filters.ItemCount == 0 ? null : filters.Selected, filters.Minimums));
     }
 
     private void Reveal()
@@ -587,6 +610,7 @@ internal sealed class PriceWindow : Form
             WindowTheme.ThemeChanged -= OnThemeChanged;
             currencyMenu.Dispose();
             gameWatch.Dispose();
+            cooldownTimer.Dispose();
             tray?.Dispose();
             menu.Dispose();
             leagueMenu.Dispose();

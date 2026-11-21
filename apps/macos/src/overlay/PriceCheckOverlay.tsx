@@ -41,6 +41,7 @@ import {
 import type { Theme } from '@vaaluation/ui';
 import { getTradeClient } from '../services/trade';
 import { onItemCopied } from '../native/VLEvents';
+import { useTradeCooldown } from '../hooks/useTradeCooldown';
 import { PriceModifiers, PriceFilterActions } from '../components/PriceModifiers';
 
 type SearchState =
@@ -54,7 +55,7 @@ type SearchState =
       spread: PriceDistribution | null;
       warnings: PriceWarning[];
     }
-  | { status: 'error'; message: string };
+  | { status: 'error'; message: string; rateLimited?: boolean };
 
 const round = formatAmount;
 
@@ -126,6 +127,7 @@ export function PriceCheckOverlay({
   onContentHeight: (height: number) => void;
 }) {
   const searchRevision = useRef(0);
+  const cooldown = useTradeCooldown();
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
   const [item, setItem] = useState<ParsedItem | null>(null);
@@ -197,21 +199,39 @@ export function PriceCheckOverlay({
         // place. Adjusting a filter and pressing Search still works.
         runSearchRef.current?.(built);
       })
-      .catch(() => {
-        if (!cancelled) setFilters([]);
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setFilters([]);
+          const rateLimited = cooldown.start(cause);
+          setState({
+            status: 'error',
+            rateLimited,
+            message:
+              cause instanceof Error ? cause.message : 'Could not load modifier filters.',
+          });
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [item, league]);
+  }, [item, league, cooldown.start]);
 
   const runSearch = useCallback(
     async (withFilters: SelectableFilter[] = filters, automatic = false) => {
-      if (item === null || league === null) return;
+      if (item === null || league === null || cooldown.seconds > 0) return;
       const revision = ++searchRevision.current;
       setState({ status: 'searching' });
       try {
         const client = getTradeClient();
+        // A cooldown may have interrupted the initial modifier lookup.
+        // Retry that lookup before searching, so recovery keeps the item rolls.
+        let applied = withFilters;
+        if (applied.length === 0) {
+          const stats = await client.getStatIndex();
+          if (revision !== searchRevision.current) return;
+          applied = buildPriceFilters(item, stats);
+          setFilters(applied);
+        }
         const baseTypes = await client.getBaseTypeIndex();
 
         // An item searched on three of its exact rolls routinely matches
@@ -219,7 +239,6 @@ export function PriceCheckOverlay({
         // it. Rather than report no listings and leave the player guessing
         // which checkbox to clear, the search gives up its weakest filter and
         // asks again. Bounded, because each attempt spends a request.
-        let applied = withFilters;
         let search = await client.search(
           league,
           buildQuery(item, applied, { baseTypes }),
@@ -257,13 +276,15 @@ export function PriceCheckOverlay({
         });
       } catch (cause: unknown) {
         if (revision !== searchRevision.current) return;
+        const rateLimited = cooldown.start(cause);
         setState({
           status: 'error',
+          rateLimited,
           message: cause instanceof Error ? cause.message : 'Search failed.',
         });
       }
     },
-    [item, league, filters],
+    [item, league, filters, cooldown.seconds, cooldown.start],
   );
 
   runSearchRef.current = (withFilters) => {
@@ -419,7 +440,11 @@ export function PriceCheckOverlay({
                 <Text style={styles.error}>{leagueError}</Text>
               ) : null}
               {state.status === 'error' ? (
-                <Text style={styles.error}>{state.message}</Text>
+                <Text style={styles.error}>
+                  {state.rateLimited
+                    ? (cooldown.message ?? state.message)
+                    : state.message}
+                </Text>
               ) : null}
 
               {state.status === 'done'
@@ -516,13 +541,16 @@ export function PriceCheckOverlay({
             item === null ||
             league === null ||
             state.status === 'searching' ||
+            cooldown.seconds > 0 ||
             !validMinimums
           }
         >
           {state.status === 'searching' ? (
             <ActivityIndicator size="small" color={theme.actionText} />
           ) : (
-            <Text style={styles.searchText}>Search</Text>
+            <Text style={styles.searchText}>
+              {cooldown.seconds > 0 ? `Wait ${cooldown.seconds}s` : 'Search'}
+            </Text>
           )}
         </Pressable>
         <View style={{ marginLeft: 'auto', zIndex: 30 }}>

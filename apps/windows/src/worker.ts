@@ -4,6 +4,7 @@ import {
   TRACKED_CURRENCIES,
   TradeClient,
   CurrencyHistoryClient,
+  TradeError,
   type HistoryPeriod,
   type CurrencyRate,
 } from '@vaaluation/trade-client';
@@ -22,11 +23,11 @@ import { PriceCheckEngine } from './engine';
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.18 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.19 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
 const historyClient = new CurrencyHistoryClient({
-  userAgent: 'ExileWorth/0.1.18 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.19 (+https://github.com/wild-butterfly/ExileWorth)',
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
 });
@@ -163,6 +164,9 @@ async function run() {
       process.stdout.write(
         JSON.stringify({
           error: error instanceof Error ? error.message : 'Search failed.',
+          ...(error instanceof TradeError
+            ? { code: error.code, retryAfterMs: error.retryAfterMs }
+            : {}),
         }) + '\n',
       );
     }
