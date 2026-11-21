@@ -36,6 +36,30 @@ function query(text: string) {
 }
 
 describe('catalogue item names and rolled modifiers', () => {
+  it('honours a declared explicit group rather than inferring an implicit Viscera stat', () => {
+    const source = fixture('viscera-scholars-arm-advanced.txt').replace(
+      '{ Implicit Modifier }',
+      '{ Explicit Modifier }',
+    );
+    expect(query(source).query.stats[0]!.filters).toEqual([
+      { id: 'explicit.stat_328541901', value: { min: 27 } },
+    ]);
+  });
+  it('searches the reported Scholar’s Arm advanced-copy format without treating its heading as a stat', () => {
+    const source = fixture('viscera-scholars-arm-advanced.txt');
+    const item = parsed(source);
+    expect(item).toMatchObject({
+      kind: 'catalogue',
+      name: "Scholar's Arm",
+      modifiers: [{ text: '+27 to Intelligence', type: 'implicit' }],
+    });
+    if (item.kind !== 'catalogue') throw new Error('Expected catalogue item');
+    expect(item.modifiers).toHaveLength(1);
+    expect(query(source).query).toMatchObject({
+      type: "Scholar's Arm",
+      stats: [{ filters: [{ id: 'implicit.stat_328541901', value: { min: 27 } }] }],
+    });
+  });
   it.each([
     [
       ankh,

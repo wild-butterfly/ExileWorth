@@ -86,7 +86,7 @@ function isUsageSection(lines: readonly string[]): boolean {
 
 function classifyModLine(line: string, annotation?: ModifierAnnotation): Modifier {
   let body = line;
-  let type: ModifierType = 'explicit';
+  let type: ModifierType = annotation?.type ?? 'explicit';
   for (const { suffix, type: suffixType } of MOD_SUFFIXES) {
     if (body.endsWith(suffix)) {
       body = body.slice(0, -suffix.length);
@@ -111,17 +111,19 @@ function classifyModLine(line: string, annotation?: ModifierAnnotation): Modifie
 function toModifiers(lines: readonly string[]): Modifier[] {
   const modifiers: Modifier[] = [];
   let pending: ModifierAnnotation | undefined;
+  let declaredGroup: ModifierAnnotation | undefined;
 
   for (const line of lines) {
     if (isAnnotationLine(line)) {
       const annotation = parseAnnotation(line);
       if (annotation !== null) {
         pending = annotation;
+        declaredGroup = annotation.type ? annotation : undefined;
         continue;
       }
       // Unrecognized braces: keep the line rather than dropping it.
     }
-    const modifier = classifyModLine(line, pending);
+    const modifier = classifyModLine(line, pending ?? declaredGroup);
     const previous = modifiers.at(-1);
     // Some cluster passive types span two copied lines (bows, traps/mines).
     // They are one categorical trade filter, not two independent rolls.
@@ -253,6 +255,17 @@ function scanSections(
     for (const line of section) {
       const trimmed = line.trim();
       if (trimmed === '') continue;
+
+      // This reminder is copied with cluster enchants, including advanced
+      // copy. It describes jewel behaviour; it is not a selectable stat.
+      if (
+        /^\(Added Passive Skills are never considered to be in Radius by other Jewels\)$/i.test(
+          trimmed,
+        )
+      ) {
+        state.unknownLines.push(trimmed);
+        continue;
+      }
 
       if (FLAG_LINES.has(trimmed)) {
         sectionHadStructure = true;

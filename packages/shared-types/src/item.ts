@@ -21,6 +21,8 @@ export type ModifierType =
  * `{ Prefix Modifier "Healthy" (Tier: 12) — Life }`.
  */
 export interface ModifierAnnotation {
+  /** Advanced copy can declare a stat group without a prefix/suffix name. */
+  readonly type?: ModifierType;
   readonly affix: 'prefix' | 'suffix' | 'unknown';
   readonly name: string;
   readonly tier?: number;

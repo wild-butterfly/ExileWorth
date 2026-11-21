@@ -217,7 +217,7 @@ export function buildFilters(item: ParsedItem, stats: StatIndex): SelectableFilt
 
   item.modifiers.forEach((modifier, index) => {
     const match = stats.match(
-      implicitCatalogue && modifier.type === 'explicit'
+      implicitCatalogue && modifier.type === 'explicit' && !modifier.annotation
         ? { ...modifier, type: 'implicit' }
         : modifier,
       { local },

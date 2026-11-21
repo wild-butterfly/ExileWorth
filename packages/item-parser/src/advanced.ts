@@ -1,4 +1,4 @@
-import type { ModifierAnnotation } from '@vaaluation/shared-types';
+import type { ModifierAnnotation, ModifierType } from '@vaaluation/shared-types';
 
 /**
  * Support for the game's "Advanced Mod Descriptions" option, which prefixes
@@ -26,6 +26,21 @@ export function parseAnnotation(line: string): ModifierAnnotation | null {
 
   // Split the trailing tag list on the em dash the game uses as separator.
   const [head, tagPart] = splitOnDash(body);
+  const group =
+    /^(Implicit|Explicit|Enchant(?:ment)?|Crafted|Fractured|Rune|Scourge) Modifier\b/i
+      .exec(head)?.[1]
+      ?.toLowerCase();
+  const groups: Record<string, ModifierType> = {
+    implicit: 'implicit',
+    explicit: 'explicit',
+    enchant: 'enchant',
+    enchantment: 'enchant',
+    crafted: 'crafted',
+    fractured: 'fractured',
+    rune: 'rune',
+    scourge: 'scourge',
+  };
+  const type = group ? groups[group] : undefined;
 
   const affix: ModifierAnnotation['affix'] = /^Prefix\b/i.test(head)
     ? 'prefix'
@@ -45,6 +60,7 @@ export function parseAnnotation(line: string): ModifierAnnotation | null {
           .filter((tag) => tag.length > 0);
 
   const annotation: ModifierAnnotation = {
+    ...(type !== undefined ? { type } : {}),
     affix,
     name: nameMatch?.[1] ?? '',
     ...(tierMatch?.[1] !== undefined ? { tier: Number(tierMatch[1]) } : {}),
@@ -55,7 +71,8 @@ export function parseAnnotation(line: string): ModifierAnnotation | null {
   if (
     annotation.affix === 'unknown' &&
     annotation.name === '' &&
-    annotation.tier === undefined
+    annotation.tier === undefined &&
+    annotation.type === undefined
   ) {
     return null;
   }

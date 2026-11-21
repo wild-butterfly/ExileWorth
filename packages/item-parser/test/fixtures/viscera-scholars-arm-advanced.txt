@@ -1,0 +1,9 @@
+Item Class: Viscera
+Scholar's Arm
+--------
+Upper Limb
+--------
+{ Implicit Modifier }
++27 to Intelligence
+--------
+Take this to the Wickerman in a town or hideout to attach it.
