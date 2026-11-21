@@ -77,10 +77,12 @@ jobs:
           path: dist/ExileWorth-Windows-x64.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: Windows-overlay-screenshot
           path: |
             dist/windows-overlay.png
+            dist/windows-overlay-*-open.png
             dist/windows-desktop.png
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
