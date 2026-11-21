@@ -1,0 +1,10 @@
+Item Class: Viscera
+Flaming Furnace
+--------
+Torso
+--------
+{ Implicit Modifier }
+15% chance to inflict Fire Exposure on Hit
+(Fire Exposure applies -10% to Fire Resistance for 4 seconds) (implicit)
+--------
+Take this to the Wickerman in a town or hideout to attach it.

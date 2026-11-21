@@ -26,7 +26,7 @@ import {
   splitSections,
 } from './sections';
 import { isAnnotationLine, parseAnnotation, stripRanges } from './advanced';
-import { isClusterRadiusReminder } from './reminders';
+import { isModifierReminder } from './reminders';
 
 const RARITIES: Record<string, ItemRarity | 'currency' | 'gem' | 'divination'> = {
   Normal: 'normal',
@@ -257,9 +257,8 @@ function scanSections(
       const trimmed = line.trim();
       if (trimmed === '') continue;
 
-      // This reminder is copied with cluster enchants, including advanced
-      // copy. It describes jewel behaviour; it is not a selectable stat.
-      if (isClusterRadiusReminder(trimmed)) {
+      // Known skill explanations are copied with modifiers, but are not stats.
+      if (isModifierReminder(trimmed)) {
         state.unknownLines.push(trimmed);
         continue;
       }

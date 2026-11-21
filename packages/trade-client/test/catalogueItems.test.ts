@@ -36,6 +36,43 @@ function query(text: string) {
 }
 
 describe('catalogue item names and rolled modifiers', () => {
+  it.each(['', ' (implicit)'])(
+    'searches Flaming Furnace without its exposure explanation%s',
+    (suffix) => {
+      const source = fixture('viscera-flaming-furnace-advanced.txt').replace(
+        'seconds) (implicit)',
+        `seconds)${suffix}`,
+      );
+      const item = parsed(source);
+      if (item.kind !== 'catalogue') throw new Error('Expected catalogue item');
+      expect(item.modifiers).toEqual([
+        expect.objectContaining({
+          text: '15% chance to inflict Fire Exposure on Hit',
+          type: 'implicit',
+        }),
+      ]);
+      expect(
+        item.unknownLines.some((line) => line.includes('Fire Exposure applies')),
+      ).toBe(true);
+      expect(query(source).query).toMatchObject({
+        type: 'Flaming Furnace',
+        stats: [{ filters: [{ id: 'implicit.stat_3602667353', value: { min: 15 } }] }],
+      });
+      const stale = {
+        ...item,
+        modifiers: [
+          ...item.modifiers,
+          {
+            text: '(Fire Exposure applies -10% to Fire Resistance for 4 seconds)',
+            type: 'implicit' as const,
+          },
+        ],
+      };
+      expect(buildQuery(stale, buildPriceFilters(stale, stats), { baseTypes })).toEqual(
+        query(source),
+      );
+    },
+  );
   it('honours a declared explicit group rather than inferring an implicit Viscera stat', () => {
     const source = fixture('viscera-scholars-arm-advanced.txt').replace(
       '{ Implicit Modifier }',
