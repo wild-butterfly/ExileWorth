@@ -10,8 +10,8 @@ ExileWorth was formerly called Vaaluation.
 
 | Platform                            | Build                                                                                                                            | Default price check                               | Setup                                                                        |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.8-macos/ExileWorth-0.1.8-macOS.zip)       | <kbd>Control</kbd> + <kbd>D</kbd>                 | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/)     |
-| Windows 11 x64 · Preview            | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.19/ExileWorth-0.1.19-Windows-x64.zip) | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
+| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.9-macos/ExileWorth-0.1.9-macOS.zip)       | <kbd>Control</kbd> + <kbd>D</kbd>                 | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/)     |
+| Windows 11 x64 · Preview            | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.20/ExileWorth-0.1.20-Windows-x64.zip) | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
 
 Select **Covens** for Covens of Umbra.
 
