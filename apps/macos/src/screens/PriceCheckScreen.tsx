@@ -331,7 +331,7 @@ export function PriceCheckScreen() {
             <View style={styles.card}>
               <View style={styles.headerRow}>
                 <Text style={styles.cardTitle}>
-                  {state.total} listing{state.total === 1 ? '' : 's'}
+                  Trade · {state.total} listing{state.total === 1 ? '' : 's'}
                 </Text>
                 {state.summary ? (
                   <Text style={styles.summary}>

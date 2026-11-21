@@ -402,7 +402,7 @@ export function PriceCheckOverlay({
                 run 1 to 11 chaos beside a divine, and a mean would answer
                 with a price nobody is asking. */}
               <Text style={styles.priceMeta}>
-                typical · {listingCount} listing{listingCount === 1 ? '' : 's'}
+                Trade · {listingCount} listing{listingCount === 1 ? '' : 's'}
               </Text>
             </View>
           ) : null}

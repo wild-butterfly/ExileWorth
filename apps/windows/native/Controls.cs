@@ -649,7 +649,7 @@ internal sealed class ListingView : ScrollList
     {
         int pad = this.Px(compact ? 4 : 10);
         int priceWidth = this.Px(compact ? 92 : 112);
-        int levelWidth = ShowLevel ? this.Px(42) : 0;
+        int levelWidth = ShowLevel && !Exchange ? this.Px(42) : 0;
         int ageWidth = this.Px(46);
         var price = new Rectangle(row.Left + pad, row.Top, priceWidth, row.Height);
         var level = new Rectangle(price.Right, row.Top, levelWidth, row.Height);
@@ -664,7 +664,7 @@ internal sealed class ListingView : ScrollList
         var font = WindowTheme.Mono(7f);
         var flags = TextFormatFlags.VerticalCenter;
         WindowTheme.Text(g, Exchange ? "CHAOS / EACH" : "PRICE", font, price, WindowTheme.Faint, flags);
-        if (ShowLevel) WindowTheme.Text(g, "ILVL", font, level, WindowTheme.Faint, flags | TextFormatFlags.Right);
+        if (ShowLevel && !Exchange) WindowTheme.Text(g, "ILVL", font, level, WindowTheme.Faint, flags | TextFormatFlags.Right);
         WindowTheme.Text(g, "ACCOUNT", font, Rectangle.FromLTRB(account.Left + this.Px(11), account.Top, account.Right, account.Bottom), WindowTheme.Faint, flags);
         WindowTheme.Text(g, Exchange ? "STOCK" : "LISTED", font, age, WindowTheme.Faint, flags | TextFormatFlags.Right);
         using var line = new Pen(WindowTheme.Hairline);
@@ -696,7 +696,7 @@ internal sealed class ListingView : ScrollList
         WindowTheme.Text(g, WindowTheme.ShortCurrency(listing.Currency), WindowTheme.Sans(compact ? 7.5f : 8f),
             Rectangle.FromLTRB(x + amountWidth + this.Px(3), bounds.Top, price.Right, bounds.Bottom), WindowTheme.Dim);
 
-        if (ShowLevel)
+        if (ShowLevel && !Exchange)
             WindowTheme.Text(g, listing.Ilvl?.ToString() ?? "—", WindowTheme.Mono(8.5f), level, WindowTheme.Secondary,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
 
@@ -1383,7 +1383,7 @@ internal sealed class PriceHeader : Control
             TextRenderer.DrawText(g, unit, unitFont,
                 new Point(x + amountSize.Width + this.Px(4), top + amountSize.Height - unitSize.Height - this.Px(1)),
                 WindowTheme.Muted, TextFormatFlags.NoPadding);
-            string detail = exchange ? "Exchange · per item" : $"typical · {total:N0} listing{(total == 1 ? "" : "s")}";
+            string detail = exchange ? "Exchange · bulk offers" : $"Trade · {total:N0} listing{(total == 1 ? "" : "s")}";
             if (typical.Chaos is { } chaos) detail = $"{WindowTheme.Amount(chaos)} chaos · " + detail;
             var detailFont = DetailFont;
             Size detailSize = TextRenderer.MeasureText(g, detail, detailFont, Size.Empty, TextFormatFlags.NoPadding);

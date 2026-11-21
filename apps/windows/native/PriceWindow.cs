@@ -469,7 +469,7 @@ internal sealed class PriceWindow : Form
         string title = itemName ?? (hasItem ? "Unknown item" : "No item checked yet");
         hero.Show(title, exchange is not null ? meta : statusText, typical, total, exchange is not null);
         listings.Exchange = exchange is not null;
-        pricesHeading.Text = exchange is null ? "ASKING PRICES" : "EXCHANGE OFFERS";
+        pricesHeading.Text = exchange is null ? "TRADE LISTINGS" : "EXCHANGE OFFERS";
         modifiersHeading.Text = exchange is null ? "MATCH MODIFIERS" : "EXCHANGE INFO";
         currencyFilter.Visible = exchange is null;
         open.Text = exchange is null ? "Open trade site ↗" : "Open exchange site ↗";
@@ -546,16 +546,17 @@ internal sealed class PriceWindow : Form
             var checkedAt = DateTimeOffset.FromUnixTimeMilliseconds(exchange.UpdatedAt).ToLocalTime();
             statusText = $"Bulk asking rates · {result.Total} offers · checked {checkedAt:HH:mm} · cached up to 5 min. Not live in-game orders.";
             if (exchange.Item.Id == "chaos") statusText = "Exchange · Chaos is the reference currency: 1 Chaos Orb = 1 chaos.";
-            filters.Placeholder = "Exchange quote in Chaos. Sellers may require bulk purchases.";
+            filters.Placeholder = exchange.Item.Id == "chaos" ? "Chaos is the reference currency: 1 Chaos Orb = 1 chaos."
+                : $"Bulk Item Exchange asking rates.\nChecked {checkedAt:HH:mm} · cached up to 5 min.\nSellers may require bulk purchases.\nNot live in-game exchange orders.";
             return;
         }
         filters.Placeholder = "Modifiers you can match appear here.";
         string currency = GamePriceOverlay.CurrencyFilters.First(entry => entry.Id == listingCurrency).Short;
         string scope = listingCurrency is null ? result.Selected : $"{result.Selected} · {currency} only";
-        meta = result.Total == 0 ? $"{scope} · no matches" : $"{scope} · {result.Total:N0} matches";
+        meta = result.Total == 0 ? $"Trade · {scope} · no matches" : $"Trade · {scope} · {result.Total:N0} matches";
         statusText = result.Total == 0
-            ? $"No matches in {scope}. Try All currencies or fewer modifiers."
-            : $"{scope} · {result.Total:N0} matches · showing the {result.Listings.Length} cheapest asking prices.";
+            ? $"Trade · no matches in {scope}. Try All currencies or fewer modifiers."
+            : $"Trade · {scope} · {result.Total:N0} matches · showing the {result.Listings.Length} cheapest asking prices.";
     }
 
     private void CopyWhisper(Listing listing)
