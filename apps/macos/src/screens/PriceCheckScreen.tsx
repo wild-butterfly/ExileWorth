@@ -33,6 +33,7 @@ import { getTradeClient } from '../services/trade';
 import { onItemCopied } from '../native/VLEvents';
 import { readClipboardText } from '../native/VLClipboard';
 import { log } from '../native/VLLog';
+import { useTradeCooldown } from '../hooks/useTradeCooldown';
 import { PriceModifiers, PriceFilterActions } from '../components/PriceModifiers';
 
 type SearchState =
@@ -46,7 +47,7 @@ type SearchState =
       summary: PriceSummary | null;
       warnings: PriceWarning[];
     }
-  | { status: 'error'; message: string; retryAfterMs?: number };
+  | { status: 'error'; message: string; retryAfterMs?: number; rateLimited?: boolean };
 
 function relativeAge(iso: string): string {
   const then = Date.parse(iso);
@@ -72,6 +73,7 @@ function itemTitle(item: ParsedItem): string {
 
 export function PriceCheckScreen() {
   const searchRevision = useRef(0);
+  const cooldown = useTradeCooldown();
   const theme = useTheme();
   const { settings } = useSettings();
   const { leagues } = useLeagues();
@@ -118,22 +120,38 @@ export function PriceCheckScreen() {
       .then((stats) => {
         if (!cancelled) setFilters(buildPriceFilters(item, stats));
       })
-      .catch(() => {
-        if (!cancelled) setFilters([]);
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setFilters([]);
+          const rateLimited = cooldown.start(cause);
+          setState({
+            status: 'error',
+            rateLimited,
+            message:
+              cause instanceof Error ? cause.message : 'Could not load modifier filters.',
+          });
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [item]);
+  }, [item, cooldown.start]);
 
   const runSearch = useCallback(async () => {
-    if (item === null || league === null) return;
+    if (item === null || league === null || cooldown.seconds > 0) return;
     const revision = ++searchRevision.current;
     setState({ status: 'searching' });
     try {
       const client = getTradeClient();
+      let applied = filters;
+      if (applied.length === 0) {
+        const stats = await client.getStatIndex();
+        if (revision !== searchRevision.current) return;
+        applied = buildPriceFilters(item, stats);
+        setFilters(applied);
+      }
       const baseTypes = await client.getBaseTypeIndex();
-      const query = buildQuery(item, filters, { baseTypes });
+      const query = buildQuery(item, applied, { baseTypes });
       const search = await client.search(league, query);
       const results = await client.fetchListings(search.result.slice(0, 10), search.id);
       if (revision !== searchRevision.current) return;
@@ -150,16 +168,18 @@ export function PriceCheckScreen() {
       log('info', 'trade', `Search returned ${search.total} listings`);
     } catch (cause: unknown) {
       if (revision !== searchRevision.current) return;
+      const rateLimited = cooldown.start(cause);
       const message = cause instanceof Error ? cause.message : 'The trade search failed.';
       const retryAfterMs = (cause as { retryAfterMs?: number } | null)?.retryAfterMs;
       setState({
         status: 'error',
+        rateLimited,
         message,
         ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
       });
       log('warn', 'trade', message);
     }
-  }, [item, league, filters]);
+  }, [item, league, filters, cooldown.seconds, cooldown.start]);
 
   const editFilters = (next: SelectableFilter[]) => {
     setFilters(next);
@@ -232,10 +252,19 @@ export function PriceCheckScreen() {
               onPress={() => {
                 void runSearch();
               }}
-              disabled={state.status === 'searching' || league === null || !validMinimums}
+              disabled={
+                state.status === 'searching' ||
+                league === null ||
+                cooldown.seconds > 0 ||
+                !validMinimums
+              }
             >
               <Text style={styles.buttonText}>
-                {state.status === 'searching' ? 'Searching…' : 'Search'}
+                {cooldown.seconds > 0
+                  ? `Wait ${cooldown.seconds}s`
+                  : state.status === 'searching'
+                    ? 'Searching…'
+                    : 'Search'}
               </Text>
             </Pressable>
             <PriceFilterActions
@@ -259,10 +288,11 @@ export function PriceCheckScreen() {
           {state.status === 'error' ? (
             <View style={styles.card}>
               <Text style={[styles.warning, { color: theme.accentText }]}>
-                {state.message}
+                {state.rateLimited ? (cooldown.message ?? state.message) : state.message}
               </Text>
               <Pressable
                 style={styles.button}
+                disabled={cooldown.seconds > 0}
                 onPress={() => {
                   void runSearch();
                 }}

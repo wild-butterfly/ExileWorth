@@ -29,7 +29,9 @@ internal sealed class Worker : IDisposable
                 ?? throw new IOException("The trade engine stopped.");
             using var response = JsonDocument.Parse(line);
             if (response.RootElement.TryGetProperty("error", out var error))
-                throw new TradeException(error.GetString() ?? "Trade request failed.");
+                throw new TradeException(error.GetString() ?? "Trade request failed.",
+                    response.RootElement.TryGetProperty("code", out var code) ? code.GetString() : null,
+                    response.RootElement.TryGetProperty("retryAfterMs", out var retry) && retry.TryGetDouble(out double milliseconds) ? milliseconds : null);
             return response.RootElement.GetProperty("result").Deserialize<T>(Json)
                 ?? throw new IOException("The trade engine returned no result.");
         }
@@ -63,7 +65,12 @@ internal sealed class Worker : IDisposable
         finally { process.Dispose(); process = null; }
     }
 
-    private sealed class TradeException(string message) : Exception(message);
+}
+
+internal sealed class TradeException(string message, string? code = null, double? retryAfterMs = null) : Exception(message)
+{
+    public string? Code { get; } = code;
+    public double? RetryAfterMs { get; } = retryAfterMs;
 }
 
 internal record League(string Id, string Text)

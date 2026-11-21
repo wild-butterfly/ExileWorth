@@ -62,11 +62,13 @@ export class RateLimitPolicy {
     const rules = parseRules(headers.get('x-rate-limit-ip'));
     const state = parseState(headers.get('x-rate-limit-ip-state'));
     if (rules.length > 0) this.rules = rules;
-    if (state.length > 0) this.state = state;
-    this.lastUpdated = this.now();
+    if (state.length > 0) {
+      this.state = state;
+      this.lastUpdated = this.now();
+    }
 
     // Any active restriction blocks every request under this policy.
-    for (const entry of this.state) {
+    for (const entry of state) {
       if (entry.restrictedForSeconds > 0) {
         this.blockUntil(this.now() + entry.restrictedForSeconds * 1000);
       }
@@ -83,18 +85,17 @@ export class RateLimitPolicy {
    */
   retryAfterMs(): number {
     const now = this.now();
-    if (this.blockedUntil > now) return this.blockedUntil - now;
-
+    let waitMs = Math.max(0, this.blockedUntil - now);
     for (const rule of this.rules) {
       const entry = this.state.find((s) => s.periodSeconds === rule.periodSeconds);
       if (entry === undefined) continue;
       if (entry.hits >= rule.maxHits) {
         // The window rolls forward from when the state was reported.
         const windowEnds = this.lastUpdated + rule.periodSeconds * 1000;
-        if (windowEnds > now) return windowEnds - now;
+        if (windowEnds > now) waitMs = Math.max(waitMs, windowEnds - now);
       }
     }
-    return 0;
+    return waitMs;
   }
 
   get isBlocked(): boolean {
