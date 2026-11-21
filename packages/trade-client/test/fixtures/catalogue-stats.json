@@ -32,6 +32,11 @@
           "id": "implicit.stat_328541901",
           "text": "+# to Intelligence",
           "type": "implicit"
+        },
+        {
+          "id": "implicit.stat_3602667353",
+          "text": "#% chance to inflict Fire Exposure on Hit",
+          "type": "implicit"
         }
       ]
     }
