@@ -1,0 +1,29 @@
+{
+  "result": [
+    {
+      "label": "Explicit",
+      "entries": [
+        {
+          "id": "explicit.stat_927817294",
+          "text": "Raised Zombies have #% increased maximum Life",
+          "type": "explicit"
+        }
+      ]
+    },
+    {
+      "label": "Implicit",
+      "entries": [
+        {
+          "id": "implicit.stat_2510300854",
+          "text": "Minions created Recently have #% increased Attack and Cast Speed",
+          "type": "implicit"
+        },
+        {
+          "id": "implicit.stat_927817294",
+          "text": "Raised Zombies have #% increased maximum Life",
+          "type": "implicit"
+        }
+      ]
+    }
+  ]
+}

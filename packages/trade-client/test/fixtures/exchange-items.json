@@ -1,0 +1,104 @@
+{
+  "result": [
+    {
+      "label": "Currency",
+      "entries": [
+        {
+          "id": "alch",
+          "text": "Orb of Alchemy",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lVcGdyYWRlVG9SYXJlIiwic2NhbGUiOjF9XQ/0c72cd1d44/CurrencyUpgradeToRare.png"
+        },
+        {
+          "id": "chaos",
+          "text": "Chaos Orb",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lSZXJvbGxSYXJlIiwic2NhbGUiOjF9XQ/46a2347805/CurrencyRerollRare.png"
+        },
+        {
+          "id": "divine",
+          "text": "Divine Orb",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lNb2RWYWx1ZXMiLCJzY2FsZSI6MX1d/ec48896769/CurrencyModValues.png"
+        }
+      ]
+    },
+    {
+      "label": "Fragments, Threads & Mapping",
+      "entries": [
+        {
+          "id": "betrayal-thread",
+          "text": "Betrayal Thread",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvVGhyZWFkcy9CZXRyYXlhbFRocmVhZCIsInNjYWxlIjoxfV0/fa10b037f1/BetrayalThread.png"
+        }
+      ]
+    },
+    {
+      "label": "Runegrafts",
+      "entries": [
+        {
+          "id": "runegraft-of-the-river",
+          "text": "Runegraft of the River",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2V0dGxlcnMvVmlsbGFnZVJ1bmU1Iiwic2NhbGUiOjF9XQ/239b52bb4d/VillageRune5.png"
+        }
+      ]
+    },
+    {
+      "label": "Expedition Currency",
+      "entries": [
+        {
+          "id": "astragali",
+          "text": "Astragali",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXhwZWRpdGlvbi9HYW1ibGVyUmVmcmVzaEN1cnJlbmN5Iiwic2NhbGUiOjF9XQ/ff5640db4c/GamblerRefreshCurrency.png"
+        }
+      ]
+    },
+    {
+      "label": "Catalysts",
+      "entries": [
+        {
+          "id": "turbulent-catalyst",
+          "text": "Turbulent Catalyst",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2F0YWx5c3RzL1R1cmJ1bGVudENhdGFseXN0Iiwic2NhbGUiOjF9XQ/1f49d03e58/TurbulentCatalyst.png"
+        }
+      ]
+    },
+    {
+      "label": "Oils & Extractor",
+      "entries": [
+        {
+          "id": "golden-oil",
+          "text": "Golden Oil",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvT2lscy9Hb2xkZW5PaWwiLCJzY2FsZSI6MX1d/263a5d73da/GoldenOil.png"
+        }
+      ]
+    },
+    {
+      "label": "Fossils & Resonators",
+      "entries": [
+        {
+          "id": "scorched-fossil",
+          "text": "Scorched Fossil",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsdmUvQW1iZXJGaXJlRmx5Iiwic2NhbGUiOjF9XQ/0954934026/AmberFireFly.png"
+        }
+      ]
+    },
+    {
+      "label": "Essences",
+      "entries": [
+        {
+          "id": "deafening-essence-of-greed",
+          "text": "Deafening Essence of Greed",
+          "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXNzZW5jZS9HcmVlZDciLCJzY2FsZSI6MX1d/9d7e9a3b11/Greed7.png"
+        }
+      ]
+    },
+    {
+      "label": "Cards",
+      "entries": [
+        {
+          "id": "the-doctor",
+          "text": "The Doctor",
+          "image": ""
+        }
+      ]
+    }
+  ]
+}

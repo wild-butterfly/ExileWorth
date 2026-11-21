@@ -39,6 +39,31 @@ export class PriceCheckEngine {
     const { item } = this.item;
     const { leagues, selected } = await this.leagues(preferred);
     if (selected === null) throw new Error('No PC trade leagues are available.');
+    const exchange = await this.client.quoteExchangeItem(item, selected);
+    if (exchange !== null) {
+      this.filters = [];
+      return {
+        leagues,
+        selected,
+        itemName: item.name,
+        exchange,
+        filters: [],
+        total: exchange.offers.length,
+        listings: exchange.offers.slice(0, 10).map((offer) => ({
+          amount: offer.wantAmount / offer.giveAmount,
+          currency: 'chaos',
+          accountName: offer.accountName,
+          presence: 'online' as const,
+          stock: offer.stock,
+          minimum: offer.giveAmount,
+        })),
+        typical:
+          exchange.perItemChaos === null
+            ? null
+            : { amount: exchange.perItemChaos, currency: 'chaos', chaos: null },
+        tradeUrl: exchange.url,
+      };
+    }
     const stats = await this.client.getStatIndex();
     const baseTypes = await this.client.getBaseTypeIndex();
     if (text !== null || this.filters.length === 0)
@@ -54,7 +79,7 @@ export class PriceCheckEngine {
     filters = filters.map((filter) => {
       const min = minimums?.[filter.key];
       return typeof min === 'number' && Number.isFinite(min) && filter.value !== null
-        ? { ...filter, min, max: null }
+        ? { ...filter, min, max: filter.exact ? min : null }
         : filter;
     });
     const combined = filters.find((filter) => filter.selected && filter.combinedKeys);
@@ -103,13 +128,14 @@ export class PriceCheckEngine {
     );
     return {
       leagues,
+      exchange: null,
       selected,
       total: search.total,
       listings,
       typical: await this.typical(selected, listings),
       itemName: item.name,
       filters: filters.map(
-        ({ key, label, selected, value, min, combinedKeys, tooltip }) => ({
+        ({ key, label, selected, value, min, combinedKeys, tooltip, exact }) => ({
           key,
           label,
           enabled: selected,
@@ -117,6 +143,7 @@ export class PriceCheckEngine {
           min,
           combinedKeys,
           tooltip,
+          exact: exact ?? false,
         }),
       ),
       tradeUrl: tradeSearchUrl(selected, search.id),

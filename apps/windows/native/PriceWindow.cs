@@ -17,6 +17,8 @@ internal sealed class PriceWindow : Form
     private readonly FlatButton search = new(ButtonKind.Primary, "Search") { Enabled = false };
     private readonly FlatButton open = new(ButtonKind.Ghost, "Open trade site ↗") { Enabled = false };
     private readonly Label listingHint = Ui.Label("", WindowTheme.Sans(8.5f), WindowTheme.Dim);
+    private readonly Label pricesHeading = Ui.Eyebrow("Asking prices");
+    private readonly Label modifiersHeading = Ui.Eyebrow("Match modifiers");
     private readonly NotifyIcon tray;
     private readonly ContextMenuStrip menu = WindowTheme.Menu();
     private readonly Worker worker = new();
@@ -45,6 +47,7 @@ internal sealed class PriceWindow : Form
     private string? itemName;
     private string meta = "";
     private TypicalPrice? typical;
+    private ExchangeQuote? exchange;
     private int total;
     private Uri? tradeUrl;
     private bool quitting, busy, hasItem;
@@ -243,7 +246,7 @@ internal sealed class PriceWindow : Form
         mods.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         mods.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         mods.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        mods.Controls.Add(Ui.Eyebrow("Match modifiers"), 0, 0);
+        mods.Controls.Add(modifiersHeading, 0, 0);
         filters.Margin = new Padding(0, 0, 0, S(10));
         mods.Controls.Add(filters, 0, 1);
         mods.Controls.Add(Ui.Row(search, paste), 0, 2);
@@ -260,7 +263,7 @@ internal sealed class PriceWindow : Form
         var listTop = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2, Margin = Padding.Empty };
         listTop.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         listTop.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        listTop.Controls.Add(Ui.Eyebrow("Asking prices"), 0, 0);
+        listTop.Controls.Add(pricesHeading, 0, 0);
         currencyFilter.Margin = new Padding(0, 0, 0, S(6));
         currencyMenu.ShowImageMargin = true;
         foreach (var (label, id, _) in GamePriceOverlay.CurrencyFilters)
@@ -456,7 +459,7 @@ internal sealed class PriceWindow : Form
         league.Enabled = paste.Enabled = !busy && CooldownSeconds == 0;
         currencyFilter.Enabled = !busy && CooldownSeconds == 0;
         search.Enabled = hasItem && !busy && CooldownSeconds == 0 && filters.HasValidMinimums;
-        search.Text = CooldownSeconds > 0 ? $"Wait {CooldownSeconds}s" : busy && hasItem ? "Searching…" : "Search";
+        search.Text = CooldownSeconds > 0 ? $"Wait {CooldownSeconds}s" : busy && hasItem ? "Searching…" : exchange is not null ? "Refresh" : "Search";
         open.Enabled = tradeUrl is not null && !busy;
     }
 
@@ -464,16 +467,22 @@ internal sealed class PriceWindow : Form
     private void Render()
     {
         string title = itemName ?? (hasItem ? "Unknown item" : "No item checked yet");
-        hero.Show(title, statusText, typical, total);
+        hero.Show(title, exchange is not null ? meta : statusText, typical, total, exchange is not null);
+        listings.Exchange = exchange is not null;
+        pricesHeading.Text = exchange is null ? "ASKING PRICES" : "EXCHANGE OFFERS";
+        modifiersHeading.Text = exchange is null ? "MATCH MODIFIERS" : "EXCHANGE INFO";
+        currencyFilter.Visible = exchange is null;
+        open.Text = exchange is null ? "Open trade site ↗" : "Open exchange site ↗";
+        open.AccessibleName = open.Text;
         listingHint.Text = currentListings.Any(listing => listing.Whisper is not null)
             ? "Click a listing to copy its whisper." : "";
         if (!ReferenceEquals(listings.Listings, currentListings)) listings.Listings = currentListings;
-        listings.Placeholder = busy ? "Searching…" : hasItem ? "No asking prices matched. Try fewer modifiers or All currencies."
+        listings.Placeholder = busy ? "Searching…" : exchange?.Item.Id == "chaos" ? "Chaos is the reference currency: 1 Chaos Orb = 1 chaos." : exchange is not null ? "No exchange offers in Chaos. The source remains Exchange; try again later." : hasItem ? "No asking prices matched. Try fewer modifiers or All currencies."
             : "Listings appear here after a price check.";
         if (overlay.Visible)
         {
             overlay.Present(new PriceView(itemName ?? "ExileWorth", meta.Length > 0 ? meta : statusText, currentListings,
-                currentFilters, typical, total, listingCurrency, busy, hasItem, tradeUrl, CooldownSeconds), statusText, leagueName);
+                currentFilters, typical, total, listingCurrency, busy, hasItem, tradeUrl, CooldownSeconds, exchange is not null), statusText, leagueName);
         }
     }
 
@@ -508,10 +517,11 @@ internal sealed class PriceWindow : Form
             currentFilters = [];
         }
         typical = null;
+        exchange = null;
         total = 0;
         meta = "";
         currentListings = [];
-        statusText = "Looking up trade listings…";
+        statusText = "Checking item or exchange prices…";
         Render();
         var result = await worker.SendAsync<PriceResult>(new { action = "check", preferred, text, enabled, minimums, currency = listingCurrency });
         if (IsDisposed) return;
@@ -521,12 +531,25 @@ internal sealed class PriceWindow : Form
         currentFilters = result.Filters;
         itemName = result.ItemName ?? "Price Check";
         typical = result.Typical;
+        exchange = result.Exchange;
         total = result.Total;
         currentListings = result.Listings;
         _ = CurrencyIcons.LoadAsync(pages.Worker, currentListings.Select(listing => listing.Currency).Distinct());
         if (Uri.TryCreate(result.TradeUrl, UriKind.Absolute, out var url) &&
             url.Scheme == Uri.UriSchemeHttps && url.Host == "www.pathofexile.com")
             tradeUrl = url;
+        if (exchange is not null)
+        {
+            meta = exchange.PerItemChaos is null ? "Exchange · no offers in Chaos"
+                : exchange.Quantity > 1 && exchange.StackChaos is double stack
+                    ? $"Stack {exchange.Quantity} ≈ {WindowTheme.ExchangeAmount(stack)} chaos" : "Exchange · bulk offers";
+            var checkedAt = DateTimeOffset.FromUnixTimeMilliseconds(exchange.UpdatedAt).ToLocalTime();
+            statusText = $"Bulk asking rates · {result.Total} offers · checked {checkedAt:HH:mm} · cached up to 5 min. Not live in-game orders.";
+            if (exchange.Item.Id == "chaos") statusText = "Exchange · Chaos is the reference currency: 1 Chaos Orb = 1 chaos.";
+            filters.Placeholder = "Exchange quote in Chaos. Sellers may require bulk purchases.";
+            return;
+        }
+        filters.Placeholder = "Modifiers you can match appear here.";
         string currency = GamePriceOverlay.CurrencyFilters.First(entry => entry.Id == listingCurrency).Short;
         string scope = listingCurrency is null ? result.Selected : $"{result.Selected} · {currency} only";
         meta = result.Total == 0 ? $"{scope} · no matches" : $"{scope} · {result.Total:N0} matches";

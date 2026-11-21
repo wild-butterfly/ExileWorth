@@ -1,0 +1,16 @@
+Item Class: Jewels
+Rarity: Magic
+Shining Small Cluster Jewel of Joy
+--------
+Requirements:
+Level: 54
+--------
+Item Level: 68
+--------
+Adds 3 Passive Skills (enchant)
+Added Small Passive Skills grant: +15% to Cold Resistance (enchant)
+--------
+Added Small Passive Skills also grant: 5% increased Mana Regeneration Rate
+Added Small Passive Skills also grant: +4 to maximum Energy Shield
+--------
+Place into an allocated Small, Medium or Large Jewel Socket on the Passive Skill Tree. Added passives do not interact with jewel radiuses. Right click to remove from the Socket.

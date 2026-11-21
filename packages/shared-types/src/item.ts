@@ -68,6 +68,7 @@ export interface Requirements {
 
 /** Fields shared by every parsed item. */
 interface ItemBase {
+  readonly stackSize?: { current: number; max: number };
   readonly itemClass: string;
   readonly rawText: string;
   /** Lines the parser did not understand, preserved verbatim. */
@@ -154,8 +155,15 @@ export interface MapItem extends ItemBase {
   readonly unknownProperties: readonly string[];
 }
 
+/** Named trade-catalogue items whose clipboard format has no rarity line. */
+export interface CatalogueItem extends ItemBase {
+  readonly kind: 'catalogue';
+  readonly name: string;
+  readonly modifiers: readonly Modifier[];
+}
+
 export type ParsedItem =
-  CurrencyItem | DivinationCardItem | GemItem | EquipmentItem | MapItem;
+  CurrencyItem | DivinationCardItem | GemItem | EquipmentItem | MapItem | CatalogueItem;
 
 export type ParseErrorCode =
   'empty' | 'not_an_item' | 'unsupported_language' | 'unrecognized_format';

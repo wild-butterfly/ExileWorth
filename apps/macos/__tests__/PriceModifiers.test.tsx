@@ -72,4 +72,30 @@ describe('Mac price filter controls', () => {
         .accessibilityState.expanded,
     ).toBe(false);
   });
+
+  it('keeps an edited cluster passive count exact in the trade filter', () => {
+    const count: SelectableFilter = {
+      ...filter,
+      key: 'passives',
+      label: 'Adds 4 Passive Skills',
+      statId: 'enchant.stat_3086156145',
+      value: 4,
+      min: 4,
+      max: 4,
+      exact: true,
+    };
+    const change = jest.fn();
+    act(() => {
+      tree = renderer.create(
+        <PriceModifiers
+          filters={[count]}
+          onChange={change}
+          combined={false}
+          onValidityChange={jest.fn()}
+        />,
+      );
+    });
+    act(() => tree.root.findByType(TextInput).props.onChangeText('5'));
+    expect(change).toHaveBeenLastCalledWith([{ ...count, min: 5, max: 5 }]);
+  });
 });

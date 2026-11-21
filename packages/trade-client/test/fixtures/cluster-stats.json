@@ -1,0 +1,74 @@
+{
+  "result": [
+    {
+      "label": "Explicit",
+      "entries": [
+        {
+          "id": "explicit.stat_4036575250",
+          "text": "Added Small Passive Skills also grant: +# to All Attributes",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_2618549697",
+          "text": "Added Small Passive Skills have #% increased Effect",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_2337273077",
+          "text": "1 Added Passive Skill is Life from Death",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_2669029667",
+          "text": "Added Small Passive Skills also grant: +#% to all Elemental Resistances",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_2474836297",
+          "text": "Added Small Passive Skills also grant: #% increased Mana Regeneration Rate",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_2643685329",
+          "text": "Added Small Passive Skills also grant: +# to Maximum Energy Shield",
+          "type": "explicit"
+        }
+      ]
+    },
+    {
+      "label": "Enchant",
+      "entries": [
+        {
+          "id": "enchant.stat_3086156145",
+          "text": "Adds # Passive Skills",
+          "type": "enchant"
+        },
+        {
+          "id": "enchant.stat_4079888060",
+          "text": "# Added Passive Skills are Jewel Sockets",
+          "type": "enchant"
+        },
+        {
+          "id": "enchant.stat_3948993189|30",
+          "text": "Added Small Passive Skills grant: Minions have 12% increased maximum Life",
+          "type": "enchant"
+        },
+        {
+          "id": "enchant.stat_3948993189|5",
+          "text": "Added Small Passive Skills grant: Wand Attacks deal 12% increased Damage with Hits and Ailments",
+          "type": "enchant"
+        },
+        {
+          "id": "enchant.stat_3948993189|47",
+          "text": "Added Small Passive Skills grant: +15% to Cold Resistance",
+          "type": "enchant"
+        },
+        {
+          "id": "enchant.stat_3948993189|33",
+          "text": "Added Small Passive Skills grant: 12% increased Trap Damage\nAdded Small Passive Skills grant: 12% increased Mine Damage",
+          "type": "enchant"
+        }
+      ]
+    }
+  ]
+}

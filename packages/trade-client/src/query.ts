@@ -38,6 +38,12 @@ export interface SelectableFilter {
   readonly value: number | null;
   readonly min: number | null;
   readonly max: number | null;
+  /** A categorical catalogue choice, never a rolled numeric value. */
+  readonly option?: number;
+  /** Passive/socket counts must match exactly, including after edits. */
+  readonly exact?: boolean;
+  /** Cluster identities and rolls must not disappear in automatic retries. */
+  readonly relaxable?: boolean;
   /**
    * How strongly this modifier argued for being searched on. Carried through
    * so a search that finds nothing can give up its weakest filter first.
@@ -178,10 +184,26 @@ function preselectWeight(modifier: Modifier): number {
  * are identified by name, so their modifiers start unselected.
  */
 export function buildFilters(item: ParsedItem, stats: StatIndex): SelectableFilter[] {
-  if (item.kind !== 'equipment' && item.kind !== 'map') return [];
+  if (item.kind !== 'equipment' && item.kind !== 'map' && item.kind !== 'catalogue')
+    return [];
 
-  const preselectAllowed = item.rarity === 'rare' || item.rarity === 'magic';
+  const catalogueItem = item.kind === 'catalogue';
+  const normalItem = item.kind === 'equipment' && item.rarity === 'normal';
+  const implicitCatalogue =
+    (catalogueItem || normalItem) && /^Viscera$/i.test(item.itemClass);
+  const preselectAllowed =
+    !catalogueItem && (item.rarity === 'rare' || item.rarity === 'magic');
   const local = usesLocalStats(item);
+  const cluster =
+    item.kind === 'equipment' &&
+    item.rarity !== 'unique' &&
+    /(?:^|\s)(?:Small|Medium|Large) Cluster Jewel(?:\s|$)/.test(item.baseType);
+  if (cluster && item.modifiers.length === 0) {
+    throw new TradeError(
+      'not_searchable',
+      'No cluster-jewel modifiers were recognized. Copy the item again or check it on the trade site.',
+    );
+  }
 
   const candidates: {
     key: string;
@@ -189,17 +211,44 @@ export function buildFilters(item: ParsedItem, stats: StatIndex): SelectableFilt
     label: string;
     value: number | null;
     weight: number;
+    option?: number;
+    exact?: boolean;
   }[] = [];
 
   item.modifiers.forEach((modifier, index) => {
-    const match = stats.match(modifier, { local });
-    if (match === null) return;
+    const match = stats.match(
+      implicitCatalogue && modifier.type === 'explicit'
+        ? { ...modifier, type: 'implicit' }
+        : modifier,
+      { local },
+    );
+    if (match === null) {
+      if (catalogueItem) {
+        throw new TradeError(
+          'not_searchable',
+          `This item's modifier is not supported yet: “${modifier.text}”. Check this item on the trade site.`,
+        );
+      }
+      if (cluster)
+        throw new TradeError(
+          'not_searchable',
+          `This cluster-jewel modifier is not supported yet: “${modifier.text}”. Check this item on the trade site.`,
+        );
+      return;
+    }
     candidates.push({
       key: `${index}:${match.id}`,
       statId: match.id,
       label: modifier.text,
       value: match.values[0] ?? null,
       weight: preselectAllowed ? preselectWeight(modifier) : 0,
+      ...(match.option !== undefined ? { option: match.option } : {}),
+      ...(cluster &&
+      /^(?:Adds \d+ Passive Skills|\d+ Added Passive Skills? (?:is a Jewel Socket|are Jewel Sockets))$/.test(
+        modifier.text,
+      )
+        ? { exact: true }
+        : {}),
     });
   });
 
@@ -218,7 +267,10 @@ export function buildFilters(item: ParsedItem, stats: StatIndex): SelectableFilt
   return [
     ...propertyFilters(item),
     ...candidates.map((candidate) => {
-      const selected = chosen.has(candidate.key);
+      const selected =
+        catalogueItem ||
+        normalItem ||
+        (cluster ? preselectAllowed : chosen.has(candidate.key));
       return {
         key: candidate.key,
         statId: candidate.statId,
@@ -227,7 +279,10 @@ export function buildFilters(item: ParsedItem, stats: StatIndex): SelectableFilt
         value: candidate.value,
         // Default to "at least what this item rolled", the usual intent.
         min: selected && candidate.value !== null ? candidate.value : null,
-        max: null,
+        max: candidate.exact ? candidate.value : null,
+        ...(candidate.option !== undefined ? { option: candidate.option } : {}),
+        ...(candidate.exact ? { exact: true } : {}),
+        ...(cluster || catalogueItem || normalItem ? { relaxable: false } : {}),
         weight: candidate.weight,
         kind: 'stat' as const,
       };
@@ -283,7 +338,8 @@ export function buildQuery(
         filter.selected && !replaced.has(filter.key) && filter.kind !== 'property',
     )
     .map((filter) => {
-      const value: { min?: number; max?: number } = {};
+      const value: { min?: number; max?: number; option?: number } = {};
+      if (filter.option !== undefined) value.option = filter.option;
       if (filter.min !== null) value.min = filter.min;
       if (filter.max !== null) value.max = filter.max;
       return Object.keys(value).length > 0
@@ -298,6 +354,15 @@ export function buildQuery(
   };
 
   switch (item.kind) {
+    case 'catalogue': {
+      const identity = baseTypes?.identity(item.name);
+      if (!identity)
+        throw new TradeError(
+          'not_searchable',
+          `“${item.name}” is not an exact item name in the trade catalogue. Copy the complete item again.`,
+        );
+      return { query: { ...base, ...identity }, sort: { price: 'asc' } };
+    }
     case 'currency':
     case 'divinationCard':
       return { query: { ...base, type: item.name }, sort: { price: 'asc' } };
@@ -363,9 +428,15 @@ export function relaxWeakest(
   filters: readonly SelectableFilter[],
 ): SelectableFilter[] | null {
   const bounded = filters.filter(
-    (filter) => filter.selected && (filter.min !== null || filter.max !== null),
+    (filter) =>
+      filter.selected &&
+      filter.relaxable !== false &&
+      (filter.min !== null || filter.max !== null),
   );
-  const pool = bounded.length > 0 ? bounded : filters.filter((f) => f.selected);
+  const pool =
+    bounded.length > 0
+      ? bounded
+      : filters.filter((f) => f.selected && f.relaxable !== false);
   if (pool.length === 0) return null;
 
   let weakest = pool[0] as SelectableFilter;

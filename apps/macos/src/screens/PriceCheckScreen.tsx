@@ -15,6 +15,7 @@ import type {
   PriceWarning,
   PricedListing,
   SelectableFilter,
+  ExchangeQuote,
 } from '@vaaluation/trade-client';
 import {
   buildPriceFilters,
@@ -35,10 +36,12 @@ import { readClipboardText } from '../native/VLClipboard';
 import { log } from '../native/VLLog';
 import { useTradeCooldown } from '../hooks/useTradeCooldown';
 import { PriceModifiers, PriceFilterActions } from '../components/PriceModifiers';
+import { ExchangePriceCard } from '../components/ExchangePriceCard';
 
 type SearchState =
   | { status: 'idle' }
   | { status: 'searching' }
+  | { status: 'exchange'; quote: ExchangeQuote }
   | {
       status: 'done';
       total: number;
@@ -61,6 +64,7 @@ function relativeAge(iso: string): string {
 
 function itemTitle(item: ParsedItem): string {
   switch (item.kind) {
+    case 'catalogue':
     case 'currency':
     case 'divinationCard':
     case 'gem':
@@ -108,17 +112,26 @@ export function PriceCheckScreen() {
   useEffect(() => {
     let cancelled = false;
     searchRevision.current++;
+    setState({ status: 'idle' });
     setFilters([]);
     setCombined(false);
     setDirty(false);
-    if (item === null) {
+    if (item === null || league === null) {
       setFilters([]);
       return;
     }
     getTradeClient()
-      .getStatIndex()
+      .quoteExchangeItem(item, league)
+      .then(async (quote) => {
+        if (cancelled) return null;
+        if (quote) {
+          setState({ status: 'exchange', quote });
+          return null;
+        }
+        return getTradeClient().getStatIndex();
+      })
       .then((stats) => {
-        if (!cancelled) setFilters(buildPriceFilters(item, stats));
+        if (!cancelled && stats) setFilters(buildPriceFilters(item, stats));
       })
       .catch((cause: unknown) => {
         if (!cancelled) {
@@ -135,7 +148,7 @@ export function PriceCheckScreen() {
     return () => {
       cancelled = true;
     };
-  }, [item, cooldown.start]);
+  }, [item, league, cooldown.start]);
 
   const runSearch = useCallback(async () => {
     if (item === null || league === null || cooldown.seconds > 0) return;
@@ -143,6 +156,14 @@ export function PriceCheckScreen() {
     setState({ status: 'searching' });
     try {
       const client = getTradeClient();
+      const quote = await client.quoteExchangeItem(item, league);
+      if (revision !== searchRevision.current) return;
+      if (quote) {
+        setFilters([]);
+        setDirty(false);
+        setState({ status: 'exchange', quote });
+        return;
+      }
       let applied = filters;
       if (applied.length === 0) {
         const stats = await client.getStatIndex();
@@ -233,8 +254,10 @@ export function PriceCheckScreen() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Modifiers to match</Text>
               <Text style={styles.hint}>
-                Only a few relevant modifiers are preselected — searching every roll
-                usually returns nothing.
+                {item.kind === 'catalogue' ||
+                (item.kind === 'equipment' && /Cluster Jewel(?:\s|$)/.test(item.baseType))
+                  ? 'The item’s modifiers are selected. Edit a value or untick a modifier, then Search to compare prices.'
+                  : 'Relevant modifiers are preselected. Edit the values or choose which modifiers to match.'}
               </Text>
               <PriceModifiers
                 filters={filters}
@@ -264,7 +287,9 @@ export function PriceCheckScreen() {
                   ? `Wait ${cooldown.seconds}s`
                   : state.status === 'searching'
                     ? 'Searching…'
-                    : 'Search'}
+                    : state.status === 'exchange'
+                      ? 'Refresh'
+                      : 'Search'}
               </Text>
             </Pressable>
             <PriceFilterActions
@@ -373,6 +398,20 @@ export function PriceCheckScreen() {
                   {tradeSearchUrl(league, state.queryId)}
                 </Text>
               ) : null}
+            </View>
+          ) : null}
+
+          {state.status === 'exchange' ? (
+            <View style={styles.card}>
+              <ExchangePriceCard quote={state.quote} />
+              <Pressable
+                style={styles.button}
+                onPress={() => {
+                  void Linking.openURL(state.quote.url);
+                }}
+              >
+                <Text style={styles.buttonText}>Exchange site</Text>
+              </Pressable>
             </View>
           ) : null}
         </>

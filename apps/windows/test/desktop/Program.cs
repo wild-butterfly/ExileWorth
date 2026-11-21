@@ -14,13 +14,17 @@ internal static class Program
             Environment.ExitCode = CaptureDesktop(args[1], args[2]).GetAwaiter().GetResult();
             return;
         }
+        bool exchangeCapture = args.Length > 0 && args[0] == "--exchange";
+        if (exchangeCapture) args = args.Skip(1).ToArray();
         using var game = new GameFixture { Text = "ExileWorth game fixture", WindowState = FormWindowState.Maximized, BackColor = Color.FromArgb(38, 34, 31), KeyPreview = true };
         game.Controls.Add(new Label
         {
             Text = "Windows overlay test fixture", AutoSize = true,
             Location = new Point(24, 24), ForeColor = Color.White,
         });
-        const string item = "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
+        string item = exchangeCapture
+            ? "Item Class: Stackable Currency\r\nRarity: Currency\r\nBetrayal Thread\r\n--------\r\nStack Size: 20/100"
+            : "Item Class: Stackable Currency\r\nRarity: Currency\r\nDivine Orb";
         int copies = 0;
         int gameClicks = 0;
         game.MouseDown += (_, _) => gameClicks++;
@@ -43,6 +47,7 @@ internal static class Program
                 string verifiedReplies = Path.Combine(logFolder, "replies-verified");
                 File.Delete(verifiedReplies);
                 var start = new ProcessStartInfo(args[0]);
+                if (exchangeCapture) start.Environment["EXILEWORTH_TEST_EXCHANGE"] = "1";
                 start.Environment["EXILEWORTH_TEST_REPLIES"] = verifiedReplies;
                 string verifiedFilters = Path.Combine(logFolder, "filters-verified");
                 File.Delete(verifiedFilters);
@@ -58,12 +63,14 @@ internal static class Program
                 await Task.Delay(750);
                 Assert(copies == 0 && !IsTopmost(desktop), "Shortcut ran outside the game.");
 
+                if (!exchangeCapture) {
                 InvokeButton(desktop, "Settings");
                 InvokeButton(desktop, "+ Add reply");
                 await Until(() => FindButton(desktop, "Remove reply 4") is not null, "added reply in Settings");
                 InvokeButton(desktop, "Remove reply 1");
                 await Until(() => FindButton(desktop, "Remove reply 4") is null, "removed reply in Settings");
                 InvokeButton(desktop, "Price Check");
+                }
 
                 PostMessageW(desktop, 0x0112, 0xF060, 0); // Close-to-tray must keep the shortcut registered.
                 await Until(() => !IsWindowVisible(desktop), "hide to tray");
@@ -80,11 +87,24 @@ internal static class Program
                 Assert(copies == 1, "Expected exactly one copy.");
                 Assert(GetForegroundWindow() == game.Handle, "Overlay stole game focus.");
                 Assert(Clipboard.GetText() == item, "Clipboard did not contain the captured item.");
+                if (exchangeCapture)
+                    await Until(() => FindButton(overlay, "Exchange site") is not null, "exchange quote in overlay");
 
                 if (args.Length > 1)
                 {
                     await Task.Delay(350);
                     CaptureOverlay(overlay, args[1]);
+                }
+
+                if (exchangeCapture)
+                {
+                    ShowWindow(desktop, 4);
+                    Foreground(desktop);
+                    await Until(() => IsWindowVisible(desktop) && GetForegroundWindow() == desktop, "desktop exchange quote");
+                    await Task.Delay(350);
+                    CaptureOverlay(desktop, args[2]);
+                    Console.WriteLine("PASS: Captured actual Exchange desktop and compact overlay with the same recorded quote.");
+                    return;
                 }
 
                 // A click inside the panel (its status line) must not close it or take focus.

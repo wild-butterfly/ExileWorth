@@ -8,7 +8,7 @@ export function applyMinimumPreset(
 ): SelectableFilter[] {
   if (![0, 5, 10, 20].includes(percent)) throw new Error('Unknown minimum preset');
   return filters.map((filter) =>
-    filter.selected && filter.value !== null
+    filter.selected && filter.value !== null && !filter.exact
       ? {
           ...filter,
           min:
@@ -23,7 +23,9 @@ export function applyMinimumPreset(
 export function matchingMinimumPreset(
   filters: readonly SelectableFilter[],
 ): number | null {
-  const selected = filters.filter((filter) => filter.selected && filter.value !== null);
+  const selected = filters.filter(
+    (filter) => filter.selected && filter.value !== null && !filter.exact,
+  );
   if (!selected.length) return null;
   return (
     [0, 5, 10, 20].find((percent) =>

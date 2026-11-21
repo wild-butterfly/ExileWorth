@@ -1,6 +1,7 @@
 import type {
   ItemProperties,
   CurrencyItem,
+  CatalogueItem,
   DivinationCardItem,
   EquipmentItem,
   GemItem,
@@ -75,6 +76,7 @@ const USAGE_PREFIXES = [
   'Travel to this Map',
   'Place into',
   'Take this item',
+  'Take this to',
   'Sell with other',
 ];
 
@@ -119,7 +121,20 @@ function toModifiers(lines: readonly string[]): Modifier[] {
       }
       // Unrecognized braces: keep the line rather than dropping it.
     }
-    modifiers.push(classifyModLine(line, pending));
+    const modifier = classifyModLine(line, pending);
+    const previous = modifiers.at(-1);
+    // Some cluster passive types span two copied lines (bows, traps/mines).
+    // They are one categorical trade filter, not two independent rolls.
+    if (
+      previous &&
+      /^Added Small Passive Skills grant:/.test(previous.text) &&
+      /^Added Small Passive Skills grant:/.test(modifier.text)
+    ) {
+      modifiers[modifiers.length - 1] = {
+        ...previous,
+        text: `${previous.text}\n${modifier.text}`,
+      };
+    } else modifiers.push(modifier);
     pending = undefined;
   }
 
@@ -128,7 +143,7 @@ function toModifiers(lines: readonly string[]): Modifier[] {
 
 interface HeaderInfo {
   itemClass: string;
-  rarity: string;
+  rarity: string | null;
   nameLines: string[];
 }
 
@@ -148,7 +163,7 @@ function parseHeader(header: readonly string[]): HeaderInfo | null {
     }
   }
 
-  if (rarity === null) return null;
+  if (nameLines.length === 0) return null;
   return { itemClass: itemClass ?? 'Unknown', rarity, nameLines };
 }
 
@@ -212,7 +227,7 @@ function parseRequirementsSection(lines: readonly string[]): Requirements {
  */
 function scanSections(
   sections: readonly (readonly string[])[],
-  options: { collectMapProperties: boolean },
+  options: { collectMapProperties: boolean; collectUnknownModifiers?: boolean },
 ): ScanState {
   const state: ScanState = {
     corrupted: false,
@@ -252,8 +267,20 @@ function scanSections(
         continue;
       }
 
+      // Cluster descriptions contain colons but are modifiers, not item
+      // properties. Treating one as structure discarded its whole section.
+      if (
+        /^(?:Adds \d+ Passive Skills|\d+ Added Passive Skills? |Added Small Passive Skills )/.test(
+          trimmed,
+        )
+      ) {
+        freeLines.push(trimmed);
+        continue;
+      }
+
       const kv = parseKeyValue(trimmed);
       if (kv !== null) {
+        const previousStructure: boolean = sectionHadStructure;
         sectionHadStructure = true;
         switch (kv.key) {
           case 'Item Level':
@@ -302,7 +329,10 @@ function scanSections(
             state.elementalAverage = averageDamage(kv.value) ?? undefined;
             break;
           default:
-            if (options.collectMapProperties) {
+            if (options.collectUnknownModifiers) {
+              sectionHadStructure = previousStructure;
+              freeLines.push(trimmed);
+            } else if (options.collectMapProperties) {
               state.mapProperties.push(trimmed);
             } else {
               state.unknownLines.push(trimmed);
@@ -364,8 +394,43 @@ export function parseItemText(text: string): ParseResult {
       ok: false,
       code: 'not_an_item',
       message:
-        'Missing "Rarity:" line. Copy an item in the game (English client) and try again.',
+        'Missing item name. Copy an item in the game (English client) and try again.',
     };
+  }
+
+  if (header.rarity === null) {
+    // New league items can omit rarity entirely. Keep a separate item kind:
+    // its name must be validated exactly against the trade catalogue later.
+    if (header.itemClass === 'Unknown' && sections.rest.length === 0) {
+      return {
+        ok: false,
+        code: 'not_an_item',
+        message: 'Copy a complete item from the English game client.',
+      };
+    }
+    const state = scanSections(sections.rest, {
+      collectMapProperties: false,
+      collectUnknownModifiers: true,
+    });
+    const slot =
+      /^(?:Torso|Upper Limb|Lower Limb|Head|Body Part|Left Arm|Right Arm|Left Leg|Right Leg)$/i;
+    const free = state.modifierSections.flat();
+    const item: CatalogueItem = {
+      kind: 'catalogue',
+      itemClass: header.itemClass,
+      name: header.nameLines[0]!,
+      ...(state.stackSize !== undefined ? { stackSize: state.stackSize } : {}),
+      rawText: text,
+      modifiers: free.filter((modifier) => !slot.test(modifier.text)),
+      unknownLines: [
+        ...state.unknownLines,
+        ...header.nameLines.slice(1),
+        ...free
+          .filter((modifier) => slot.test(modifier.text))
+          .map((modifier) => modifier.text),
+      ],
+    };
+    return { ok: true, item };
   }
 
   const rarityKind = RARITIES[header.rarity];
@@ -451,6 +516,7 @@ function buildItem(
   if (isMap) {
     const map: MapItem = {
       kind: 'map',
+      ...(state.stackSize !== undefined ? { stackSize: state.stackSize } : {}),
       itemClass: header.itemClass,
       rawText,
       rarity,
@@ -470,6 +536,7 @@ function buildItem(
 
   const equipment: EquipmentItem = {
     kind: 'equipment',
+    ...(state.stackSize !== undefined ? { stackSize: state.stackSize } : {}),
     properties: itemProperties(state),
     itemClass: header.itemClass,
     rawText,

@@ -79,12 +79,14 @@ internal record League(string Id, string Text)
 }
 internal record LeagueResult(League[] Leagues, string? Selected);
 internal record PriceResult(League[] Leagues, string Selected, int Total, Listing[] Listings,
-    Modifier[] Filters, string TradeUrl, string? ItemName, TypicalPrice? Typical);
+    Modifier[] Filters, string TradeUrl, string? ItemName, TypicalPrice? Typical, ExchangeQuote? Exchange = null);
+internal record ExchangeItem(string Id, string Name);
+internal record ExchangeQuote(double? PerItemChaos, double? StackChaos, int Quantity, long UpdatedAt, ExchangeItem Item);
 internal record TypicalPrice(double Amount, string Currency, double? Chaos);
 internal record Listing(double Amount, string Currency, string AccountName, int? Ilvl, string Presence,
-    string? Indexed = null, string? Whisper = null);
+    string? Indexed = null, string? Whisper = null, double? Stock = null, double? Minimum = null);
 internal record Modifier(string Key, string Label, bool Enabled, double? Value = null, double? Min = null,
-    string[]? CombinedKeys = null, string? Tooltip = null)
+    string[]? CombinedKeys = null, string? Tooltip = null, bool Exact = false)
 {
     public override string ToString() => Label;
 }

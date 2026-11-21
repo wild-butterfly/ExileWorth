@@ -44,6 +44,7 @@ export interface StatMatch {
   readonly text: string;
   /** Numeric values pulled from the modifier, in order. */
   readonly values: readonly number[];
+  readonly option?: number;
 }
 
 export class StatIndex {
@@ -54,7 +55,7 @@ export class StatIndex {
     for (const group of groups) {
       const index = new Map<string, TradeStatEntry>();
       for (const entry of group.entries) {
-        const key = normalizeStatText(entry.text);
+        const key = normalizeStatText(entry.text).toLowerCase();
         // First entry wins: the catalog lists the canonical stat first.
         if (!index.has(key)) index.set(key, entry);
       }
@@ -76,13 +77,23 @@ export class StatIndex {
    * thing.
    */
   match(modifier: Modifier, options: { local?: boolean } = {}): StatMatch | null {
-    const key = normalizeStatText(modifier.text);
+    const text = modifier.text.replace(
+      /^1 Added Passive Skill is a Jewel Socket$/,
+      '1 Added Passive Skills are Jewel Sockets',
+    );
+    const key = normalizeStatText(text);
     const values = extractValues(modifier.text);
 
     const preferred = GROUP_FOR_TYPE[modifier.type];
-    const candidates = [preferred, 'Explicit', 'Pseudo'].filter(
-      (label): label is string => label !== undefined,
-    );
+    const clusterEnchant =
+      /^(?:Adds \d+ Passive Skills|\d+ Added Passive Skills? (?:is a Jewel Socket|are Jewel Sockets)|Added Small Passive Skills grant:)/.test(
+        modifier.text,
+      );
+    const candidates = [
+      clusterEnchant ? 'Enchant' : preferred,
+      'Explicit',
+      'Pseudo',
+    ].filter((label): label is string => label !== undefined);
 
     const plain = [key, positiveForm(key)].filter(
       (candidate): candidate is string => candidate !== null,
@@ -96,9 +107,17 @@ export class StatIndex {
       const group = this.byGroup.get(label);
       if (group === undefined) continue;
       for (const candidate of keys) {
-        const entry = group.get(candidate);
+        const entry = group.get(candidate.toLowerCase());
         if (entry !== undefined) {
-          return { id: entry.id, text: entry.text, values };
+          // The catalogue encodes enum choices as "stat_id|option". They
+          // are identities, not numerical minimums (e.g. minion life = 30).
+          const option = /^(.*)\|(\d+)$/.exec(entry.id);
+          return {
+            id: option?.[1] ?? entry.id,
+            text: entry.text,
+            values: entry.text.includes('#') ? values : [],
+            ...(option ? { option: Number(option[2]) } : {}),
+          };
         }
       }
     }

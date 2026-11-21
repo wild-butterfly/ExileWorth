@@ -71,17 +71,23 @@ jobs:
           Copy-Item apps/windows/test/desktop/worker-fixture.cjs "$appDir/worker.cjs"
           dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -- "$appDir/ExileWorth.exe" "$PWD/dist/windows-overlay.png" "$PWD/dist/windows-desktop.png"
           if ($LASTEXITCODE -ne 0) { throw 'Windows shortcut or overlay test failed' }
+          Copy-Item apps/windows/test/desktop/exchange-snapshot.json "$appDir/exchange-snapshot.json"
+          dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -- --exchange "$appDir/ExileWorth.exe" "$PWD/dist/windows-exchange-overlay.png" "$PWD/dist/windows-exchange-desktop.png"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows exchange captures failed' }
       - uses: actions/upload-artifact@v4
         with:
           name: ExileWorth-Windows-x64
           path: dist/ExileWorth-Windows-x64.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: Windows-overlay-screenshot
           path: |
             dist/windows-overlay.png
             dist/windows-desktop.png
+            dist/windows-exchange-overlay.png
+            dist/windows-exchange-desktop.png
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: failure()

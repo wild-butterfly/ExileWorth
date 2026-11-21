@@ -1,6 +1,7 @@
 const console = require('node:console');
 
-const { writeFileSync } = require('node:fs');
+const { readFileSync, writeFileSync } = require('node:fs');
+const { join } = require('node:path');
 const { createInterface } = require('node:readline');
 const { setTimeout } = require('node:timers');
 
@@ -12,6 +13,20 @@ let copiedText = null;
 const reply = (body) => setTimeout(() => console.log(body), checks === 2 ? 2500 : 0);
 lines.on('line', (line) => {
   const request = JSON.parse(line);
+  if (request.action === 'icons') {
+    console.log(JSON.stringify({ result: {} }));
+    return;
+  }
+  if (request.action === 'check' && process.env.EXILEWORTH_TEST_EXCHANGE === '1') {
+    console.log(
+      JSON.stringify({
+        result: JSON.parse(
+          readFileSync(join(__dirname, 'exchange-snapshot.json'), 'utf8'),
+        ),
+      }),
+    );
+    return;
+  }
   if (request.action === 'check' && request.text !== null && request.text !== undefined) {
     checks += 1;
     copiedText = request.text;

@@ -6,7 +6,7 @@ namespace ExileWorth.Windows;
 /// <summary>What the compact overlay shows for the current price check.</summary>
 internal sealed record PriceView(
     string Title, string Meta, IReadOnlyList<Listing> Listings, IReadOnlyList<Modifier> Filters,
-    TypicalPrice? Typical, int Total, string? Currency, bool Busy, bool HasItem, Uri? TradeUrl, int CooldownSeconds = 0);
+    TypicalPrice? Typical, int Total, string? Currency, bool Busy, bool HasItem, Uri? TradeUrl, int CooldownSeconds = 0, bool Exchange = false);
 
 /// <summary>
 /// The compact in-game panel. It opens without focus; clicking a minimum input
@@ -419,7 +419,8 @@ internal sealed class GamePriceOverlay : Form
         busy = view.Busy;
         cooldownSeconds = view.CooldownSeconds;
         hasItem = view.HasItem;
-        header.Show(view.Title, view.Meta, view.Typical, view.Total);
+        header.Show(view.Title, view.Meta, view.Typical, view.Total, view.Exchange);
+        listings.Exchange = view.Exchange;
         if (priceLayout.RowStyles[0].Height != header.MeasuredHeight) priceLayout.RowStyles[0].Height = header.MeasuredHeight;
         league.Text = leagueName ?? "";
         if (!ReferenceEquals(listings.Listings, view.Listings)) listings.Listings = view.Listings;
@@ -435,11 +436,14 @@ internal sealed class GamePriceOverlay : Form
         status.ForeColor = WindowTheme.Dim;
         tradeUrl = view.TradeUrl;
         tradeSite.Enabled = tradeUrl is not null && !view.Busy;
-        search.Text = cooldownSeconds > 0 ? $"Wait {cooldownSeconds}s" : view.Busy && view.HasItem ? "Searching…" : "Search";
+        search.Text = cooldownSeconds > 0 ? $"Wait {cooldownSeconds}s" : view.Busy && view.HasItem ? "Searching…" : view.Exchange ? "Refresh" : "Search";
+        tradeSite.Text = view.Exchange ? "Exchange site ↗" : "Trade site ↗";
+        tradeSite.AccessibleName = view.Exchange ? "Exchange site" : "Trade site";
         UpdateSearch();
         modifiers.Enabled = !view.Busy;
         preset.Enabled = combinedResistance.Enabled = !view.Busy;
         if (view.Busy) presetPicker.Visible = false;
+        currency.Visible = !view.Exchange;
         currency.Enabled = !view.Busy && cooldownSeconds == 0;
         selectedCurrency = view.Currency;
         ShowCurrency();
