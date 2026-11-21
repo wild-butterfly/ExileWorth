@@ -7,6 +7,11 @@
           "id": "explicit.stat_927817294",
           "text": "Raised Zombies have #% increased maximum Life",
           "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_328541901",
+          "text": "+# to Intelligence",
+          "type": "explicit"
         }
       ]
     },
@@ -21,6 +26,11 @@
         {
           "id": "implicit.stat_927817294",
           "text": "Raised Zombies have #% increased maximum Life",
+          "type": "implicit"
+        },
+        {
+          "id": "implicit.stat_328541901",
+          "text": "+# to Intelligence",
           "type": "implicit"
         }
       ]

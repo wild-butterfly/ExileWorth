@@ -33,6 +33,38 @@ function parsed(source = text) {
 const queryFilters = (query: TradeQuery) => query.query.stats[0]!.filters;
 
 describe('cluster jewel modifier searches', () => {
+  it('ignores the reported cluster radius reminder and unnamed advanced headings while retaining every real filter', () => {
+    const plain = parsed(
+      readFileSync(
+        join(__dirname, '../../item-parser/test/fixtures/cluster-jewel-small.txt'),
+        'utf8',
+      ),
+    );
+    const advanced = parsed(
+      readFileSync(
+        join(
+          __dirname,
+          '../../item-parser/test/fixtures/cluster-jewel-small-advanced.txt',
+        ),
+        'utf8',
+      ),
+    );
+    if (advanced.kind !== 'equipment') throw new Error('Expected cluster jewel');
+    expect(advanced.unknownLines).toContain(
+      '(Added Passive Skills are never considered to be in Radius by other Jewels)',
+    );
+    expect(advanced.modifiers).toHaveLength(4);
+    expect(advanced.modifiers.map((modifier) => modifier.type)).toEqual([
+      'enchant',
+      'enchant',
+      'explicit',
+      'explicit',
+    ]);
+    const baseTypes = new BaseTypeIndex([{ entries: [{ type: 'Small Cluster Jewel' }] }]);
+    expect(
+      buildQuery(advanced, buildPriceFilters(advanced, stats), { baseTypes }),
+    ).toEqual(buildQuery(plain, buildPriceFilters(plain, stats), { baseTypes }));
+  });
   it('matches both rolled stats in the Shining Small Cluster Jewel screenshot without inventing a socket filter', () => {
     const source = readFileSync(
       join(__dirname, '../../item-parser/test/fixtures/cluster-jewel-small.txt'),

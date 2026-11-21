@@ -37,6 +37,29 @@ describe('advanced mod description annotations', () => {
   it('returns null for braces with no recognizable structure', () => {
     expect(parseAnnotation('{ something else entirely }')).toBeNull();
   });
+
+  it('recognizes unnamed modifier-group headings from advanced copy', () => {
+    expect(parseAnnotation('{ Implicit Modifier }')).toEqual({
+      type: 'implicit',
+      affix: 'unknown',
+      name: '',
+      tags: [],
+    });
+    expect(parseAnnotation('{ Enchant Modifier }')?.type).toBe('enchant');
+  });
+
+  it('uses a bare implicit heading for its modifier lines until the next heading', () => {
+    const parsed = parseItemText(
+      "Item Class: Viscera\nScholar's Arm\n--------\nUpper Limb\n--------\n{ Implicit Modifier }\n+27 to Intelligence\n+12 to Strength\n{ Explicit Modifier }\n+5 to Dexterity",
+    );
+    if (!parsed.ok || parsed.item.kind !== 'catalogue')
+      throw new Error('Expected catalogue item');
+    expect(parsed.item.modifiers.map((mod) => [mod.text, mod.type])).toEqual([
+      ['+27 to Intelligence', 'implicit'],
+      ['+12 to Strength', 'implicit'],
+      ['+5 to Dexterity', 'explicit'],
+    ]);
+  });
 });
 
 describe('roll range stripping', () => {
