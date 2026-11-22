@@ -258,13 +258,24 @@ internal sealed class DesktopPages : IDisposable
         var keyMenu = WindowTheme.Menu();
         keyMenu.MaximumSize = new Size(0, 420);
         var reset = new FlatButton(ButtonKind.Ghost, "Reset to default");
+        var easyShortcut = new Shortcut(1, Keys.D);
+        var easy = new FlatButton(ButtonKind.Secondary, "Use Alt + D");
         void ShowShortcut()
         {
             modifier.Text = $"{Shortcut.FormatModifiers(current.Shortcut.Modifiers)}  ▾";
             key.Text = $"{current.Shortcut.Key}  ▾";
-            foreach (ToolStripMenuItem item in modifierMenu.Items) item.Checked = Equals(item.Tag, current.Shortcut.Modifiers);
-            foreach (ToolStripMenuItem item in keyMenu.Items) item.Checked = Equals(item.Tag, current.Shortcut.Key);
+            foreach (ToolStripMenuItem item in modifierMenu.Items)
+            {
+                item.Checked = Equals(item.Tag, current.Shortcut.Modifiers);
+                item.Enabled = Shortcut.IsAllowed((uint)item.Tag!, current.Shortcut.Key);
+            }
+            foreach (ToolStripMenuItem item in keyMenu.Items)
+            {
+                item.Checked = Equals(item.Tag, current.Shortcut.Key);
+                item.Enabled = Shortcut.IsAllowed(current.Shortcut.Modifiers, (Keys)item.Tag!);
+            }
             reset.Enabled = current.Shortcut != Shortcut.Default;
+            easy.Visible = current.Shortcut != easyShortcut;
         }
         foreach (uint option in Shortcut.ModifierOptions)
             modifierMenu.Items.Add(new ToolStripMenuItem(Shortcut.FormatModifiers(option), null,
@@ -275,14 +286,16 @@ internal sealed class DesktopPages : IDisposable
         modifier.Click += (_, _) => modifierMenu.Show(modifier, new Point(0, modifier.Height + 4));
         key.Click += (_, _) => keyMenu.Show(key, new Point(0, key.Height + 4));
         reset.Click += (_, _) => Apply(current with { Shortcut = Shortcut.Default }, ShowShortcut);
+        easy.Click += (_, _) => Apply(current with { Shortcut = easyShortcut }, ShowShortcut);
         ShowShortcut();
         var plus = Ui.Label("+", WindowTheme.Sans(10f), WindowTheme.Faint);
         plus.Anchor = AnchorStyles.None;
         plus.Margin = new Padding(0, 0, 8, 0);
         stack.Add(Ui.Section("Price-check shortcut",
             "Press it while hovering an item in Path of Exile. It only works while the game is in front, " +
-            "and ExileWorth copies the item once. Shortcuts that use Alt may trigger the game’s Pin Popups binding.",
-            Ui.Row(modifier, plus, key, reset)));
+            "and ExileWorth copies the item once. Alt + D is the easiest to press; if the game pins its item tooltip " +
+            "when you use it, move Path of Exile's Pin Popups binding off Alt or choose Ctrl + Shift.",
+            Ui.Row(modifier, plus, key, easy, reset)));
 
         // Trade replies.
         var thanksField = new TextField(DesktopPreferences.DefaultThanks) { Width = 420 };
