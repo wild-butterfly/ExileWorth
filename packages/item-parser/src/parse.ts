@@ -85,12 +85,19 @@ function isUsageSection(lines: readonly string[]): boolean {
   return lines.some((line) => USAGE_PREFIXES.some((prefix) => line.startsWith(prefix)));
 }
 
+/**
+ * Advanced copies (Ctrl+Alt+C) mark rolls that cannot scale, e.g.
+ * "1 Added Passive Skill is Sage — Unscalable Value". The marker is display
+ * metadata, never part of the stat text the trade site matches.
+ */
+const UNSCALABLE = /\s+[—–-]\s*Unscalable Value$/;
+
 function classifyModLine(line: string, annotation?: ModifierAnnotation): Modifier {
-  let body = line;
+  let body = line.replace(UNSCALABLE, '');
   let type: ModifierType = annotation?.type ?? 'explicit';
   for (const { suffix, type: suffixType } of MOD_SUFFIXES) {
     if (body.endsWith(suffix)) {
-      body = body.slice(0, -suffix.length);
+      body = body.slice(0, -suffix.length).replace(UNSCALABLE, '');
       type = suffixType;
       break;
     }
