@@ -260,6 +260,7 @@ describe('cluster jewel modifier searches', () => {
       'utf8',
     );
     const item = parsed(source);
+    if (item.kind !== 'equipment') throw new Error('Expected equipment');
     expect(item.modifiers.map((mod) => mod.text)).toContain(
       '1 Added Passive Skill is Sage',
     );
