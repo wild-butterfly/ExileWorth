@@ -221,7 +221,8 @@ export class TradeClient {
     return this.currencyIcons;
   }
 
-  private getStaticData(): Promise<unknown> {
+  /** GGG's static exchange catalogue: categories, names and icon URLs. */
+  getStaticData(): Promise<unknown> {
     this.staticData ??= this.request(
       `${BASE}/data/static`,
       undefined,

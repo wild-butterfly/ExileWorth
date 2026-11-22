@@ -1,0 +1,1431 @@
+{
+  "market": {
+    "league": "Covens",
+    "period": "24h",
+    "latestHour": 1795320000000,
+    "failedHours": 0,
+    "chaosIcon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lSZXJvbGxSYXJlIiwic2NhbGUiOjF9XQ/46a2347805/CurrencyRerollRare.png",
+    "rows": [
+      {
+        "id": "Metadata/Items/DivinationCards/DivinationCardDamnation",
+        "name": "Damnation",
+        "category": "Cards",
+        "icon": null,
+        "chaos": 174243.228,
+        "volume": 283,
+        "series": [
+          154677.408,
+          159410.75,
+          170960.02,
+          161638.893,
+          162886.957,
+          160116.391,
+          170813.63,
+          196634.887,
+          203713.2,
+          198685.052,
+          198206.157,
+          174478.11,
+          178747.69,
+          189736.917,
+          null,
+          202220.712,
+          187204.58,
+          169815.077,
+          171051.575,
+          173513.916,
+          165348.204,
+          166214.982,
+          171391.492,
+          173367.306
+        ],
+        "change": 12.083
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyDuplicate",
+        "name": "Mirror of Kalandra",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lEdXBsaWNhdGUiLCJzY2FsZSI6MX1d/8d7fea29d1/CurrencyDuplicate.png",
+        "chaos": 115909.14,
+        "volume": 1478,
+        "series": [
+          121648.571, 116947.67, 113220.693, 114728.869, 116025.497, 114334.026,
+          103514.492, 109067.99, 109022.466, 108658.133, 111204.748, 112485.481,
+          117783.669, 117945.59, 117827.23, 115543.364, 118217.357, 119289.719,
+          119948.379, 125355.38, 125882.133, 124461.143, 124187.694, 124444.87
+        ],
+        "change": 2.299
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyHinekorasLock",
+        "name": "Hinekora's Lock",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvSGluZWtvcmFzTG9jayIsInNjYWxlIjoxfV0/b188026e7f/HinekorasLock.png",
+        "chaos": 14380.094,
+        "volume": 5173,
+        "series": [
+          14152.991, 14417.956, 15099.731, 14085.82, 13361.123, 13006.821, 12224.812,
+          12434.184, 13167.785, 13097.424, 13673.231, 14398.264, 14505.228, 14618.048,
+          14509.23, 14772.479, 14672.893, 14656.971, 15233.554, 15350.135, 16809.586,
+          16767.792, 15669.101, 15802.602
+        ],
+        "change": 11.656
+      },
+      {
+        "id": "Metadata/Items/DivinationCards/DivinationCardHouseOfMirrors",
+        "name": "House of Mirrors",
+        "category": "Cards",
+        "icon": null,
+        "chaos": 13971.032,
+        "volume": 13158,
+        "series": [
+          14135.032, 13466.142, 13278.289, 13092.038, 13055.909, 13193.082, 13621.675,
+          14120.378, 14344.1, 14444.463, 14754.68, 14171.37, 14174.927, 14210.648,
+          13563.34, 13468.273, 13693.338, 13916.076, 14180.744, 15016.341, 14448.079,
+          14635.565, 14644.343, 14304.123
+        ],
+        "change": 1.196
+      },
+      {
+        "id": "Metadata/Items/DivinationCards/DivinationCardTheApothecary",
+        "name": "The Apothecary",
+        "category": "Cards",
+        "icon": null,
+        "chaos": 10072.909,
+        "volume": 7111,
+        "series": [
+          10291.572, 10034.332, 9923.914, 9835.093, 10033.309, 9863.681, 9759.34,
+          10045.205, 10255.028, 10008.804, 10295.571, 10230.283, 10323.785, 10407.989,
+          10244.093, 9967.653, 9975.475, 9890.944, 9884.653, 10014.824, 10168.377,
+          10115.59, 10087.584, 10040.499
+        ],
+        "change": -2.44
+      },
+      {
+        "id": "Metadata/Items/DivinationCards/DivinationCardFathersLove",
+        "name": "Father's Love",
+        "category": "Cards",
+        "icon": null,
+        "chaos": 8210.899,
+        "volume": 130,
+        "series": [
+          7857.985, 7340.235, 7105.526, 7182.61, 7465.506, 7277.023, 7313.687, 7674.069,
+          7886.769, 7809.889, 7829.534, 7458.316, 7570.991, 8670.812, 8804.976, 8685.963,
+          8897.211, 8858.265, 8618.759, 8962.25, 8794.679, 8720.172, 8823.959, 9468.246
+        ],
+        "change": 20.492
+      },
+      {
+        "id": "Metadata/Items/Currency/RunegraftBuffScaling",
+        "name": "Runegraft of the Warp",
+        "category": "Runegrafts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2V0dGxlcnMvVmlsbGFnZVJ1bmUxMSIsInNjYWxlIjoxfV0/3a56530c4f/VillageRune11.png",
+        "chaos": 8059.295,
+        "volume": 1841,
+        "series": [
+          6924.619, 7051.369, 7700.094, 7302.58, 6752.784, 6868.99, 7028.353, 7466.449,
+          7746.428, 7681.928, 7974.219, 7732.035, 7553.229, 8543.352, 8160.816, 8287.167,
+          8919.018, 9081.392, 9192.41, 9278.629, 8876.45, 9445.587, 9764.651, 9476.185
+        ],
+        "change": 36.848
+      },
+      {
+        "id": "Metadata/Items/DivinationCards/DivinationCardTheDemon",
+        "name": "The Demon",
+        "category": "Cards",
+        "icon": null,
+        "chaos": 7902.423,
+        "volume": 724,
+        "series": [
+          7454.809, 7244.284, 6530.673, 6691.957, 6654.68, 7110.691, 7583.177, 8604.614,
+          8435.931, 8662.103, 7696.378, 7366.76, 8003.689, 7733.362, 7864.06, 8844.369,
+          9074.697, 9796.339, 9426.767, 9048.981, 8673.268, 8410.809, 8037.841, 7221.27
+        ],
+        "change": -3.133
+      },
+      {
+        "id": "Metadata/Items/DivinationCards/DivinationCardPearlsBeforeSwine",
+        "name": "Pearls Before Swine",
+        "category": "Cards",
+        "icon": null,
+        "chaos": 7788.779,
+        "volume": 66,
+        "series": [
+          7304.606,
+          6692.567,
+          null,
+          7393.863,
+          7600.819,
+          7371.53,
+          7601.304,
+          7989.442,
+          7904.412,
+          7662.929,
+          7456.699,
+          7500.573,
+          7656.058,
+          7084.542,
+          7554.326,
+          7885.129,
+          8297.002,
+          8122.055,
+          8295.555,
+          8347.902,
+          null,
+          null,
+          8691.467,
+          9255.476
+        ],
+        "change": 26.707
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyDuplicateShard",
+        "name": "Mirror Shard",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTWlycm9yU2hhcmQiLCJzY2FsZSI6MX1d/698183ea2b/MirrorShard.png",
+        "chaos": 5925.185,
+        "volume": 7523,
+        "series": [
+          6250.835, 6128.086, 5911.519, 5859.422, 5849.417, 5792.722, 5508.47, 5648.131,
+          5647.595, 5631.842, 5800.976, 5693.541, 5859.788, 5962.081, 6003.468, 6042.492,
+          6060.518, 6075.329, 6186.85, 6187.791, 6178.131, 6080.136, 6090.929, 6176.737
+        ],
+        "change": -1.185
+      },
+      {
+        "id": "Metadata/Items/Currency/AncestralOmenOnChanceMakeUnique",
+        "name": "Omen of Fortune",
+        "category": "Ancestor",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQXptZXJpL1Zvb2Rvb09tZW5zMVB1cnBsZSIsInNjYWxlIjoxfV0/f7558b6e48/VoodooOmens1Purple.png",
+        "chaos": 3814.2,
+        "volume": 955,
+        "series": [
+          3922.053, 3905.633, 3906.875, 3779.962, 3856.401, 3688.532, 3536.972, 3727.183,
+          3799.621, 3730.53, 3712.684, 3679.941, 3693.504, 3808.069, 3745.39, 3710.43,
+          3655.305, 3920.992, 3978.48, 4003.966, 4145.033, 4078.588, 4068.132, 4178.558
+        ],
+        "change": 6.54
+      },
+      {
+        "id": "Metadata/Items/Currency/AncestralTattooSpecialUnique4",
+        "name": "Journey Tattoo of the Mind",
+        "category": "Ancestor",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQW5jZXN0b3JzL1VuaXF1ZTNUYXR0dG9vRXF1aXBtZW50Iiwic2NhbGUiOjF9XQ/f83d9c508a/Unique3TatttooEquipment.png",
+        "chaos": 2951.923,
+        "volume": 29,
+        "series": [
+          null,
+          3886.007,
+          null,
+          3802.558,
+          3569.445,
+          3742.469,
+          3903.372,
+          null,
+          2328.979,
+          2309.376,
+          null,
+          null,
+          2764.688,
+          null,
+          2541.642,
+          2745.715,
+          2753.899,
+          2778.598,
+          2585.628,
+          2457.391,
+          2378.889,
+          2467.171,
+          null,
+          null
+        ],
+        "change": -36.511
+      },
+      {
+        "id": "Metadata/Items/Currency/AncestralTattooArohongui5",
+        "name": "Tattoo of the Arohongui Shaman",
+        "category": "Ancestor",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQW5jZXN0b3JzL0NvbW1vbkludFRhdHR0b29FcXVpcG1lbnQiLCJzY2FsZSI6MX1d/ccfb032651/CommonIntTatttooEquipment.png",
+        "chaos": 1944.971,
+        "volume": 5845,
+        "series": [
+          1976.891, 2033.073, 2036.261, 1974.433, 1967.132, 1868.306, 1887.041, 1939.423,
+          1976.827, 1937.602, 1910.946, 1869.237, 1891.823, 1910.153, 1909.791, 1890.849,
+          1865.462, 1933.102, 1905.243, 1986.754, 2056.996, 2005.711, 1981.649, 2034.634
+        ],
+        "change": 2.921
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyWishSupportGemGreen",
+        "name": "Soul Core of Finesse",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU291bGNvcmVzL1NvdWxDb3JlR2VuZXJpY0RleHRlcml0eSIsInNjYWxlIjoxfV0/2729235e41/SoulCoreGenericDexterity.png",
+        "chaos": 1755.579,
+        "volume": 2279,
+        "series": [
+          1714.54, 1641.125, 1664.59, 1697.655, 1711.844, 1683.711, 1584.457, 1701.389,
+          1812.834, 1684.273, 1721.884, 1681.27, 1667.729, 1827.587, 1796.762, 1649.021,
+          1805.704, 1878.484, 1713.701, 1883.856, 1940.593, 1840.634, 1843.596, 1948.981
+        ],
+        "change": 13.674
+      },
+      {
+        "id": "Metadata/Items/MapFragments/AbyssPinnacleKeyHypnotic",
+        "name": "Zorath's Eye of the Inevitable",
+        "category": "Fragments",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvUXVlc3RJdGVtcy9Cb3NzRW50cmFuY2VLZXlSaXZldGVkIiwic2NhbGUiOjF9XQ/4e4bf74ba9/BossEntranceKeyRiveted.png",
+        "chaos": 1729.505,
+        "volume": 2145,
+        "series": [
+          1995.909, 1911.731, 1867.194, 1845.257, 1845.604, 1821.544, 1814.851, 1830.48,
+          1813.658, 1725.168, 1800.891, 1640.63, 1653.183, 1696.406, 1683.997, 1678.508,
+          1737.23, 1636.024, 1620.207, 1668.957, 1658.05, 1632.63, 1628.933, 1630.591
+        ],
+        "change": -18.303
+      },
+      {
+        "id": "Metadata/Items/Currency/RunegraftAttributeGlobalDefences",
+        "name": "Runegraft of the Fortress",
+        "category": "Runegrafts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2V0dGxlcnMvVmlsbGFnZVJ1bmUxIiwic2NhbGUiOjF9XQ/98d663edbd/VillageRune1.png",
+        "chaos": 1680.336,
+        "volume": 3828,
+        "series": [
+          1878.646, 1813.559, 1740.621, 1657.318, 1537.437, 1389.332, 1317.948, 1405.583,
+          1417.209, 1443.578, 1545.553, 1643.132, 1826.722, 1837.18, 1838.442, 1757.036,
+          1655.744, 1770.397, 1707.32, 1756.261, 2020.832, 2022.378, 1983.363, 2059.684
+        ],
+        "change": 9.637
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyWishSupportGemRed",
+        "name": "Soul Core of Might",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU291bGNvcmVzL1NvdWxDb3JlR2VuZXJpY1N0cmVuZ3RoIiwic2NhbGUiOjF9XQ/ec0c904c58/SoulCoreGenericStrength.png",
+        "chaos": 1658.759,
+        "volume": 2244,
+        "series": [
+          1644.938, 1617.296, 1617.982, 1613.682, 1570.965, 1581.092, 1562.715, 1511.471,
+          1593.091, 1629.235, 1614.508, 1622.45, 1630.824, 1732.158, 1631.417, 1596.717,
+          1635.414, 1753.757, 1721.844, 1833.496, 1862.552, 1958.524, 1852.207, 1669.241
+        ],
+        "change": 1.477
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyWishSupportGemBlue",
+        "name": "Soul Core of Intellect",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU291bGNvcmVzL1NvdWxDb3JlR2VuZXJpY0ludGVsbGlnZW5jZSIsInNjYWxlIjoxfV0/34f9cc2429/SoulCoreGenericIntelligence.png",
+        "chaos": 1649.052,
+        "volume": 2378,
+        "series": [
+          1518.243, 1488.325, 1434.105, 1418.048, 1400.348, 1443.287, 1576.587, 1550.19,
+          1584.391, 1614.529, 1621.832, 1627.604, 1676.068, 1743.458, 1769.123, 1647.362,
+          1657.506, 1772.908, 1815.405, 1780.515, 1747.111, 1805.056, 1841.591, 1903.765
+        ],
+        "change": 25.393
+      },
+      {
+        "id": "Metadata/Items/Currency/MushruneUber",
+        "name": "Prismatic Oil",
+        "category": "Oils",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvT2lscy9QcmlzbWF0aWNPaWwiLCJzY2FsZSI6MX1d/271183afbe/PrismaticOil.png",
+        "chaos": 1534.567,
+        "volume": 3943,
+        "series": [
+          1388.175, 1378.415, 1349.662, 1355.701, 1375.62, 1346.887, 1359.303, 1398.319,
+          1410.809, 1416.872, 1401.874, 1420.441, 1428.676, 1482.839, 1522.374, 1690.049,
+          1798.775, 1946.174, 1936.013, 1869.906, 1816.704, 1765.089, 1818.637, 1785.124
+        ],
+        "change": 28.595
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyFractureRare",
+        "name": "Fracturing Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRnJhY3R1cmluZ09yYkNvbWJpbmVkIiwic2NhbGUiOjF9XQ/3fb18e8a5b/FracturingOrbCombined.png",
+        "chaos": 1342.459,
+        "volume": 24172,
+        "series": [
+          1242.41, 1225.501, 1248.577, 1302.593, 1254.486, 1303.441, 1288.628, 1292.188,
+          1329.751, 1321.666, 1333.94, 1317.361, 1335.687, 1341.461, 1364.792, 1403.653,
+          1405.974, 1413.141, 1413.754, 1439.912, 1419.714, 1409.15, 1389.96, 1396.669
+        ],
+        "change": 12.416
+      },
+      {
+        "id": "Metadata/Items/Currency/RunegraftFishing",
+        "name": "Runegraft of the Angler",
+        "category": "Runegrafts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2V0dGxlcnMvVmlsbGFnZVJ1bmUxMCIsInNjYWxlIjoxfV0/7a75e42c42/VillageRune10.png",
+        "chaos": 885.632,
+        "volume": 16,
+        "series": [
+          null,
+          null,
+          1000,
+          null,
+          1049.837,
+          null,
+          1232.644,
+          525.621,
+          null,
+          null,
+          1065.243,
+          null,
+          638.005,
+          858.732,
+          1059.018,
+          844.835,
+          null,
+          1068.691,
+          861.876,
+          null,
+          1081.313,
+          null,
+          null,
+          null
+        ],
+        "change": 8.131
+      },
+      {
+        "id": "Metadata/Items/Currency/AncestralTattooSpecialUnique5",
+        "name": "Journey Tattoo of the Soul",
+        "category": "Ancestor",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQW5jZXN0b3JzL1VuaXF1ZTNUYXR0dG9vRXF1aXBtZW50Iiwic2NhbGUiOjF9XQ/f83d9c508a/Unique3TatttooEquipment.png",
+        "chaos": 871.716,
+        "volume": 37,
+        "series": [
+          1011.893,
+          null,
+          1068.5,
+          null,
+          null,
+          898.326,
+          null,
+          200,
+          664.313,
+          839.773,
+          749.146,
+          895.135,
+          850.673,
+          966.074,
+          1059.018,
+          1056.044,
+          635.515,
+          null,
+          null,
+          867.314,
+          698.788,
+          null,
+          1059.935,
+          1063.848
+        ],
+        "change": 5.134
+      },
+      {
+        "id": "Metadata/Items/MapFragments/CurrencyAuguryBossKey",
+        "name": "Cursed Poppet",
+        "category": "Fragments",
+        "icon": "https://web.poecdn.com/gen/image/WzI4LDE0LHsiZiI6IjJESXRlbXMvTWFwcy9BdWd1cnlCb3NzRnJhZ21lbnQiLCJzY2FsZSI6MX1d/e712f203bf/AuguryBossFragment.png",
+        "chaos": 869.404,
+        "volume": 35472,
+        "series": [
+          919.385, 927.963, 912.721, 896.073, 855.289, 786.309, 792.485, 803.551, 817.346,
+          811.044, 838.378, 934.699, 925.932, 898.566, 886.183, 888.524, 867.478, 873.94,
+          889.737, 892.263, 910.012, 887.876, 865.661, 877.64
+        ],
+        "change": -4.541
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAfflictionRerollClusterEnchant",
+        "name": "Refracting Fog",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsaXJpdW0iLCJzY2FsZSI6MX1d/e343b7ca20/Delirium.png",
+        "chaos": 742.23,
+        "volume": 2168,
+        "series": [
+          573.548, 626.915, 742.808, 658.389, 665.933, 693.587, 712.27, 706.952, 682.948,
+          673.95, 755.148, 740.217, 764.391, 753.789, 815.818, 803.906, 815.663, 767.7,
+          731.706, 778.456, 785.07, 848.167, 807.894, 785.22
+        ],
+        "change": 36.906
+      },
+      {
+        "id": "Metadata/Items/MapFragments/CurrencyFaridunBossKey",
+        "name": "The Black Barya",
+        "category": "Fragments",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRmFyaWR1bi9GYXJpZHVuQm9zc0tleSIsInNjYWxlIjoxfV0/957d1ee2bd/FaridunBossKey.png",
+        "chaos": 673.78,
+        "volume": 31122,
+        "series": [
+          636.338, 620.536, 637.375, 631.821, 612.744, 605.851, 599.975, 635.182, 632.914,
+          632.016, 606.22, 604.535, 624.177, 651.588, 659.001, 652.732, 657.292, 699.433,
+          795.715, 783.038, 746.421, 804.373, 863.719, 904.479
+        ],
+        "change": 42.138
+      },
+      {
+        "id": "Metadata/Items/Currency/ReflectiveMist",
+        "name": "Reflecting Mist",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvUmVmbGVjdGl2ZU1pc3QiLCJzY2FsZSI6MX1d/26956f795e/ReflectiveMist.png",
+        "chaos": 633.555,
+        "volume": 4645,
+        "series": [
+          608.503, 582.54, 575.304, 585.114, 586.287, 584.837, 573.653, 592.719, 575.511,
+          552.596, 587.526, 588.122, 577.415, 606.636, 607.176, 613.219, 630.019, 720.566,
+          760.905, 732.848, 760.374, 789.437, 785.214, 790.267
+        ],
+        "change": 29.871
+      },
+      {
+        "id": "Metadata/Items/Currency/AncestralTattooValako4",
+        "name": "Tattoo of the Valako Shieldbearer",
+        "category": "Ancestor",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQW5jZXN0b3JzL0NvbW1vblN0clRhdHR0b29FcXVpcG1lbnQiLCJzY2FsZSI6MX1d/5cf69ce758/CommonStrTatttooEquipment.png",
+        "chaos": 601.414,
+        "volume": 4666,
+        "series": [
+          583.516, 574.632, 572.6, 571.136, 580.33, 584.791, 583.435, 594.808, 589.213,
+          574.78, 586.458, 586.129, 588.601, 590.533, 608.52, 602.582, 598.582, 612.359,
+          615.678, 645.819, 633.603, 629.354, 669.789, 686.423
+        ],
+        "change": 17.636
+      },
+      {
+        "id": "Metadata/Items/MapFragments/VoidbornVaultKey",
+        "name": "Voidborn Reliquary Key",
+        "category": "Fragments",
+        "icon": "https://web.poecdn.com/gen/image/WzI4LDE0LHsiZiI6IjJESXRlbXMvTWFwcy9Db3NtaWNDb3JlU3VwcG9ydGVyVmF1bHRLZXkiLCJzY2FsZSI6MX1d/1f2d34a36d/CosmicCoreSupporterVaultKey.png",
+        "chaos": 599.243,
+        "volume": 56287,
+        "series": [
+          585.057, 577.861, 500.566, 507.534, 521.559, 502.333, 500.332, 544.765, 521.641,
+          539.349, 580.882, 569.379, 600.334, 635.615, 658.229, 655.082, 689.799, 753.276,
+          743.75, 698.262, 623.625, 620.197, 613.095, 610.015
+        ],
+        "change": 4.266
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyHellscapeModValues",
+        "name": "Volatile Vaal Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvVm9sYXRpbGVWYWFsT3JiIiwic2NhbGUiOjF9XQ/9bcdda2c63/VolatileVaalOrb.png",
+        "chaos": 591.71,
+        "volume": 32390,
+        "series": [
+          522.74, 508.105, 502.487, 507.898, 497.834, 501.935, 498.596, 500.599, 518.987,
+          514.031, 531.135, 544.279, 585.802, 600.002, 657.499, 699.936, 686.164, 714.557,
+          721.671, 713.445, 746.887, 717.963, 717.915, 705.143
+        ],
+        "change": 34.894
+      },
+      {
+        "id": "Metadata/Items/MapFragments/CurrencyMastermindsLair",
+        "name": "Syndicate Medallion",
+        "category": "Fragments",
+        "icon": "https://web.poecdn.com/gen/image/WzI4LDE0LHsiZiI6IjJESXRlbXMvTWFwcy9DYXRhcmluYVRva2VuIiwic2NhbGUiOjF9XQ/e8d8cc5155/CatarinaToken.png",
+        "chaos": 587.348,
+        "volume": 14228,
+        "series": [
+          567.613, 557.05, 554.573, 564.434, 595.185, 608.602, 593.588, 579.876, 593.633,
+          582.567, 590.082, 604.605, 611.29, 621.499, 616.297, 583.575, 587.622, 571.844,
+          549.243, 548.145, 582.184, 587.772, 593.409, 567.886
+        ],
+        "change": 0.048
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyHeistWeaponEnchant",
+        "name": "Tempering Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGl2aW5lRW5jaGFudEJvZHlBcm1vdXJDdXJyZW5jeSIsInNjYWxlIjoxfV0/37681eda1c/DivineEnchantBodyArmourCurrency.png",
+        "chaos": 579.488,
+        "volume": 13367,
+        "series": [
+          568.963, 579.468, 582.463, 530.794, 523.971, 579.471, 594.242, 610.325, 575.204,
+          536.546, 565.839, 570.482, 550.399, 568.455, 587.349, 602.225, 597.18, 601.599,
+          605.568, 604.78, 603.28, 600.637, 581.474, 626.782
+        ],
+        "change": 10.162
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyUpgradeInfluenceMod",
+        "name": "Orb of Dominance",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTWF2ZW5PcmIiLCJzY2FsZSI6MX1d/f307d80bfd/MavenOrb.png",
+        "chaos": 487.945,
+        "volume": 10093,
+        "series": [
+          500.38, 491.442, 496.429, 507.709, 503.291, 488.2, 477.706, 464.319, 459.64,
+          473.453, 458.232, 484.057, 458.787, 480.34, 481.723, 476.572, 489.655, 470.468,
+          462.815, 493.246, 533.017, 547.211, 556.136, 538.281
+        ],
+        "change": 7.574
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyWishSupportGem",
+        "name": "Soul Core of Instability",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU291bGNvcmVzL1NvdWxDb3JlR2VuZXJpYyIsInNjYWxlIjoxfV0/df392887b5/SoulCoreGeneric.png",
+        "chaos": 448.999,
+        "volume": 6139,
+        "series": [
+          446.43, 404.863, 393.589, 396.776, 391.867, 378.046, 385.514, 383.283, 432.136,
+          464.244, 486.736, 476.035, 485.595, 506.736, 466.52, 451.46, 401.939, 469.6,
+          543.76, 508.122, 451.629, 488.726, 469.658, 483.475
+        ],
+        "change": 8.298
+      },
+      {
+        "id": "Metadata/Items/MapFragments/CurrencyOfferingToTheGoddessGift",
+        "name": "Gift to the Goddess",
+        "category": "Fragments",
+        "icon": "https://web.poecdn.com/gen/image/WzI4LDE0LHsiZiI6IjJESXRlbXMvTWFwcy9MYWJ5cmludGhIYXJ2ZXN0SW5mdXNlZDEiLCJzY2FsZSI6MX1d/a5254d7933/LabyrinthHarvestInfused1.png",
+        "chaos": 426.295,
+        "volume": 1156,
+        "series": [
+          489.1, 443.861, 426.31, 402.839, 397.647, 418.771, 421.916, 426.807, 436.189,
+          445.656, 449.958, 458.366, 445.105, 458.869, 433.839, 421.629, 407.069, 413.022,
+          410.287, 386.448, 385.131, 392.416, 377.56, 397.927
+        ],
+        "change": -18.641
+      },
+      {
+        "id": "Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll4",
+        "name": "Prime Chaotic Resonator",
+        "category": "Delve",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsdmUvUmVyb2xsMngyQyIsInNjYWxlIjoxfV0/c624d45072/Reroll2x2C.png",
+        "chaos": 394.353,
+        "volume": 9297,
+        "series": [
+          398.215, 350.192, 343.558, 407.313, 405.193, 377.369, 377.149, 387.319, 412.815,
+          397.099, 399.674, 396.028, 401.015, 405.916, 402.079, 398.392, 401.707, 403.41,
+          397.436, 395.79, 389.997, 384.11, 383.937, 391.205
+        ],
+        "change": -1.76
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyHeistArmourEnchant",
+        "name": "Tailoring Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGl2aW5lRW5jaGFudFdlYXBvbkN1cnJlbmN5Iiwic2NhbGUiOjF9XQ/d417654a23/DivineEnchantWeaponCurrency.png",
+        "chaos": 375.079,
+        "volume": 12825,
+        "series": [
+          392.66, 373.46, 364.22, 365.795, 346.389, 359.531, 358.269, 364.742, 373.456,
+          367.466, 353.697, 340.808, 364.226, 378.595, 386.512, 387.371, 394.65, 385.626,
+          408.673, 403.782, 402.273, 402.994, 384.494, 387.534
+        ],
+        "change": -1.305
+      },
+      {
+        "id": "Metadata/Items/Currency/AncestralTattooNgamahu4",
+        "name": "Tattoo of the Ngamahu Warmonger",
+        "category": "Ancestor",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQW5jZXN0b3JzL0NvbW1vblN0clRhdHR0b29FcXVpcG1lbnQiLCJzY2FsZSI6MX1d/5cf69ce758/CommonStrTatttooEquipment.png",
+        "chaos": 352.103,
+        "volume": 3275,
+        "series": [
+          305.925, 290.334, 284.675, 304.584, 301.428, 330.543, 345.033, 362.912, 364.087,
+          342.028, 339.518, 367.342, 363.812, 327.966, 354.314, 338.045, 398.299, 420.893,
+          430.529, 434.598, 406.647, 384.674, 356.256, 354.813
+        ],
+        "change": 15.98
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyRerollRareVeiled",
+        "name": "Veiled Exalted Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvVmVpbGVkRXhhbHRlZE9yYiIsInNjYWxlIjoxfV0/976e8acb0b/VeiledExaltedOrb.png",
+        "chaos": 322.724,
+        "volume": 8530,
+        "series": [
+          477.657, 416.328, 361.97, 367.669, 377.909, 373.528, 354.156, 373.308, 360.935,
+          339.441, 293.156, 314.435, 303.683, 291.813, 277.968, 277.874, 284.346, 286.573,
+          284.493, 297.118, 282.47, 254.291, 293.433, 248.617
+        ],
+        "change": -47.951
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyHellscapeUpgradeModTier",
+        "name": "Tainted Divine Teardrop",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvSGVsbHNjYXBlL0hlbGxzY2FwZVRlYXJkcm9wT3JiIiwic2NhbGUiOjF9XQ/0d251b9d52/HellscapeTeardropOrb.png",
+        "chaos": 294.513,
+        "volume": 1764,
+        "series": [
+          281.345, 304.099, 275.373, 356.439, 269.884, 236.188, 223.64, 288.462, 232.495,
+          231.942, 292.778, 350.791, 282.146, 314.754, 246.069, 356.056, 260.783, 255.91,
+          248.395, 261.731, 253.631, 264.599, 240.23, 336.509
+        ],
+        "change": 19.607
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyMapQualityCurrency",
+        "name": "Maven's Chisel of Avarice",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTWF2ZW5DaGlzZWw0Iiwic2NhbGUiOjF9XQ/d878502dc7/MavenChisel4.png",
+        "chaos": 249.445,
+        "volume": 42551,
+        "series": [
+          224.578, 215.505, 220.605, 225.753, 237.361, 256.155, 258.787, 260.766, 255.857,
+          256.102, 235.067, 234.129, 234.849, 239.118, 252.161, 270.981, 275.234, 279.042,
+          268.01, 265.524, 252.749, 242.566, 250.832, 266.992
+        ],
+        "change": 18.886
+      },
+      {
+        "id": "Metadata/Items/Deepwater/DeepwaterAbyssCurrency",
+        "name": "Merrick's Ducat",
+        "category": "Other",
+        "icon": null,
+        "chaos": 243.43,
+        "volume": 1130,
+        "series": [
+          303.239, 286.704, 277.203, 291.675, 255.593, 241.302, 207.156, 173.673, 190.049,
+          199.163, 223.673, 211.892, 208.783, 208.078, 228.156, 230.202, 251.006, 253.246,
+          277.239, 269.096, 289.061, 300.57, 327.91, 350.094
+        ],
+        "change": 15.451
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyDelveCraftingAbyss",
+        "name": "Hollow Fossil",
+        "category": "Delve",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsdmUvQW1iZXJFeWUiLCJzY2FsZSI6MX1d/542a2b7b0a/AmberEye.png",
+        "chaos": 230.269,
+        "volume": 7477,
+        "series": [
+          238.88, 246.896, 236.375, 251.631, 240.422, 254.701, 247.713, 246.5, 251.138,
+          258.418, 257.334, 242.773, 240.445, 255.456, 239.886, 217.856, 204.695, 176.791,
+          167.879, 188.704, 204.522, 206.979, 199.024, 192.188
+        ],
+        "change": -19.546
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyModValues",
+        "name": "Divine Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lNb2RWYWx1ZXMiLCJzY2FsZSI6MX1d/ec48896769/CurrencyModValues.png",
+        "chaos": 212.421,
+        "volume": 1715478,
+        "series": [
+          221.352, 215.889, 213.7, 211.253, 209.967, 207.915, 205.441, 210.248, 211.725,
+          209.943, 213.049, 211.284, 212.668, 214.683, 211.804, 211.209, 211.838, 213.738,
+          215.469, 216.829, 216.263, 212.687, 211.987, 212.77
+        ],
+        "change": -3.877
+      },
+      {
+        "id": "Metadata/Items/Currency/MushruneCorrupt",
+        "name": "Tainted Oil",
+        "category": "Oils",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvT2lscy9WYWFsT2lsIiwic2NhbGUiOjF9XQ/ac4ceb0430/VaalOil.png",
+        "chaos": 209.852,
+        "volume": 4158,
+        "series": [
+          224.679, 218.905, 214.891, 200.175, 198.922, 191.833, 194.194, 199.189, 220.51,
+          203.38, 208.829, 208.207, 208.218, 203.475, 205.082, 205.813, 206.047, 211.034,
+          212.588, 221.77, 217.829, 221.364, 237.937, 221.504
+        ],
+        "change": -1.413
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyDelveCraftingMirror",
+        "name": "Fractured Fossil",
+        "category": "Delve",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsdmUvRnJhY3R1cmVkRm9zc2lsIiwic2NhbGUiOjF9XQ/328d2256ce/FracturedFossil.png",
+        "chaos": 182.649,
+        "volume": 4961,
+        "series": [
+          152.915, 165.529, 169.497, 199.105, 183.579, 186.442, 176.972, 185.67, 191.635,
+          203.539, 180.155, 173.759, 175.423, 200.713, 184.043, 168.077, 182.515, 181.982,
+          166.133, 177.729, 173.454, 190.911, 191.066, 179.341
+        ],
+        "change": 17.281
+      },
+      {
+        "id": "Metadata/Items/Currency/HarvestSeedFaridun",
+        "name": "Crystallised Rancour",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvSGFydmVzdC9GYXJpZHVuTGlmZWZvcmNlIiwic2NhbGUiOjF9XQ/8852b4c459/FaridunLifeforce.png",
+        "chaos": 170.445,
+        "volume": 15293,
+        "series": [
+          136.26, 174.895, 176.649, 196.774, 169.668, 172.841, 199.402, 186.126, 186.575,
+          186.829, 168.285, 178.14, 170.995, 138.521, 146.16, 160.526, 169.447, 157.559,
+          158.891, 174.466, 167.786, 165.842, 183.053, 164.791
+        ],
+        "change": 20.939
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyMapQualityRarity",
+        "name": "Maven's Chisel of Procurement",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTWF2ZW5DaGlzZWwxIiwic2NhbGUiOjF9XQ/a21d7d73da/MavenChisel1.png",
+        "chaos": 161.996,
+        "volume": 47010,
+        "series": [
+          118.239, 134.175, 141.409, 158.228, 167.281, 173.196, 180.765, 180.515, 177.556,
+          169.48, 152.446, 147.842, 158.986, 164.669, 174.952, 167.429, 162.194, 160.421,
+          158.263, 158.955, 158.791, 155.421, 164.301, 180.397
+        ],
+        "change": 52.57
+      },
+      {
+        "id": "Metadata/Items/AtlasExiles/ApplyInfluence",
+        "name": "Awakener's Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvVHJhbnNmZXJPcmIiLCJzY2FsZSI6MX1d/f3b1c1566f/TransferOrb.png",
+        "chaos": 126.832,
+        "volume": 12177,
+        "series": [
+          147.626, 146.677, 145.247, 147.5, 146.867, 146.898, 148.37, 145.812, 141.357,
+          127.403, 107.919, 108.486, 108.363, 112.015, 104.327, 106.769, 115.797, 118.825,
+          129.731, 135.382, 138.838, 122.272, 115.76, 122.073
+        ],
+        "change": -17.309
+      },
+      {
+        "id": "Metadata/Items/Currency/RunegraftSupportLevels",
+        "name": "Runegraft of Gemcraft",
+        "category": "Runegrafts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2V0dGxlcnMvVmlsbGFnZVJ1bmUxNCIsInNjYWxlIjoxfV0/6288329dc0/VillageRune14.png",
+        "chaos": 113.643,
+        "volume": 1066,
+        "series": [
+          108.909, 114.171, 115.967, 104.922, 87, 88.059, 96.296, 103.668, 111.686,
+          116.642, 111.278, 115.242, 147.006, 184.165, 140.404, 126.793, 126.042, 113.327,
+          99.122, 108.537, 93.557, 87.313, 83.868, 88.632
+        ],
+        "change": -18.619
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyDelveCraftingGemLevel",
+        "name": "Faceted Fossil",
+        "category": "Delve",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsdmUvRmFjZXRlZEZvc3NpbCIsInNjYWxlIjoxfV0/473889cafb/FacetedFossil.png",
+        "chaos": 108.834,
+        "volume": 5143,
+        "series": [
+          109.974, 88.603, 73.365, 89.42, 115.923, 101.308, 80.972, 72.155, 80.661,
+          91.033, 138.154, 115.09, 129.019, 182.227, 123.09, 107.121, 110.285, 93.909,
+          98.714, 94.042, 106.569, 111.874, 101.692, 97.07
+        ],
+        "change": -11.734
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAddZanaInfluence",
+        "name": "Orb of Remembrance",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2VjcmV0c29mdGhlQXRsYXMvWmFuYVBpbm5hY2xlT3JiMSIsInNjYWxlIjoxfV0/c91033d1be/ZanaPinnacleOrb1.png",
+        "chaos": 103.453,
+        "volume": 17102,
+        "series": [
+          95.556, 88.464, 93.252, 95.871, 110.659, 108.054, 108.095, 114.331, 91.527,
+          85.777, 90.884, 93.738, 101.139, 102.454, 97.257, 100.466, 110.101, 102.73,
+          118.063, 123.278, 127.461, 116.414, 111.476, 110.025
+        ],
+        "change": 15.141
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyConflictOrb",
+        "name": "Orb of Conflict",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ29uZmxpY3RPcmJSYW5rMSIsInNjYWxlIjoxfV0/7e02c990fc/ConflictOrbRank1.png",
+        "chaos": 100.491,
+        "volume": 42863,
+        "series": [
+          100.603, 96.135, 97.747, 95.999, 91.886, 97.492, 96.952, 94.084, 95.226, 93.412,
+          94.755, 93.545, 96.108, 98.128, 93.608, 106.224, 105.696, 97.533, 103.966,
+          113.659, 113.229, 119.834, 119.807, 114.46
+        ],
+        "change": 13.774
+      },
+      {
+        "id": "Metadata/Items/Currency/Mushrune12",
+        "name": "Golden Oil",
+        "category": "Oils",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvT2lscy9Hb2xkZW5PaWwiLCJzY2FsZSI6MX1d/263a5d73da/GoldenOil.png",
+        "chaos": 90.113,
+        "volume": 30424,
+        "series": [
+          70.912, 67.871, 69.947, 73.611, 103.205, 103.798, 111.019, 121.614, 112.785,
+          101.366, 86.444, 84.054, 78.507, 85.251, 84.728, 84.54, 86.752, 89.898, 89.695,
+          92.046, 89.959, 89.97, 94.134, 91.659
+        ],
+        "change": 29.258
+      },
+      {
+        "id": "Metadata/Items/Currency/RunegraftTreacherousAuras",
+        "name": "Runegraft of Treachery",
+        "category": "Runegrafts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2V0dGxlcnMvVmlsbGFnZVJ1bmUyMCIsInNjYWxlIjoxfV0/6f462c33f6/VillageRune20.png",
+        "chaos": 89.052,
+        "volume": 8895,
+        "series": [
+          90.231, 84.727, 79.117, 74.522, 76.126, 79.19, 76.305, 90.142, 87.374, 98.005,
+          119.675, 86.53, 86.802, 88.989, 97.361, 112.635, 111.445, 83.16, 77.735, 81.132,
+          82.019, 81.479, 80.616, 88.299
+        ],
+        "change": -2.141
+      },
+      {
+        "id": "Metadata/Items/Currency/RunegraftUnexciting",
+        "name": "Runegraft of Stability",
+        "category": "Runegrafts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2V0dGxlcnMvVmlsbGFnZVJ1bmUyIiwic2NhbGUiOjF9XQ/c0bfc39082/VillageRune2.png",
+        "chaos": 83.411,
+        "volume": 420,
+        "series": [
+          67.083, 60.3, 58.684, 43.529, 64.048, 64.211, 66.217, 64.923, 113.783, 68.52,
+          75.944, 76.226, 76.455, 91.808, 211.971, 104.538, 98.211, 105.174, 92.176, 91.8,
+          92.714, 79.5, 72.889, 72.5
+        ],
+        "change": 8.075
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyJewelleryQualitySuffix",
+        "name": "Dextral Catalyst",
+        "category": "Catalysts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2F0YWx5c3RzL1F1YWxpdHlTdWZmaXhDYXRhbHlzdCIsInNjYWxlIjoxfV0/e38f82e21d/QualitySuffixCatalyst.png",
+        "chaos": 73.085,
+        "volume": 25252,
+        "series": [
+          55.239, 50.893, 51.634, 49.86, 50.17, 52.757, 59.057, 60.222, 66.303, 64.526,
+          70.103, 63.948, 66.231, 68.184, 64.716, 64.858, 77.024, 86.724, 102.569,
+          101.459, 104.057, 113.809, 106.617, 103.922
+        ],
+        "change": 88.132
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyFractureRareShard",
+        "name": "Fracturing Shard",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRnJhY3R1cmluZ09yYlNoYXJkIiwic2NhbGUiOjF9XQ/34fdc6a813/FracturingOrbShard.png",
+        "chaos": 60.403,
+        "volume": 13776,
+        "series": [
+          54.326, 53.824, 56.724, 61.031, 56.75, 60.695, 61.507, 59.78, 61.115, 59.831,
+          61.131, 58.112, 59.994, 58.719, 62.231, 62.487, 58.836, 60.17, 59.542, 64.718,
+          62.821, 63.281, 62.719, 63.195
+        ],
+        "change": 16.326
+      },
+      {
+        "id": "Metadata/Items/AtlasExiles/AddModToRareHunter",
+        "name": "Hunter's Exalted Orb",
+        "category": "Currency",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvSW5mbHVlbmNlIEV4YWx0cy9CYXNpbGlza09yYiIsInNjYWxlIjoxfV0/cd2131d564/BasiliskOrb.png",
+        "chaos": 57.957,
+        "volume": 5970,
+        "series": [
+          48.143, 51.229, 52.484, 56.23, 55.48, 55.61, 51.291, 62.745, 62.576, 62.56,
+          61.365, 59.813, 58.564, 55.776, 58.167, 58.2, 64.32, 61.837, 63.66, 61.749,
+          55.271, 55.002, 55.417, 50.15
+        ],
+        "change": 4.17
+      },
+      {
+        "id": "Metadata/Items/Currency/LegionCocoonBodyArmour",
+        "name": "Maraketh Enshrouding Crystal",
+        "category": "EnshroudingCrystals",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTGVnaW9uL01hcmFrZXRoRW5zaHJvdWRpbmdDcnlzdGFsIiwic2NhbGUiOjF9XQ/99a72ff6c4/MarakethEnshroudingCrystal.png",
+        "chaos": 48.946,
+        "volume": 23775,
+        "series": [
+          28.821, 31.086, 48.729, 53.717, 50.553, 50.928, 50.3, 51.784, 49.033, 49.139,
+          42.833, 43.923, 51.424, 40.787, 39.967, 50.172, 62.567, 65.217, 52.465, 51.339,
+          52.17, 51.569, 45.852, 48.805
+        ],
+        "change": 69.34
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyDelveCraftingSpeed",
+        "name": "Shuddering Fossil",
+        "category": "Delve",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsdmUvU2h1ZGRlcmluZ0Zvc3NpbCIsInNjYWxlIjoxfV0/ecd4122277/ShudderingFossil.png",
+        "chaos": 46.061,
+        "volume": 42603,
+        "series": [
+          38.56, 39.109, 43.179, 46.666, 46.543, 46.704, 49.327, 48.95, 50.09, 48.958,
+          47.752, 47.608, 47.33, 48.488, 51.04, 44.135, 48.22, 44.494, 42.291, 41.998,
+          43.592, 40.843, 43.514, 47.029
+        ],
+        "change": 21.964
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyDelveCraftingCorruptEssence",
+        "name": "Glyphic Fossil",
+        "category": "Delve",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsdmUvR2x5cGhpY0Zvc3NpbCIsInNjYWxlIjoxfV0/3e6fb90b9d/GlyphicFossil.png",
+        "chaos": 44.819,
+        "volume": 3329,
+        "series": [
+          41.222, 40.058, 32.228, 46.259, 39.691, 41.991, 37.765, 41.469, 48.943, 54.907,
+          54.679, 39.729, 58.898, 66.644, 41.07, 39.205, 50.601, 40.036, 38.564, 34.115,
+          38.306, 40.038, 44.055, 39.529
+        ],
+        "change": -4.108
+      },
+      {
+        "id": "Metadata/Items/Currency/LegionCocoonQuiver",
+        "name": "Afarud Enshrouding Crystal",
+        "category": "EnshroudingCrystals",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTGVnaW9uL0FmYXJ1ZEVuc2hyb3VkaW5nQ3J5c3RhbCIsInNjYWxlIjoxfV0/6e040b24a0/AfarudEnshroudingCrystal.png",
+        "chaos": 42.943,
+        "volume": 1354,
+        "series": [
+          41.552, 84.143, 96.793, 79.889, 77.591, 68.077, 67.671, 65.831, 53.643, 43.476,
+          34.737, 31.264, 27.699, 26.44, 19.457, 12.6, 15.65, 11.32, 8.655, 7.706, 9.8,
+          19.342, 28.371, 22.179
+        ],
+        "change": -46.624
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyJewelleryQualityPrefix",
+        "name": "Sinistral Catalyst",
+        "category": "Catalysts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2F0YWx5c3RzL1F1YWxpdHlQcmVmaXhDYXRhbHlzdCIsInNjYWxlIjoxfV0/0a6b5dfbf8/QualityPrefixCatalyst.png",
+        "chaos": 38.416,
+        "volume": 22830,
+        "series": [
+          45.895, 42.756, 45.096, 45.923, 43.763, 46.548, 45.851, 47.154, 45.248, 39.154,
+          37.861, 34.99, 34.796, 35.498, 35.769, 36.143, 37.547, 37.026, 37.341, 27.607,
+          30.128, 31.186, 29.584, 29.975
+        ],
+        "change": -34.687
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyEssenceFaridun1",
+        "name": "Essence of Desolation",
+        "category": "Essences",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXNzZW5jZS9Fc3NlbmNlb2ZEZXNvbGF0aW9uIiwic2NhbGUiOjF9XQ/bda84af9e1/EssenceofDesolation.png",
+        "chaos": 33.458,
+        "volume": 3757,
+        "series": [
+          19.136, 16.237, 32.723, 46.135, 17.015, 20.6, 19.802, 31.535, 24.464, 34.687,
+          25.923, 21.863, 23.642, 28.648, 19.889, 25.392, 23.615, 48.325, 29.025, 35.894,
+          41.641, 50.416, 47.378, 46.8
+        ],
+        "change": 144.561
+      },
+      {
+        "id": "Metadata/Items/Currency/Mushrune11",
+        "name": "Silver Oil",
+        "category": "Oils",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvT2lscy9TaWx2ZXJPaWwiLCJzY2FsZSI6MX1d/d6ad829c2f/SilverOil.png",
+        "chaos": 29.699,
+        "volume": 33019,
+        "series": [
+          22, 23.544, 24.59, 25.297, 32.842, 45.016, 44.156, 38.802, 35.336, 30.963,
+          28.317, 25.445, 25.994, 25.511, 26.177, 28.943, 30.325, 30.404, 28.412, 29.475,
+          28.368, 29.791, 29.511, 29.231
+        ],
+        "change": 32.87
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyMutatedAddModToRare",
+        "name": "Foulborn Exalted Orb",
+        "category": "Keepers",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2hheXVsYS9Gb3VsYm9ybkV4YWx0ZWQiLCJzY2FsZSI6MX1d/e2146eb9af/FoulbornExalted.png",
+        "chaos": 24.902,
+        "volume": 147304,
+        "series": [
+          30.942, 30.148, 25.581, 26.398, 27.02, 29.729, 28.29, 26.028, 25.075, 24.497,
+          21.679, 22.886, 21.895, 20.916, 23.491, 23.119, 23.932, 25.881, 26.242, 25.932,
+          24.97, 22.632, 25.083, 23.781
+        ],
+        "change": -23.144
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAfflictionOrbDivinationCards",
+        "name": "Diviner's Delirium Orb",
+        "category": "DeliriumOrbs",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsaXJpdW0vRGVsaXJpdW1PcmJEaXZpbmF0aW9uQ2FyZHMiLCJzY2FsZSI6MX1d/9ab37abc47/DeliriumOrbDivinationCards.png",
+        "chaos": 22.212,
+        "volume": 27024,
+        "series": [
+          23.577, 23.371, 22.761, 22.733, 22.047, 22.84, 22.715, 22.953, 22.342, 22.421,
+          23.032, 22.954, 22.908, 21.936, 21.549, 21.237, 20.813, 21.274, 21.401, 21.565,
+          21.753, 21.44, 21.301, 21.563
+        ],
+        "change": -8.541
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyJewelleryQualityVaal",
+        "name": "Tainted Catalyst",
+        "category": "Catalysts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2F0YWx5c3RzL1RhaW50ZWRDYXRhbHlzdCIsInNjYWxlIjoxfV0/5ce364bd70/TaintedCatalyst.png",
+        "chaos": 18.963,
+        "volume": 75851,
+        "series": [
+          19.762, 19.235, 18.346, 19.838, 20.091, 20.186, 19.881, 18.861, 17.831, 17.994,
+          21.734, 19.452, 20.696, 20.82, 19.303, 18.01, 17.975, 18.94, 17.956, 18.548,
+          18.562, 17.447, 15.824, 16.476
+        ],
+        "change": -16.628
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyJewelleryQualityResistance",
+        "name": "Prismatic Catalyst",
+        "category": "Catalysts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2F0YWx5c3RzL1ByaXNtYXRpY0NhdGFseXN0Iiwic2NhbGUiOjF9XQ/1e725fd26d/PrismaticCatalyst.png",
+        "chaos": 15.621,
+        "volume": 192766,
+        "series": [
+          14.823, 14.092, 14.015, 13.635, 13.651, 14.666, 14.678, 16.213, 16.803, 16.5,
+          17.19, 16.726, 16.284, 15.925, 15.407, 15.77, 15.47, 15.825, 15.99, 15.368,
+          16.241, 16.046, 16.201, 16.294
+        ],
+        "change": 9.925
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyEssenceScorn3",
+        "name": "Deafening Essence of Scorn",
+        "category": "Essences",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXNzZW5jZS9TY29ybjciLCJzY2FsZSI6MX1d/ac4ec5f480/Scorn7.png",
+        "chaos": 15.573,
+        "volume": 353760,
+        "series": [
+          18.054, 15.965, 15.639, 16.036, 17.311, 16.247, 15.342, 15.389, 14.898, 14.978,
+          14.367, 13.807, 15, 14.245, 15.782, 17.655, 18.053, 15.547, 15.035, 13.893,
+          16.711, 17.112, 14.192, 14.467
+        ],
+        "change": -19.87
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyEssenceZeal4",
+        "name": "Deafening Essence of Zeal",
+        "category": "Essences",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXNzZW5jZS9aZWFsNyIsInNjYWxlIjoxfV0/27ff3b63ea/Zeal7.png",
+        "chaos": 15.516,
+        "volume": 378243,
+        "series": [
+          8.882, 8.412, 9.192, 8.527, 7.98, 9.347, 13.637, 15.886, 17.364, 16.682, 15.931,
+          15.589, 16.318, 16.23, 18.73, 19.94, 20.774, 19.325, 22.784, 22.066, 18.087,
+          17.56, 14.503, 14.984
+        ],
+        "change": 68.7
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyEssenceUber1",
+        "name": "Essence of Trickery",
+        "category": "Essences",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXNzZW5jZS9Fc3NlbmNlRGVsaXJpdW0iLCJzY2FsZSI6MX1d/d55a1ae408/EssenceDelirium.png",
+        "chaos": 15.044,
+        "volume": 824,
+        "series": [
+          18.036, 16.6, 13.385, 18.51, 12.2, 12.077, 12.238, 11.811, 11.034, 10.469,
+          11.659, 12.211, 16.243, 15.607, 12.5, 16.338, 15.19, 10.765, 16.225, 12.278,
+          18.475, 20.385, 19.944, 17.038
+        ],
+        "change": -5.529
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyEssenceScorn1",
+        "name": "Screaming Essence of Scorn",
+        "category": "Essences",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXNzZW5jZS9TY29ybjUiLCJzY2FsZSI6MX1d/0325ed7212/Scorn5.png",
+        "chaos": 14.239,
+        "volume": 14283,
+        "series": [
+          1.462, 1.16, 1.209, 146.686, 167.177, 1.099, 1.097, 1.128, 1.262, 1.146, 1.03,
+          1.155, 1.494, 1.244, 1.424, 1.354, 1.464, 1.863, 1.585, 1.485, 1.354, 1.364,
+          1.23, 1.265
+        ],
+        "change": -13.477
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyEssenceHorror1",
+        "name": "Essence of Horror",
+        "category": "Essences",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXNzZW5jZS9Ib3Jyb3IxIiwic2NhbGUiOjF9XQ/8be6722c5e/Horror1.png",
+        "chaos": 11.115,
+        "volume": 248189,
+        "series": [
+          13.13, 12.248, 11.681, 10.092, 9.869, 10.333, 10.289, 9.986, 10.304, 10.372,
+          10.76, 10.774, 11.375, 11.393, 11.84, 12.452, 11.268, 11.553, 11.364, 11.428,
+          11.526, 11.616, 11.304, 11.049
+        ],
+        "change": -15.844
+      },
+      {
+        "id": "Metadata/Items/Currency/Mushrune10",
+        "name": "Opalescent Oil",
+        "category": "Oils",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvT2lscy9PcGFsZXNjZW50T2lsIiwic2NhbGUiOjF9XQ/abd419a154/OpalescentOil.png",
+        "chaos": 9.749,
+        "volume": 42365,
+        "series": [
+          8.054, 8.729, 8.785, 8.567, 8.882, 14.545, 14.83, 13.218, 11.899, 10.243, 9.852,
+          8.7, 8.506, 8.223, 7.859, 8.564, 9.235, 9.554, 9.611, 9.668, 9.704, 9.368,
+          9.917, 9.795
+        ],
+        "change": 21.606
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyJewelleryQualityResource",
+        "name": "Fertile Catalyst",
+        "category": "Catalysts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2F0YWx5c3RzL0ZlcnRpbGVDYXRhbHlzdCIsInNjYWxlIjoxfV0/74603722ac/FertileCatalyst.png",
+        "chaos": 8.482,
+        "volume": 180830,
+        "series": [
+          8.02, 8.141, 7.494, 7.322, 7.15, 7.33, 8.348, 9.965, 9.482, 9.602, 10.022,
+          9.102, 8.718, 8.604, 8.364, 8.616, 8.775, 8.738, 8.613, 7.901, 8.357, 7.899,
+          7.729, 7.599
+        ],
+        "change": -5.252
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAfflictionOrbScarabs",
+        "name": "Threaded Delirium Orb",
+        "category": "DeliriumOrbs",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsaXJpdW0vRGVsaXJpdW1PcmJTY2FyYWJzIiwic2NhbGUiOjF9XQ/ca1dcdc38b/DeliriumOrbScarabs.png",
+        "chaos": 8.003,
+        "volume": 3448,
+        "series": [
+          8.806, 10.725, 8.553, 10.29, 6.949, 6.654, 6.717, 7.81, 6.4, 6.925, 6.654,
+          7.757, 7.771, 7.616, 7.556, 6.838, 6.885, 7.744, 8.86, 12.014, 7.842, 9.13,
+          7.177, 7.507
+        ],
+        "change": -14.745
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAfflictionOrbUniques",
+        "name": "Singular Delirium Orb",
+        "category": "DeliriumOrbs",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsaXJpdW0vRGVsaXJpdW1PcmJVbmlxdWVzIiwic2NhbGUiOjF9XQ/f8eb9f0b63/DeliriumOrbUniques.png",
+        "chaos": 6.67,
+        "volume": 1247,
+        "series": [
+          4.577, 4.921, 7.128, 18.273, 3.5, 5.737, 11.226, 9.141, 5.125, 5.074, 5.034,
+          3.717, 4.288, 5.054, 8.6, 10.842, 8.545, 5.809, 4.405, 3.462, 4.848, 5.522,
+          4.56, 3.063
+        ],
+        "change": -33.088
+      },
+      {
+        "id": "Metadata/Items/Currency/MushruneMirror",
+        "name": "Reflective Oil",
+        "category": "Oils",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvT2lscy9NaXJyb3JPaWwiLCJzY2FsZSI6MX1d/eca4a49588/MirrorOil.png",
+        "chaos": 6.372,
+        "volume": 867,
+        "series": [
+          4.885, 3.082, 3.789, 2.5, 4.164, 4.605, 4.944, 5.136, 4.915, 9.243, 9.458,
+          6.909, 6.892, 13.987, 5.368, 4.806, 5.889, 5.313, 4.742, 4.391, 6, 4.606, 6.909,
+          13.379
+        ],
+        "change": 173.901
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAfflictionOrbCurrency",
+        "name": "Fine Delirium Orb",
+        "category": "DeliriumOrbs",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsaXJpdW0vRGVsaXJpdW1PcmJDdXJyZW5jeSIsInNjYWxlIjoxfV0/a0ccb93233/DeliriumOrbCurrency.png",
+        "chaos": 5.657,
+        "volume": 59089,
+        "series": [
+          6.67, 6.658, 6.162, 6.11, 6.059, 5.803, 5.592, 5.491, 5.623, 5.484, 5.826, 5.75,
+          5.219, 5.308, 5.247, 5.14, 5.32, 5.201, 5.376, 5.58, 5.639, 5.621, 5.729, 5.917
+        ],
+        "change": -11.297
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAfflictionOrbGems",
+        "name": "Thaumaturge's Delirium Orb",
+        "category": "DeliriumOrbs",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsaXJpdW0vRGVsaXJpdW1PcmJHZW1zIiwic2NhbGUiOjF9XQ/027802e844/DeliriumOrbGems.png",
+        "chaos": 5.23,
+        "volume": 797,
+        "series": [
+          7.045, 7.24, 6.762, 6.063, 6.649, 6.043, 4.958, 5, 6.511, 5.426, 5, 5, 4.433,
+          3.923, 3.867, 5.489, 2, 4.818, 4.191, 4.107, 5.16, 3.933, 4, 5.276
+        ],
+        "change": -25.117
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyAfflictionOrbMaps",
+        "name": "Cartographer's Delirium Orb",
+        "category": "DeliriumOrbs",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRGVsaXJpdW0vRGVsaXJpdW1PcmJNYXBzIiwic2NhbGUiOjF9XQ/0e2be34e49/DeliriumOrbMaps.png",
+        "chaos": 4.964,
+        "volume": 1597,
+        "series": [
+          4.491, 4.556, 5.259, 4.767, 4.794, 5.397, 5.208, 4.987, 4.225, 4.343, 5.612,
+          6.163, 5.495, 5.58, 5.797, 5.127, 4.742, 4.365, 4.399, 2.25, 2.667, 4.736,
+          4.733, 3.414
+        ],
+        "change": -23.979
+      },
+      {
+        "id": "Metadata/Items/Currency/LegionCocoonHelmet",
+        "name": "Vaal Enshrouding Crystal",
+        "category": "EnshroudingCrystals",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTGVnaW9uL1ZhYWxFbnNocm91ZGluZ0NyeXN0YWwiLCJzY2FsZSI6MX1d/f720c31594/VaalEnshroudingCrystal.png",
+        "chaos": 4.212,
+        "volume": 24515,
+        "series": [
+          2.689, 2.78, 3.348, 4.046, 4.49, 3.527, 5.289, 3.139, 3.007, 2.992, 2.723,
+          3.747, 2.702, 6.363, 5.717, 3.382, 4.97, 4.876, 6.558, 5.243, 4.274, 4.26,
+          3.193, 3.997
+        ],
+        "change": 48.637
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyRefreshBarter",
+        "name": "Exotic Coinage",
+        "category": "Expedition",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXhwZWRpdGlvbi9CYXJ0ZXJSZWZyZXNoQ3VycmVuY3kiLCJzY2FsZSI6MX1d/0542d74d3c/BarterRefreshCurrency.png",
+        "chaos": 4.137,
+        "volume": 49300,
+        "series": [
+          3.827, 4.017, 4.406, 4.821, 4.489, 4.634, 4.642, 4.716, 4.762, 4.47, 4.469,
+          4.734, 4.148, 3.544, 3.582, 3.55, 3.503, 3.794, 3.499, 3.11, 3.269, 3.737,
+          3.733, 3.689
+        ],
+        "change": -3.589
+      },
+      {
+        "id": "Metadata/Items/Currency/LegionCocoonBoots",
+        "name": "Imperial Enshrouding Crystal",
+        "category": "EnshroudingCrystals",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTGVnaW9uL0ltcGVyaWFsRW5zaHJvdWRpbmdDcnlzdGFsIiwic2NhbGUiOjF9XQ/4cff71674a/ImperialEnshroudingCrystal.png",
+        "chaos": 3.32,
+        "volume": 21652,
+        "series": [
+          4.393, 4.027, 3.267, 3.389, 2.746, 3.328, 3.108, 3.651, 3.949, 2.827, 3.293,
+          4.375, 3.311, 2.215, 2.511, 2.691, 3.309, 3.866, 3.392, 3.72, 2.881, 3.472,
+          3.694, 2.994
+        ],
+        "change": -31.84
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyJewelleryQualityCritical",
+        "name": "Unstable Catalyst",
+        "category": "Catalysts",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2F0YWx5c3RzL0NyaXRpY2FsTW9kaWZpZXJDYXRhbHlzdCIsInNjYWxlIjoxfV0/eebe548a38/CriticalModifierCatalyst.png",
+        "chaos": 2.964,
+        "volume": 118979,
+        "series": [
+          3.552, 3.14, 3.101, 3.172, 3.3, 3.125, 3.062, 3.09, 2.886, 2.976, 3.076, 3.23,
+          3.076, 2.856, 2.757, 3.045, 2.865, 2.609, 2.781, 2.691, 2.728, 3.074, 2.665,
+          2.328
+        ],
+        "change": -34.451
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyMutatedAddModToMagic",
+        "name": "Foulborn Orb of Augmentation",
+        "category": "Keepers",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2hheXVsYS9Gb3VsYm9ybkF1Z21lbnRhdGlvbiIsInNjYWxlIjoxfV0/44a866f879/FoulbornAugmentation.png",
+        "chaos": 2,
+        "volume": 69243,
+        "series": [
+          2.258, 2.05, 1.875, 2.283, 2.391, 2.068, 1.839, 1.629, 1.68, 1.858, 1.89, 1.929,
+          1.807, 2.67, 1.97, 2.226, 2.273, 2.222, 1.335, 1.673, 1.579, 1.581, 1.807, 2.241
+        ],
+        "change": -0.783
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyRefreshSaga",
+        "name": "Burial Medallion",
+        "category": "Expedition",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXhwZWRpdGlvbi9EYW5uaWdSZXJvbGxDdXJyZW5jeSIsInNjYWxlIjoxfV0/58eed604a2/DannigRerollCurrency.png",
+        "chaos": 1.888,
+        "volume": 11020,
+        "series": [
+          2.86, 2.529, 1.852, 1.549, 2.662, 2.815, 2.391, 1.945, 2.14, 1.131, 1.458,
+          2.033, 1.321, 1.25, 1.611, 1.539, 2.039, 1.444, 1.753, 1.249, 1.016, 2.084,
+          1.518, 2.198
+        ],
+        "change": -23.133
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyMutatedUpgradeMagicToRare",
+        "name": "Foulborn Regal Orb",
+        "category": "Keepers",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ2hheXVsYS9Gb3VsYm9yblJlZ2FsIiwic2NhbGUiOjF9XQ/9226ef718f/FoulbornRegal.png",
+        "chaos": 1.575,
+        "volume": 71574,
+        "series": [
+          2.212, 2.051, 1.66, 1.78, 1.593, 1.991, 2.15, 1.612, 1.453, 1.795, 1.209, 1.311,
+          0.908, 1.214, 1.417, 1.163, 1.317, 1.505, 1.38, 1.779, 1.711, 1.974, 1.782,
+          2.114
+        ],
+        "change": -4.417
+      },
+      {
+        "id": "Metadata/Items/Currency/LegionCocoonGloves",
+        "name": "Karui Enshrouding Crystal",
+        "category": "EnshroudingCrystals",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTGVnaW9uL0thcnVpRW5zaHJvdWRpbmdDcnlzdGFsIiwic2NhbGUiOjF9XQ/38f2c4415b/KaruiEnshroudingCrystal.png",
+        "chaos": 1.529,
+        "volume": 13466,
+        "series": [
+          0.697, 0.578, 0.829, 0.777, 0.952, 0.776, 0.752, 0.63, 0.652, 0.66, 0.669,
+          0.642, 1.194, 3.916, 2.642, 2.541, 2.316, 2.206, 2.293, 2.211, 1.696, 1.889,
+          1.36, 1.539
+        ],
+        "change": 120.89
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyRefreshDealer",
+        "name": "Scrap Metal",
+        "category": "Expedition",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXhwZWRpdGlvbi9EZWFsZXJSZWZyZXNoQ3VycmVuY3kiLCJzY2FsZSI6MX1d/7c2be64768/DealerRefreshCurrency.png",
+        "chaos": 0.903,
+        "volume": 14729,
+        "series": [
+          0.997, 0.855, 1.305, 1.17, 1.043, 0.592, 0.741, 0.562, 0.868, 0.714, 1.245,
+          1.01, 0.632, 1.13, 1.254, 0.953, 0.987, 0.896, 0.598, 0.656, 0.698, 0.767,
+          0.964, 0.974
+        ],
+        "change": -2.302
+      },
+      {
+        "id": "Metadata/Items/Currency/LegionCocoonShield",
+        "name": "Templar Enshrouding Crystal",
+        "category": "EnshroudingCrystals",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvTGVnaW9uL1RlbXBsYXJFbnNocm91ZGluZ0NyeXN0YWwiLCJzY2FsZSI6MX1d/bed89fe6b1/TemplarEnshroudingCrystal.png",
+        "chaos": 0.8,
+        "volume": 2877,
+        "series": [
+          0.519, 0.622, 0.963, 0.61, 0.951, 0.667, 0.929, 0.687, 0.695, 0.659, 0.642,
+          0.398, 0.352, 0.339, 0.593, 0.609, 0.552, 0.273, 0.535, 0.362, 0.519, 5.866,
+          0.569, 0.544
+        ],
+        "change": 4.914
+      },
+      {
+        "id": "Metadata/Items/Currency/CurrencyRefreshGambler",
+        "name": "Astragali",
+        "category": "Expedition",
+        "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvRXhwZWRpdGlvbi9HYW1ibGVyUmVmcmVzaEN1cnJlbmN5Iiwic2NhbGUiOjF9XQ/ff5640db4c/GamblerRefreshCurrency.png",
+        "chaos": 0.1,
+        "volume": 8677,
+        "series": [
+          0.112, 0.104, 0.118, 0.121, 0.135, 0.164, 0.172, 0.175, 0.152, 0.15, 0.13,
+          0.134, 0.069, 0.048, 0.073, 0.083, 0.058, 0.096, 0.072, 0.079, 0.048, 0.102,
+          0.112, 0.194
+        ],
+        "change": 72.581
+      }
+    ]
+  },
+  "itemHistory": {
+    "points": [
+      { "at": 1794801600000, "value": null, "volume": null },
+      { "at": 1794888000000, "value": null, "volume": null },
+      { "at": 1794974400000, "value": 256.33333333333337, "volume": 3 },
+      { "at": 1795060800000, "value": 248.5925925925926, "volume": 27 },
+      { "at": 1795147200000, "value": 443.9166666666667, "volume": 24 },
+      { "at": 1795233600000, "value": 592.1785714285714, "volume": 28 },
+      { "at": 1795320000000, "value": 798.0612244897959, "volume": 49 }
+    ],
+    "failedHours": 0
+  }
+}

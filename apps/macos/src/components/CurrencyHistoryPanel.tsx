@@ -39,7 +39,7 @@ const stamp = (at: number) =>
     minute: '2-digit',
   });
 
-function HistoryPlot({
+export function HistoryPlot({
   points,
   unit,
 }: {
@@ -190,7 +190,7 @@ function HistoryPlot({
       </View>
       <Text style={styles.inspection} accessibilityLiveRegion="polite">
         {active
-          ? `${stamp(active.at)} · ${active.rate === null ? 'No trades recorded' : amount(active.rate) + ' ' + unit}${active.giveVolume !== null ? ` · ${amount(active.giveVolume)} source / ${amount(active.wantVolume!)} quote units traded` : ''}`
+          ? `${stamp(active.at)} · ${active.rate === null ? 'No trades recorded' : amount(active.rate) + ' ' + unit}${active.giveVolume !== null && active.wantVolume !== null ? ` · ${amount(active.giveVolume)} source / ${amount(active.wantVolume)} quote units traded` : active.giveVolume !== null ? ` · ${amount(active.giveVolume)} traded` : ''}`
           : ''}
       </Text>
     </View>

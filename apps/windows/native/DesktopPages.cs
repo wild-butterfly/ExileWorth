@@ -6,8 +6,6 @@ namespace ExileWorth.Windows;
 internal sealed class DesktopPages : IDisposable
 {
     private const string RepositoryUrl = "https://github.com/wild-butterfly/ExileWorth";
-    private static readonly (string Id, string Label)[] Denominations =
-        [("chaos", "Chaos"), ("divine", "Divine"), ("exalted", "Exalted")];
 
     private readonly Worker tradeWorker = new();
     private readonly Func<string?> preferred;
@@ -16,18 +14,8 @@ internal sealed class DesktopPages : IDisposable
     private readonly Action<DesktopPreferences> save;
     private DesktopPreferences current;
 
-    // Currency.
-    private readonly CurrencyView rates = new() { Dock = DockStyle.Fill };
-    private readonly CurrencyHistoryView currencyHistory = new();
-    private Label currencyLabel = null!;
-    private readonly FlatButton refresh = new(ButtonKind.Primary, "Refresh");
-    private readonly FlatButton denomination = new(ButtonKind.Secondary, "In Chaos  ▾");
-    private readonly ContextMenuStrip denominationMenu = WindowTheme.Menu();
-    private CurrencyResult? lastRates;
-    private DateTime? ratesAt;
-    private string? ratesLeague;
-    private bool loadingRates;
-    private int leagueRevision;
+    // Currency: every exchange item, priced from completed trades.
+    private readonly MarketPage market;
 
     // Trades.
     private readonly TradeView trades = new(compact: false) { Dock = DockStyle.Fill };
@@ -65,7 +53,7 @@ internal sealed class DesktopPages : IDisposable
         this.preferred = preferred;
         this.selectLeague = selectLeague;
         this.settings = settings;
-        Currency = BuildCurrency();
+        Currency = market = new MarketPage(() => selectedLeague ?? preferred());
         Trades = BuildTrades();
         Settings = BuildSettings();
     }
@@ -103,89 +91,7 @@ internal sealed class DesktopPages : IDisposable
 
     // ── Currency ─────────────────────────────────────────────────────────
 
-    private Control BuildCurrency()
-    {
-        var page = Page("Currency", "Refresh to load rates for the selected league.", out currencyLabel, denomination, refresh);
-        var disclaimer = Ui.Label("Median of the cheapest live bulk offers: what sellers are asking, not what items sold for. " +
-            "A low offer count means the median is soft.", WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true);
-        disclaimer.MaximumSize = new Size(720, 0);
-        disclaimer.Margin = new Padding(0, 0, 0, 12);
-        page.Add(disclaimer);
-        page.Add(Fill(currencyHistory), SizeType.Absolute, 290);
-        page.Add(Fill(rates, new Padding(10, 6, 6, 6)), SizeType.Percent, 100);
-
-        foreach (var (id, label) in Denominations)
-        {
-            var option = new ToolStripMenuItem(label) { Checked = id == "chaos", Tag = id };
-            option.Click += (_, _) =>
-            {
-                foreach (ToolStripMenuItem item in denominationMenu.Items) item.Checked = item == option;
-                denomination.Text = $"In {label}  ▾";
-                rates.Denomination = id;
-                ShowRates();
-            };
-            denominationMenu.Items.Add(option);
-        }
-        denomination.Click += (_, _) => denominationMenu.Show(denomination, new Point(0, denomination.Height + 4));
-        refresh.Click += async (_, _) => await RefreshRatesAsync();
-        rates.Placeholder = "Refresh to load rates.";
-        return page;
-    }
-
-    public void CurrencyShown()
-    {
-        currencyHistory.SetLeague(selectedLeague ?? preferred());
-        if (ratesLeague != selectedLeague && selectedLeague is not null && !loadingRates) _ = RefreshRatesAsync();
-    }
-
-    private async Task RefreshRatesAsync()
-    {
-        if (loadingRates) return;
-        currencyHistory.SetLeague(selectedLeague ?? preferred());
-        currencyHistory.RefreshHistory();
-        loadingRates = true;
-        refresh.Enabled = false;
-        refresh.Text = "Loading…";
-        currencyLabel.Text = "Loading bulk exchange rates… this takes about a minute to respect GGG's rate limits.";
-        rates.Placeholder = "Loading rates…";
-        int requested = leagueRevision;
-        try
-        {
-            var result = await Worker.SendAsync<CurrencyResult>(new { action = "currency", preferred = preferred() },
-                TimeSpan.FromMinutes(3));
-            if (Currency.IsDisposed || leagueRevision != requested) return;
-            lastRates = result;
-            ratesAt = DateTime.Now;
-            ratesLeague = selectedLeague;
-            _ = CurrencyIcons.LoadAsync(Worker, result.Rows.Select(row => row.Id).Append("chaos"));
-            ShowRates();
-        }
-        catch (Exception error)
-        {
-            if (!Currency.IsDisposed && leagueRevision == requested) currencyLabel.Text = error.Message;
-        }
-        finally
-        {
-            loadingRates = false;
-            if (!Currency.IsDisposed)
-            {
-                refresh.Enabled = true;
-                refresh.Text = "Refresh";
-                rates.Placeholder = "No rates loaded.";
-            }
-        }
-    }
-
-    private void ShowRates()
-    {
-        if (lastRates is null) return;
-        rates.SetRows(lastRates.Rows);
-        string unit = Denominations.First(entry => entry.Id == rates.Denomination).Label;
-        bool missing = rates.Denomination != "chaos" && lastRates.Rows.FirstOrDefault(row => row.Id == rates.Denomination)?.Rate is null;
-        currencyLabel.Text = missing
-            ? $"{lastRates.Selected} · the {unit} rate is unavailable. Try refreshing."
-            : $"{lastRates.Selected} · priced in {unit} · updated {ratesAt:t}";
-    }
+    public void CurrencyShown() => market.Shown();
 
     // ── Trades ───────────────────────────────────────────────────────────
 
@@ -522,142 +428,15 @@ internal sealed class DesktopPages : IDisposable
 
         if (selectedLeague == selected) return;
         selectedLeague = selected;
-        leagueRevision++;
-        lastRates = null;
-        rates.SetRows([]);
-        currencyLabel.Text = selected is null ? "No trade league selected." : $"{selected} · refresh to load rates.";
-        if (Currency.Parent is not null && selected is not null) CurrencyShown();
+        market.LeagueChanged();
     }
 
     public void Dispose()
     {
         Worker.Dispose();
         tradeWorker.Dispose();
-        denominationMenu.Dispose();
         Settings.Dispose();
         Currency.Dispose();
         Trades.Dispose();
-    }
-}
-
-/// <summary>Currency rows with their icons, priced in the chosen denomination.</summary>
-internal sealed class CurrencyView : ScrollList
-{
-    private const int ThinSample = 8;
-    private CurrencyRow[] rows = [];
-    private CurrencyRow[] shown = [];
-    private string denomination = "chaos";
-
-    public CurrencyView()
-    {
-        AccessibleName = "Currency rates";
-        AccessibleRole = AccessibleRole.Table;
-        CurrencyIcons.Changed += Invalidate;
-    }
-
-    public string Denomination
-    {
-        get => denomination;
-        set { denomination = value; Rebuild(); }
-    }
-
-    public void SetRows(CurrencyRow[] value)
-    {
-        rows = value;
-        Rebuild();
-    }
-
-    /// <summary>Restates chaos rates in the denomination, adding Chaos itself when it is not the unit.</summary>
-    private void Rebuild()
-    {
-        double divisor = 1;
-        if (denomination != "chaos")
-        {
-            var unit = rows.FirstOrDefault(row => row.Id == denomination)?.Rate;
-            divisor = unit is { Median: > 0 } ? unit.Median : double.NaN;
-        }
-        var list = new List<CurrencyRow>();
-        if (denomination != "chaos" && rows.Length > 0)
-            list.Add(new CurrencyRow("chaos", "Chaos Orb", double.IsFinite(divisor) ? new CurrencyQuote(1 / divisor, int.MaxValue) : null, null));
-        foreach (var row in rows.Where(row => row.Id != denomination))
-            list.Add(row with
-            {
-                Rate = row.Rate is { } rate && double.IsFinite(divisor) ? rate with { Median = rate.Median / divisor } : null,
-            });
-        shown = [.. list];
-        Reset();
-    }
-
-    protected override int Count => shown.Length;
-    protected override int RowHeight => this.Px(40);
-    protected override int HeaderHeight => this.Px(26);
-
-    protected override void DrawHeader(Graphics g, Rectangle bounds)
-    {
-        var font = WindowTheme.Mono(7f);
-        WindowTheme.Text(g, "CURRENCY", font, new Rectangle(this.Px(46), 0, Width / 2, bounds.Height), WindowTheme.Faint);
-        WindowTheme.Text(g, "RATE", font, new Rectangle(0, 0, Width - this.Px(20), bounds.Height), WindowTheme.Faint,
-            TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
-        using var line = new Pen(WindowTheme.Hairline);
-        g.DrawLine(line, 0, bounds.Bottom - 1, Width - this.Px(8), bounds.Bottom - 1);
-    }
-
-    protected override void DrawRow(Graphics g, int index, Rectangle bounds, bool hovered)
-    {
-        var row = shown[index];
-        if (hovered) WindowTheme.FillRounded(g, Rectangle.Inflate(bounds, 0, -2), this.Px(6), WindowTheme.Hover);
-        int icon = this.Px(26);
-        var iconBox = new Rectangle(bounds.Left + this.Px(8), bounds.Top + (bounds.Height - icon) / 2, icon, icon);
-        if (CurrencyIcons.Get(row.Id) is { } image)
-        {
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            g.DrawImage(image, iconBox);
-        }
-        else WindowTheme.FillRounded(g, iconBox, this.Px(6), WindowTheme.Chip);
-        var rateBox = Rectangle.FromLTRB(bounds.Right - this.Px(220), bounds.Top, bounds.Right - this.Px(12), bounds.Bottom);
-        WindowTheme.Text(g, row.Label, WindowTheme.Sans(10f), Rectangle.FromLTRB(iconBox.Right + this.Px(12), bounds.Top, rateBox.Left, bounds.Bottom),
-            WindowTheme.Body);
-
-        if (row.Rate is { } rate)
-        {
-            string amount = Format(rate.Median);
-            var big = WindowTheme.Mono(10.5f, FontStyle.Bold);
-            var unitFont = WindowTheme.Sans(8.5f);
-            string unit = denomination;
-            int unitWidth = TextRenderer.MeasureText(g, unit, unitFont, Size.Empty, TextFormatFlags.NoPadding).Width;
-            bool thin = rate.SampleSize < ThinSample;
-            int middle = bounds.Top + bounds.Height / 2;
-            var line = thin ? new Rectangle(rateBox.Left, bounds.Top + this.Px(3), rateBox.Width, middle - bounds.Top) : rateBox;
-            WindowTheme.Text(g, unit, unitFont, line, WindowTheme.Dim, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
-            WindowTheme.Text(g, amount, big, Rectangle.FromLTRB(line.Left, line.Top, line.Right - unitWidth - this.Px(6), line.Bottom),
-                WindowTheme.Foreground, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
-            if (thin)
-                WindowTheme.Text(g, $"from {rate.SampleSize} offers", WindowTheme.Mono(7f),
-                    new Rectangle(rateBox.Left, middle, rateBox.Width, bounds.Bottom - middle - this.Px(3)),
-                    WindowTheme.Down, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
-        }
-        else
-        {
-            WindowTheme.Text(g, row.Error ?? "no offers", WindowTheme.Sans(8.5f), rateBox,
-                row.Error is null ? WindowTheme.Faint : WindowTheme.Down, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
-        }
-        if (index < shown.Length - 1)
-        {
-            using var pen = new Pen(WindowTheme.Hairline);
-            g.DrawLine(pen, iconBox.Right + this.Px(12), bounds.Bottom - 1, bounds.Right - this.Px(8), bounds.Bottom - 1);
-        }
-    }
-
-    private static string Format(double value) =>
-        value >= 1000 ? Math.Round(value).ToString("#,0")
-        : value >= 10 ? value.ToString("0")
-        : value >= 1 ? value.ToString("0.0")
-        : value >= 0.01 ? value.ToString("0.00")
-        : value.ToString("G2");
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing) CurrencyIcons.Changed -= Invalidate;
-        base.Dispose(disposing);
     }
 }

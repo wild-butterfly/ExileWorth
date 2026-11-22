@@ -9,9 +9,9 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-        if (args.Length == 3 && args[0] == "--capture")
+        if (args.Length >= 3 && args[0] == "--capture")
         {
-            Environment.ExitCode = CaptureDesktop(args[1], args[2]).GetAwaiter().GetResult();
+            Environment.ExitCode = CaptureDesktop(args[1], args[2], args.Skip(3).ToArray()).GetAwaiter().GetResult();
             return;
         }
         bool exchangeCapture = args.Length > 0 && args[0] == "--exchange";
@@ -216,7 +216,7 @@ internal static class Program
     }
 
     /// <summary>Starts a packaged build, hovers the second sidebar row, and captures the window.</summary>
-    private static async Task<int> CaptureDesktop(string exe, string path)
+    private static async Task<int> CaptureDesktop(string exe, string path, string[] pages)
     {
         using var app = Process.Start(exe) ?? throw new Exception("App could not start.");
         try
@@ -231,6 +231,30 @@ internal static class Program
             await Task.Delay(700);
             CaptureOverlay(desktop, path);
             Console.WriteLine($"Captured {exe} to {path}.");
+            if (pages.Length > 0)
+            {
+                // Open Currency from the sidebar (third row) and capture the market table.
+                var currency = new WindowPoint { X = 107, Y = 171 };
+                ClientToScreen(desktop, ref currency);
+                Click(new Point(currency.X, currency.Y));
+                await Task.Delay(3000);
+                CaptureOverlay(desktop, pages[0]);
+                Console.WriteLine($"Captured the Currency page to {pages[0]}.");
+            }
+            if (pages.Length > 1)
+            {
+                // Locate the table after layout: the startup banner can move
+                // it down, so fixed window coordinates can hit a sort header.
+                var table = AutomationElement.FromHandle(desktop).FindFirst(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.NameProperty, "Currency market"))
+                    ?? throw new InvalidOperationException("Missing Currency market table.");
+                var bounds = table.Current.BoundingRectangle;
+                Click(new Point((int)bounds.Left + 120, (int)bounds.Top + 60));
+                await Until(() => FindButton(desktop, "←  All items") is not null, "Currency item detail page");
+                await Task.Delay(2500);
+                CaptureOverlay(desktop, pages[1]);
+                Console.WriteLine($"Captured an item detail page to {pages[1]}.");
+            }
             return 0;
         }
         catch (Exception error)
