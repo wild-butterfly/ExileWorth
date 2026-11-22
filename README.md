@@ -8,10 +8,10 @@ ExileWorth was formerly called Vaaluation.
 
 ## Download
 
-| Platform                            | Build                                                                                                                            | Default price check                               | Setup                                                                        |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.14-macos/ExileWorth-0.1.14-macOS.zip)     | <kbd>Control</kbd> + <kbd>D</kbd>                 | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/)     |
-| Windows 11 x64 · Preview            | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.25/ExileWorth-0.1.25-Windows-x64.zip) | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
+| Platform                            | Build                                                                                                                            | Default price check               | Setup                                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.15-macos/ExileWorth-0.1.15-macOS.zip)     | <kbd>Control</kbd> + <kbd>D</kbd> | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/)     |
+| Windows 11 x64 · Preview            | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.26/ExileWorth-0.1.26-Windows-x64.zip) | <kbd>Alt</kbd> + <kbd>D</kbd>     | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
 
 Select **Covens** for Covens of Umbra.
 
@@ -47,8 +47,8 @@ _Windows 0.1.17 running with sample Divine Orb listings in a [Windows CI run](ht
 ## First launch
 
 - **Mac:** Unzip the signed and notarized build, move `ExileWorth.app` to **Applications**, and open it. Grant Accessibility when prompted so ExileWorth can copy items and send the trade commands you choose. If the app still shows **Permission needed**, [refresh the permission for the installed copy](https://wild-butterfly.github.io/ExileWorth/guides/install/).
-- **Windows:** Extract the entire ZIP and run `ExileWorth.exe` from the extracted folder. The default price check copies the item with <kbd>Ctrl</kbd> + <kbd>C</kbd> to avoid triggering the game's Alt-based tooltip pin.
-- **Both:** Bring Path of Exile to the front, hover an inventory item, and press your price check shortcut. Change the shortcut in **Settings**; Windows also offers **Use Alt + D**, with **Ctrl + Shift + D** as the default. Enable **Start with Windows** or **Open at login** to keep ExileWorth ready after sign-in. See the [price check guide](https://wild-butterfly.github.io/ExileWorth/guides/price-check/) for modifier filters and search tips.
+- **Windows:** Extract the entire ZIP and run `ExileWorth.exe` from the extracted folder. ExileWorth copies the item with <kbd>Ctrl</kbd> + <kbd>C</kbd> to avoid triggering the game's Alt-based tooltip pin.
+- **Both:** Bring Path of Exile to the front, hover an inventory item, and press your price check shortcut. Change the shortcut in **Settings**; the Windows default is **Alt + D**. Existing installations using the previous default migrate once; other custom bindings are kept. Enable **Start with Windows** or **Open at login** to keep ExileWorth ready after sign-in. See the [price check guide](https://wild-butterfly.github.io/ExileWorth/guides/price-check/) for modifier filters and search tips.
 
 ## Frequently asked questions
 
