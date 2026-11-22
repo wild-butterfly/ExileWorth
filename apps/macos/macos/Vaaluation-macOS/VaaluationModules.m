@@ -10,6 +10,16 @@ RCT_EXTERN_METHOD(setSettings : (NSString *)json
                   resolver : (RCTPromiseResolveBlock)resolve
                   rejecter : (RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(getOpenAtLogin : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(setOpenAtLogin : (BOOL)enabled
+                  resolver : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(openLoginItemsSettings : (RCTPromiseResolveBlock)resolve
+                  rejecter : (RCTPromiseRejectBlock)reject)
+
 @end
 
 @interface RCT_EXTERN_MODULE (VLLog, NSObject)

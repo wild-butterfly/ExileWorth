@@ -17,6 +17,7 @@ import type { AppRoute } from './native/VLEvents';
 import { isAppRoute, onItemCopied, onNavigate } from './native/VLEvents';
 import { SettingsProvider, useSettings } from './state/SettingsContext';
 import { usePermissions } from './hooks/usePermissions';
+import { useLoginItem } from './hooks/useLoginItem';
 import { Mark } from './components/Mark';
 import { requestAccessibility } from './native/VLPermissions';
 import { AboutScreen } from './screens/AboutScreen';
@@ -46,7 +47,8 @@ function Shell({ initialRoute }: { initialRoute: AppRoute }) {
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
   const [route, setRoute] = useState<AppRoute>(initialRoute);
-  const { settings, loaded } = useSettings();
+  const { settings, loaded, update } = useSettings();
+  const loginItem = useLoginItem();
   const { status } = usePermissions();
 
   useEffect(() => onNavigate(setRoute), []);
@@ -124,6 +126,36 @@ function Shell({ initialRoute }: { initialRoute: AppRoute }) {
       </View>
 
       <View style={styles.main}>
+        {/* Asked once: ExileWorth cannot start itself when the game opens, so
+            starting at login is how the shortcut is always ready. */}
+        {!settings.startupPromptAnswered &&
+        loginItem.status !== null &&
+        loginItem.status !== 'enabled' ? (
+          <View style={styles.startupBanner}>
+            <View style={styles.startupText}>
+              <Text style={styles.startupTitle}>Open ExileWorth when you log in?</Text>
+              <Text style={styles.startupHint}>
+                It waits in the menu bar, so the price-check shortcut is ready whenever
+                Path of Exile is in front. Change this any time in Settings.
+              </Text>
+            </View>
+            <Pressable
+              style={styles.startupPrimary}
+              onPress={() => {
+                void loginItem.set(true);
+                update({ startupPromptAnswered: true });
+              }}
+            >
+              <Text style={styles.startupPrimaryText}>Turn on</Text>
+            </Pressable>
+            <Pressable
+              style={styles.startupSecondary}
+              onPress={() => update({ startupPromptAnswered: true })}
+            >
+              <Text style={styles.startupSecondaryText}>Not now</Text>
+            </Pressable>
+          </View>
+        ) : null}
         {route === 'price-check' ? <PriceCheckScreen /> : null}
         {route === 'trade' ? <TradeScreen onHistory={() => setRoute('history')} /> : null}
         {route === 'currency' ? <CurrencyScreen /> : null}
@@ -278,5 +310,54 @@ function makeStyles(theme: Theme) {
       marginTop: 3,
     },
     main: { flex: 1, backgroundColor: 'rgba(14,11,13,0.94)' },
+    startupBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      margin: spacing.xl,
+      marginBottom: 0,
+      padding: spacing.xl,
+      borderRadius: radii.card,
+      backgroundColor: alpha(theme.accent, 0.14),
+      borderWidth: 1,
+      borderColor: alpha(theme.accent, 0.32),
+    },
+    startupText: { flex: 1 },
+    startupTitle: {
+      fontFamily: fonts.sans,
+      fontSize: scale.ui,
+      fontWeight: '600',
+      color: palette.primary,
+    },
+    startupHint: {
+      fontFamily: fonts.sans,
+      fontSize: scale.caption,
+      color: palette.secondary,
+      marginTop: 2,
+    },
+    startupPrimary: {
+      backgroundColor: theme.action,
+      borderRadius: radii.field,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: 5,
+    },
+    startupPrimaryText: {
+      fontFamily: fonts.sans,
+      fontSize: scale.small,
+      fontWeight: '600',
+      color: theme.actionText,
+    },
+    startupSecondary: {
+      borderRadius: radii.field,
+      borderWidth: 1,
+      borderColor: borders.strong,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: 5,
+    },
+    startupSecondaryText: {
+      fontFamily: fonts.sans,
+      fontSize: scale.small,
+      color: palette.body,
+    },
   });
 }

@@ -6,7 +6,6 @@ namespace ExileWorth.Windows;
 internal sealed class DesktopPages : IDisposable
 {
     private const string RepositoryUrl = "https://github.com/wild-butterfly/ExileWorth";
-    private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
     private readonly Worker tradeWorker = new();
     private readonly Func<string?> preferred;
@@ -27,6 +26,18 @@ internal sealed class DesktopPages : IDisposable
     private readonly FlowLayoutPanel leagueChips = Ui.Row();
     private readonly Label feedback = Ui.Label("", WindowTheme.Sans(9f), WindowTheme.UpText);
     private string? selectedLeague;
+
+    private readonly Toggle startup = new() { AccessibleName = "Start with Windows" };
+    private bool syncingStartup;
+
+    /// <summary>Reflects a change made elsewhere (the first-run banner) without re-saving.</summary>
+    public void SyncStartup(DesktopPreferences updated)
+    {
+        current = updated;
+        syncingStartup = true;
+        try { startup.Checked = Startup.IsEnabled(); }
+        finally { syncingStartup = false; }
+    }
 
     public Worker Worker { get; } = new();
     public Control Settings { get; }
@@ -153,13 +164,24 @@ internal sealed class DesktopPages : IDisposable
         var keyMenu = WindowTheme.Menu();
         keyMenu.MaximumSize = new Size(0, 420);
         var reset = new FlatButton(ButtonKind.Ghost, "Reset to default");
+        var easyShortcut = new Shortcut(1, Keys.D);
+        var easy = new FlatButton(ButtonKind.Secondary, "Use Alt + D");
         void ShowShortcut()
         {
             modifier.Text = $"{Shortcut.FormatModifiers(current.Shortcut.Modifiers)}  ▾";
             key.Text = $"{current.Shortcut.Key}  ▾";
-            foreach (ToolStripMenuItem item in modifierMenu.Items) item.Checked = Equals(item.Tag, current.Shortcut.Modifiers);
-            foreach (ToolStripMenuItem item in keyMenu.Items) item.Checked = Equals(item.Tag, current.Shortcut.Key);
+            foreach (ToolStripMenuItem item in modifierMenu.Items)
+            {
+                item.Checked = Equals(item.Tag, current.Shortcut.Modifiers);
+                item.Enabled = Shortcut.IsAllowed((uint)item.Tag!, current.Shortcut.Key);
+            }
+            foreach (ToolStripMenuItem item in keyMenu.Items)
+            {
+                item.Checked = Equals(item.Tag, current.Shortcut.Key);
+                item.Enabled = Shortcut.IsAllowed(current.Shortcut.Modifiers, (Keys)item.Tag!);
+            }
             reset.Enabled = current.Shortcut != Shortcut.Default;
+            easy.Visible = current.Shortcut != easyShortcut;
         }
         foreach (uint option in Shortcut.ModifierOptions)
             modifierMenu.Items.Add(new ToolStripMenuItem(Shortcut.FormatModifiers(option), null,
@@ -170,14 +192,16 @@ internal sealed class DesktopPages : IDisposable
         modifier.Click += (_, _) => modifierMenu.Show(modifier, new Point(0, modifier.Height + 4));
         key.Click += (_, _) => keyMenu.Show(key, new Point(0, key.Height + 4));
         reset.Click += (_, _) => Apply(current with { Shortcut = Shortcut.Default }, ShowShortcut);
+        easy.Click += (_, _) => Apply(current with { Shortcut = easyShortcut }, ShowShortcut);
         ShowShortcut();
         var plus = Ui.Label("+", WindowTheme.Sans(10f), WindowTheme.Faint);
         plus.Anchor = AnchorStyles.None;
         plus.Margin = new Padding(0, 0, 8, 0);
         stack.Add(Ui.Section("Price-check shortcut",
             "Press it while hovering an item in Path of Exile. It only works while the game is in front, " +
-            "and ExileWorth copies the item once. Shortcuts that use Alt may trigger the game’s Pin Popups binding.",
-            Ui.Row(modifier, plus, key, reset)));
+            "and ExileWorth copies the item once. Alt + D is the easiest to press; if the game pins its item tooltip " +
+            "when you use it, move Path of Exile's Pin Popups binding off Alt or choose Ctrl + Shift.",
+            Ui.Row(modifier, plus, key, easy, reset)));
 
         // Trade replies.
         var thanksField = new TextField(DesktopPreferences.DefaultThanks) { Width = 420 };
@@ -288,12 +312,14 @@ internal sealed class DesktopPages : IDisposable
                 "Drag its top bar to move it.", WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true)));
 
         // Startup.
-        var startup = new Toggle { Checked = StartsWithWindows(), AccessibleName = "Start with Windows" };
+        startup.Checked = Startup.IsEnabled();
         startup.CheckedChanged += (_, _) =>
         {
+            if (syncingStartup) return;
             try
             {
-                SetStartsWithWindows(startup.Checked);
+                Startup.SetEnabled(startup.Checked);
+                Apply(current with { StartupPromptAnswered = true });
                 ShowFeedback(startup.Checked ? "ExileWorth will start in the tray when you sign in." : "Start with Windows turned off.");
             }
             catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
@@ -302,7 +328,7 @@ internal sealed class DesktopPages : IDisposable
             }
         };
         stack.Add(Ui.Section("Startup", null,
-            SwitchRow(startup, "Start with Windows", "Opens quietly in the notification area, ready for the shortcut.")));
+            SwitchRow(startup, "Start with Windows", "Opens quietly in the notification area when you sign in, so the shortcut is ready whenever Path of Exile is in front.")));
 
         var advancedCopy = new Toggle { Checked = current.AdvancedItemCopy == true, AccessibleName = "Use advanced item copy" };
         advancedCopy.CheckedChanged += (_, _) => Apply(current with { AdvancedItemCopy = advancedCopy.Checked });
@@ -375,23 +401,6 @@ internal sealed class DesktopPages : IDisposable
     {
         feedback.Text = text;
         feedback.ForeColor = error ? WindowTheme.Down : WindowTheme.UpText;
-    }
-
-    private static bool StartsWithWindows()
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            return key?.GetValue("ExileWorth") is string;
-        }
-        catch (Exception error) when (error is System.Security.SecurityException or UnauthorizedAccessException) { return false; }
-    }
-
-    private static void SetStartsWithWindows(bool enabled)
-    {
-        using var key = Registry.CurrentUser.CreateSubKey(RunKey);
-        if (enabled) key.SetValue("ExileWorth", $"\"{Application.ExecutablePath}\" --tray");
-        else key.DeleteValue("ExileWorth", throwOnMissingValue: false);
     }
 
     // ── League ───────────────────────────────────────────────────────────

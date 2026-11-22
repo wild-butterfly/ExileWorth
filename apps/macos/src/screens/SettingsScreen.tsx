@@ -15,6 +15,7 @@ import { Section } from '../components/Section';
 import { useSettings } from '../state/SettingsContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { useLeagues } from '../hooks/useLeagues';
+import { useLoginItem } from '../hooks/useLoginItem';
 import type { HotkeyErrors } from '../native/VLHotkeys';
 import {
   applyHotkeysFromSettings,
@@ -71,6 +72,7 @@ export function SettingsScreen() {
   const { settings, update } = useSettings();
   const { status } = usePermissions();
   const leagues = useLeagues();
+  const loginItem = useLoginItem();
   const [recording, setRecording] = useState<HotkeyAction | null>(null);
   const [errors, setErrors] = useState<HotkeyErrors>({});
 
@@ -301,6 +303,41 @@ export function SettingsScreen() {
           Private leagues are not listed: the trade search only exposes public leagues
           without an account sign-in, which ExileWorth deliberately does not require.
         </Text>
+      </Section>
+
+      <Section title="Startup">
+        <View style={styles.row}>
+          <View style={styles.labelBlock}>
+            <Text style={styles.label}>Open at login</Text>
+            <Text style={styles.hint}>
+              Starts ExileWorth in the menu bar when you log in, so the price-check
+              shortcut is ready whenever Path of Exile is in front.
+            </Text>
+          </View>
+          <Switch
+            value={
+              loginItem.status === 'enabled' || loginItem.status === 'requiresApproval'
+            }
+            disabled={loginItem.status === null}
+            onValueChange={(value) => {
+              void loginItem.set(value);
+              update({ startupPromptAnswered: true });
+            }}
+          />
+        </View>
+        {loginItem.status === 'requiresApproval' ? (
+          <View style={styles.row}>
+            <Text style={[styles.hint, styles.labelBlock]}>
+              macOS needs your approval in System Settings → General → Login Items.
+            </Text>
+            <Pressable style={styles.smallButton} onPress={loginItem.openSystemSettings}>
+              <Text style={styles.smallButtonText}>Open System Settings</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {loginItem.error !== null ? (
+          <Text style={styles.error}>{loginItem.error}</Text>
+        ) : null}
       </Section>
 
       <Section title="Logging">
