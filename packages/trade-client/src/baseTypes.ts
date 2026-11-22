@@ -64,6 +64,20 @@ export class BaseTypeIndex {
   }
 
   /**
+   * A tiered league item GGG's static catalogue does not list yet, such as
+   * "Greater Smuggler's Hand" beside the listed "Smuggler's Hand". Only one
+   * capitalised leading word in front of a complete known type qualifies;
+   * the full copied name is returned, never the shorter base, because the
+   * shorter base is a different item with different prices.
+   */
+  tieredName(name: string): string | null {
+    const trimmed = name.trim();
+    if (this.exact.has(trimmed) || this.named.has(trimmed)) return null;
+    const match = /^([A-Z][a-z]+) (.+)$/.exec(trimmed);
+    return match && this.exact.has(match[2]!) ? trimmed : null;
+  }
+
+  /**
    * Returns the base type contained in `name`, preferring the longest match
    * so "Greater Mana Flask" wins over "Mana Flask". Returns null when nothing
    * in the catalog matches, letting the caller fail loudly rather than send a

@@ -254,6 +254,77 @@ describe('catalogue item names and rolled modifiers', () => {
   });
 });
 
+describe('tiered names missing from the static catalogue', () => {
+  const hand = fixture('viscera-greater-smugglers-hand.txt');
+  const expected = {
+    term: "Greater Smuggler's Hand",
+    stats: [{ filters: [{ id: 'implicit.stat_2450413567', value: { min: 2 } }] }],
+  };
+
+  it('searches the full tiered name, never the cheaper plain base', () => {
+    const sent = query(hand).query;
+    expect(sent).toMatchObject(expected);
+    expect(sent.type).toBeUndefined();
+    const normal = query(
+      hand.replace('Item Class: Viscera\n', 'Item Class: Viscera\nRarity: Normal\n'),
+    ).query;
+    expect(normal).toMatchObject(expected);
+    expect(normal.type).toBeUndefined();
+    // The listed base still searches by exact type.
+    expect(query(hand.replace('Greater ', '')).query.type).toBe("Smuggler's Hand");
+  });
+
+  it('refuses names that are not one tier word before a known item', () => {
+    for (const name of ["greater Smuggler's Hand", "Very Greater Smuggler's Hand"])
+      expect(() => query(hand.replace("Greater Smuggler's Hand", name))).toThrow(
+        'not an exact item name',
+      );
+  });
+
+  it('keeps only listings whose base type equals the searched name', async () => {
+    const listing = (id: string, type: string, amount: number) => ({
+      id,
+      listing: {
+        indexed: '2026-11-22T00:00:00Z',
+        price: { type: '~b/o', amount, currency: 'chaos' },
+        account: { name: 'seller' },
+      },
+      item: { name: '', typeLine: type, baseType: type },
+    });
+    const engine = new PriceCheckEngine(
+      new TradeClient({
+        userAgent: 'test',
+        fetch: async (url) => {
+          const path = new URL(url).pathname;
+          let body: unknown = { result: [] };
+          if (path.endsWith('/data/leagues'))
+            body = { result: [{ id: 'Covens', realm: 'pc' }] };
+          if (path.endsWith('/data/items')) body = items;
+          if (path.endsWith('/data/stats')) body = catalogue;
+          if (path.endsWith('/search/Covens'))
+            body = { id: 'hand-search', total: 2, result: ['a', 'b'] };
+          if (path.includes('/fetch/'))
+            body = {
+              result: [
+                listing('a', "Smuggler's Hand", 1),
+                listing('b', "Greater Smuggler's Hand", 2),
+              ],
+            };
+          return {
+            ok: true,
+            status: 200,
+            headers: { get: () => null },
+            text: async () => JSON.stringify(body),
+          };
+        },
+      }),
+    );
+    const result = await engine.check(hand, 'Covens', null);
+    expect(result.itemName).toBe("Greater Smuggler's Hand");
+    expect(result.listings.map((row) => row.amount)).toEqual([2]);
+  });
+});
+
 describe('stash and shop price notes', () => {
   it.each([
     ['viscera-flaming-furnace-noted.txt', 'Flaming Furnace'],

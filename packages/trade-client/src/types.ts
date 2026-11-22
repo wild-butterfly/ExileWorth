@@ -87,6 +87,12 @@ export interface TradeQuery {
     readonly status: { readonly option: 'online' | 'onlineleague' | 'any' };
     readonly name?: string;
     readonly type?: string;
+    /**
+     * Free-text name search, used only for tiered names missing from GGG's
+     * static catalogue. Fetched listings are then kept only when their base
+     * type equals this text exactly.
+     */
+    readonly term?: string;
     readonly stats: ReadonlyArray<{
       readonly type: 'and';
       readonly filters: readonly StatFilter[];

@@ -319,6 +319,24 @@ function resolveType(rawType: string, baseTypes: BaseTypeIndex | undefined): str
 }
 
 /**
+ * Exact catalogue identity, or a term search for a tiered name GGG's static
+ * catalogue omits. Anything else is refused rather than priced as another item.
+ */
+function catalogueIdentity(
+  name: string,
+  baseTypes: BaseTypeIndex | undefined,
+): { type: string; name?: string } | { term: string } {
+  const identity = baseTypes?.identity(name);
+  if (identity) return identity;
+  const tiered = baseTypes?.tieredName(name);
+  if (tiered) return { term: tiered };
+  throw new TradeError(
+    'not_searchable',
+    `“${name}” is not an exact item name in the trade catalogue. Copy the complete item again.`,
+  );
+}
+
+/**
  * Assembles the request body. Throws `not_searchable` for item kinds the
  * trade search cannot express, rather than sending a query that silently
  * matches nothing.
@@ -357,15 +375,11 @@ export function buildQuery(
   };
 
   switch (item.kind) {
-    case 'catalogue': {
-      const identity = baseTypes?.identity(item.name);
-      if (!identity)
-        throw new TradeError(
-          'not_searchable',
-          `“${item.name}” is not an exact item name in the trade catalogue. Copy the complete item again.`,
-        );
-      return { query: { ...base, ...identity }, sort: { price: 'asc' } };
-    }
+    case 'catalogue':
+      return {
+        query: { ...base, ...catalogueIdentity(item.name, baseTypes) },
+        sort: { price: 'asc' },
+      };
     case 'currency':
     case 'divinationCard':
       return { query: { ...base, type: item.name }, sort: { price: 'asc' } };
@@ -391,6 +405,13 @@ export function buildQuery(
           sort: { price: 'asc' },
         };
       }
+      // Viscera names are whole identities: "Greater Smuggler's Hand" must
+      // never shrink to the different, cheaper "Smuggler's Hand".
+      if (item.rarity === 'normal' && /^Viscera$/i.test(item.itemClass))
+        return {
+          query: { ...base, ...catalogueIdentity(item.baseType, baseTypes) },
+          sort: { price: 'asc' },
+        };
       return {
         query: { ...base, type: resolveType(item.baseType, baseTypes) },
         sort: { price: 'asc' },
