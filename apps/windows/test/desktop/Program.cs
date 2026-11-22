@@ -9,6 +9,7 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        VerifyShortcutDefaults();
         if (args.Length >= 3 && args[0] == "--capture")
         {
             Environment.ExitCode = CaptureDesktop(args[1], args[2], args.Skip(3).ToArray()).GetAwaiter().GetResult();
@@ -411,8 +412,23 @@ internal static class Program
 
     private static void SendChord(Keys key)
     {
-        foreach (Keys k in new[] { Keys.LControlKey, Keys.LShiftKey, key }) SendKey(k, 0);
-        foreach (Keys k in new[] { key, Keys.LShiftKey, Keys.LControlKey }) SendKey(k, 2);
+        foreach (Keys k in new[] { Keys.LMenu, key }) SendKey(k, 0);
+        foreach (Keys k in new[] { key, Keys.LMenu }) SendKey(k, 2);
+    }
+
+    private static void VerifyShortcutDefaults()
+    {
+        var altD = new ExileWorth.Windows.Shortcut(1, Keys.D);
+        var oldDefault = new ExileWorth.Windows.Shortcut(6, Keys.D);
+        Assert(ExileWorth.Windows.Shortcut.Default == altD, "Default must be Alt + D.");
+        Assert(!ExileWorth.Windows.Shortcut.IsAllowed(1, Keys.F4), "Alt + F4 must remain blocked.");
+        var legacy = new ExileWorth.Windows.DesktopPreferences(oldDefault, true, AdvancedItemCopy: false);
+        var migrated = ExileWorth.Windows.DesktopPreferences.Upgrade(legacy);
+        Assert(migrated.Shortcut == altD && migrated.ShortcutDefaultsVersion == 1, "Previous default was not migrated.");
+        var custom = legacy with { Shortcut = new(3, Keys.F2) };
+        Assert(ExileWorth.Windows.DesktopPreferences.Upgrade(custom).Shortcut == custom.Shortcut, "Custom shortcut was overwritten.");
+        var chosen = migrated with { Shortcut = oldDefault };
+        Assert(ExileWorth.Windows.DesktopPreferences.Upgrade(chosen).Shortcut == oldDefault, "Explicit shortcut choice was migrated twice.");
     }
 
     private static void SendKey(Keys key, uint flags) =>

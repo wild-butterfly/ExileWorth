@@ -9,4 +9,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>PathOfExile_x64</AssemblyName>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../native/DesktopPreferences.cs" Link="DesktopPreferences.cs" />
+  </ItemGroup>
 </Project>

@@ -29,11 +29,11 @@ import { PriceCheckEngine } from './engine';
 const client = new TradeClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
-  userAgent: 'ExileWorth/0.1.25 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.26 (+https://github.com/wild-butterfly/ExileWorth)',
 });
 const engine = new PriceCheckEngine(client);
 const historyClient = new CurrencyHistoryClient({
-  userAgent: 'ExileWorth/0.1.25 (+https://github.com/wild-butterfly/ExileWorth)',
+  userAgent: 'ExileWorth/0.1.26 (+https://github.com/wild-butterfly/ExileWorth)',
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
 });
@@ -43,7 +43,7 @@ let catalog: Promise<MarketCatalog> | null = null;
 function marketCatalog(): Promise<MarketCatalog> {
   catalog ??= loadMarketCatalog(
     (url, options) => fetch(url, { ...options, signal: AbortSignal.timeout(20_000) }),
-    'ExileWorth/0.1.25 (+https://github.com/wild-butterfly/ExileWorth)',
+    'ExileWorth/0.1.26 (+https://github.com/wild-butterfly/ExileWorth)',
     client.getStaticData(),
   ).catch((error: unknown) => {
     catalog = null;

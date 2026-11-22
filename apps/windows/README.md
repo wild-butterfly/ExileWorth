@@ -5,7 +5,7 @@ client. It includes its runtimes. Extract the entire ZIP into a folder and run
 `ExileWorth.exe` from that folder. This preview is unsigned.
 
 1. Use Windowed or Windowed Fullscreen in Path of Exile.
-2. With the game in front, hover an inventory item and press **Ctrl + Shift + D**.
+2. With the game in front, hover an inventory item and press **Alt + D**.
    ExileWorth sends **Ctrl + C** once. Enable **Settings → Item copy → Use advanced item copy** for extra modifier details. Advanced copy uses Alt and may pin the game’s tooltip. It leaves that text on the Windows clipboard.
 3. Check the league selector. **Covens** is the PC trade league for Covens of
    Umbra. If a saved league has ended, ExileWorth selects the current league.

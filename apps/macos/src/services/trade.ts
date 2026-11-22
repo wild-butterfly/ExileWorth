@@ -5,7 +5,7 @@ import {
 } from '@vaaluation/trade-client';
 import type { FetchLike, MarketCatalog } from '@vaaluation/trade-client';
 
-export const APP_VERSION = '0.1.14';
+export const APP_VERSION = '0.1.15';
 export const PROJECT_URL = 'https://github.com/wild-butterfly/ExileWorth';
 
 /**

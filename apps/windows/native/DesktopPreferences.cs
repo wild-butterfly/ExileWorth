@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -5,7 +6,7 @@ namespace ExileWorth.Windows;
 
 internal sealed record Shortcut(uint Modifiers, Keys Key)
 {
-    public static readonly Shortcut Default = new(6, Keys.D);
+    public static readonly Shortcut Default = new(1, Keys.D);
     // 1 = Alt alone (the easiest to press); 3 = Ctrl + Alt; 6 = Ctrl + Shift; 5 = Alt + Shift; 7 = all three.
     // Shift alone is never offered: it would fire while typing capitals in chat.
     public static readonly uint[] ModifierOptions = [1, 3, 6, 5, 7];
@@ -34,7 +35,7 @@ internal sealed record Shortcut(uint Modifiers, Keys Key)
 
 internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, string? ThanksMessage = null,
     string[]? QuickReplies = null, string? Theme = null, bool? AdvancedItemCopy = null,
-    bool? StartupPromptAnswered = null)
+    bool? StartupPromptAnswered = null, int ShortcutDefaultsVersion = 0)
 {
     public const string DefaultThanks = "Thanks, have a nice day!";
 
@@ -53,17 +54,36 @@ internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, st
     public bool Equals(DesktopPreferences? other) =>
         other is not null && Shortcut == other.Shortcut && NearCursor == other.NearCursor &&
         ThanksMessage == other.ThanksMessage && Theme == other.Theme && AdvancedItemCopy == other.AdvancedItemCopy &&
-        StartupPromptAnswered == other.StartupPromptAnswered &&
+        StartupPromptAnswered == other.StartupPromptAnswered && ShortcutDefaultsVersion == other.ShortcutDefaultsVersion &&
         Replies.SequenceEqual(other.Replies);
 
-    public override int GetHashCode() => HashCode.Combine(Shortcut, NearCursor, ThanksMessage, Theme, AdvancedItemCopy, StartupPromptAnswered);
+    public override int GetHashCode() => HashCode.Combine(Shortcut, NearCursor, ThanksMessage, Theme, AdvancedItemCopy, StartupPromptAnswered, ShortcutDefaultsVersion);
     [JsonIgnore]
     public string Thanks => string.IsNullOrWhiteSpace(ThanksMessage) ? DefaultThanks : ThanksMessage.Trim();
 
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Vaaluation", "desktop-settings.json");
-    public static readonly DesktopPreferences Default = new(Shortcut.Default, true, AdvancedItemCopy: false);
+    public static readonly DesktopPreferences Default = new(Shortcut.Default, true, AdvancedItemCopy: false, ShortcutDefaultsVersion: 1);
+
+    internal static DesktopPreferences Upgrade(DesktopPreferences saved)
+    {
+        if (saved.AdvancedItemCopy is null)
+            saved = saved with
+            {
+                AdvancedItemCopy = false,
+                Shortcut = saved.Shortcut == new Shortcut(3, Keys.D) ? Shortcut.Default : saved.Shortcut,
+            };
+        // Move the previous default once. A later explicit choice of Ctrl +
+        // Shift + D is retained, as are all other custom bindings.
+        if (saved.ShortcutDefaultsVersion < 1)
+            saved = saved with
+            {
+                Shortcut = saved.Shortcut == new Shortcut(6, Keys.D) ? Shortcut.Default : saved.Shortcut,
+                ShortcutDefaultsVersion = 1,
+            };
+        return saved;
+    }
 
     public static DesktopPreferences Load()
     {
@@ -72,15 +92,7 @@ internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, st
             var saved = JsonSerializer.Deserialize<DesktopPreferences>(File.ReadAllText(FilePath));
             if (saved?.Shortcut is { } shortcut && shortcut.IsAllowed())
             {
-                // Older settings had an opt-in to plain copy. Adopt the new
-                // default once, while retaining custom shortcuts and preferences.
-                if (saved.AdvancedItemCopy is null)
-                    return saved with
-                    {
-                        AdvancedItemCopy = false,
-                        Shortcut = shortcut == new Shortcut(3, Keys.D) ? Shortcut.Default : shortcut,
-                    };
-                return saved;
+                return Upgrade(saved);
             }
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException) { }

@@ -333,7 +333,7 @@ internal sealed class DesktopPages : IDisposable
         var advancedCopy = new Toggle { Checked = current.AdvancedItemCopy == true, AccessibleName = "Use advanced item copy" };
         advancedCopy.CheckedChanged += (_, _) => Apply(current with { AdvancedItemCopy = advancedCopy.Checked });
         stack.Add(Ui.Section("Item copy",
-            "Standard copy uses Ctrl + C. The default Ctrl + Shift + D shortcut keeps Alt out of the price check.",
+            "Standard copy uses Ctrl + C. The default shortcut is Alt + D; if the game pins its tooltip, change its Pin Popups binding or choose another shortcut.",
             SwitchRow(advancedCopy, "Use advanced item copy",
                 "Uses Ctrl + Alt + C for extra modifier details. This may pin the game’s tooltip if Pin Popups uses Alt.")));
 
