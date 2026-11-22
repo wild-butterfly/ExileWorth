@@ -10,8 +10,8 @@ ExileWorth was formerly called Vaaluation.
 
 | Platform                            | Build                                                                                                                            | Default price check                               | Setup                                                                        |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.13-macos/ExileWorth-0.1.13-macOS.zip)     | <kbd>Control</kbd> + <kbd>D</kbd>                 | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/)     |
-| Windows 11 x64 · Preview            | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.24/ExileWorth-0.1.24-Windows-x64.zip) | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
+| macOS 14+ · Apple silicon and Intel | [Download for Mac](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.14-macos/ExileWorth-0.1.14-macOS.zip)     | <kbd>Control</kbd> + <kbd>D</kbd>                 | [Mac setup](https://wild-butterfly.github.io/ExileWorth/guides/install/)     |
+| Windows 11 x64 · Preview            | [Download for Windows](https://github.com/wild-butterfly/ExileWorth/releases/download/v0.1.25/ExileWorth-0.1.25-Windows-x64.zip) | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | [Windows setup](https://wild-butterfly.github.io/ExileWorth/guides/windows/) |
 
 Select **Covens** for Covens of Umbra.
 
@@ -35,20 +35,20 @@ _Windows 0.1.17 running with sample Divine Orb listings in a [Windows CI run](ht
 
 ## Features
 
-| Feature                   | What you can do                                                                                                                                                                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Price Check**           | Compare asking prices from the official trade service and refine the search by modifier.                                                                                                                                   |
-| **Trades**                | Enable chat log watching to see incoming trade requests. Send replies, invites, or trade requests with a click. Edit, add, or remove quick replies in Settings.                                                            |
-| **Currency**              | Compare exchange rates for currencies such as Divine, Chaos, and Exalted Orbs.                                                                                                                                             |
-| **Mac price filters**     | Edit minimums beside modifiers, choose Exact or a percentage preset, and optionally combine elemental resistances. Manual searches retain the chosen minimums.                                                             |
-| **Currency history**      | Select either side of a currency pair from the supported list and inspect 24-hour, 7-day, or 30-day history from GGG's completed exchange trades. Longer views sample hourly digests daily; unavailable hours remain gaps. |
-| **Windows price filters** | Show only listings priced in Alchemy, Chaos, Exalted, or Divine Orbs.                                                                                                                                                      |
+| Feature                   | What you can do                                                                                                                                                 |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Price Check**           | Compare asking prices from the official trade service and refine the search by modifier.                                                                        |
+| **Trades**                | Enable chat log watching to see incoming trade requests. Send replies, invites, or trade requests with a click. Edit, add, or remove quick replies in Settings. |
+| **Currency**              | Browse every Currency Exchange item with prices from GGG's completed trades, any currency as the unit, 24-hour volume, categories, search and sparklines.       |
+| **Mac price filters**     | Edit minimums beside modifiers, choose Exact or a percentage preset, and optionally combine elemental resistances. Manual searches retain the chosen minimums.  |
+| **Currency history**      | Open an item chart to inspect 24-hour, 7-day or 30-day completed-trade history. Longer views sample hourly digests daily; unavailable hours remain gaps.        |
+| **Windows price filters** | Show only listings priced in Alchemy, Chaos, Exalted, or Divine Orbs.                                                                                           |
 
 ## First launch
 
 - **Mac:** Unzip the signed and notarized build, move `ExileWorth.app` to **Applications**, and open it. Grant Accessibility when prompted so ExileWorth can copy items and send the trade commands you choose. If the app still shows **Permission needed**, [refresh the permission for the installed copy](https://wild-butterfly.github.io/ExileWorth/guides/install/).
 - **Windows:** Extract the entire ZIP and run `ExileWorth.exe` from the extracted folder. The default price check copies the item with <kbd>Ctrl</kbd> + <kbd>C</kbd> to avoid triggering the game's Alt-based tooltip pin.
-- **Both:** Bring Path of Exile to the front, hover an inventory item, and press your price check shortcut. Change the shortcut in **Settings**. See the [price check guide](https://wild-butterfly.github.io/ExileWorth/guides/price-check/) for modifier filters and search tips.
+- **Both:** Bring Path of Exile to the front, hover an inventory item, and press your price check shortcut. Change the shortcut in **Settings**; Windows also offers **Use Alt + D**, with **Ctrl + Shift + D** as the default. Enable **Start with Windows** or **Open at login** to keep ExileWorth ready after sign-in. See the [price check guide](https://wild-butterfly.github.io/ExileWorth/guides/price-check/) for modifier filters and search tips.
 
 ## Frequently asked questions
 
