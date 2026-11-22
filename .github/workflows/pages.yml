@@ -51,3 +51,24 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Notify IndexNow search engines
+        # Bing (and DuckDuckGo, which uses it), Yandex and others re-crawl the
+        # listed pages; failure here never fails the deploy.
+        continue-on-error: true
+        run: |
+          KEY=$(basename "$(ls website/*.txt | grep -E '/[0-9a-f]{32}\.txt$')" .txt)
+          python3 - "$KEY" <<'PY'
+          import json, sys, urllib.request
+          key = sys.argv[1]
+          urls = [u.strip() for u in open("website/sitemap.txt") if u.strip()]
+          body = json.dumps({
+              "host": "wild-butterfly.github.io",
+              "key": key,
+              "keyLocation": f"https://wild-butterfly.github.io/ExileWorth/{key}.txt",
+              "urlList": urls,
+          }).encode()
+          request = urllib.request.Request(
+              "https://api.indexnow.org/indexnow", data=body,
+              headers={"Content-Type": "application/json; charset=utf-8"})
+          print("IndexNow:", urllib.request.urlopen(request, timeout=30).status)
+          PY
