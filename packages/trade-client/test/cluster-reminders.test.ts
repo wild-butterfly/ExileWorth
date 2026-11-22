@@ -74,6 +74,18 @@ describe('cluster jewels with copied explanations', () => {
     },
   );
 
+  it('ignores a stash price note on a cluster jewel', () => {
+    const parsed = parseItemText(
+      `${fixture('cluster-jewel-large-advanced.txt').trimEnd()}\n--------\nNote: ~b/o 1 chaos\n`,
+    );
+    if (!parsed.ok) throw new Error(parsed.message);
+    expect(
+      filtersOf(
+        buildQuery(parsed.item, buildPriceFilters(parsed.item, stats), { baseTypes }),
+      ),
+    ).toEqual(LARGE);
+  });
+
   it('still reports a genuinely unsupported cluster modifier', () => {
     const source = fixture('cluster-jewel-large-advanced.txt').replace(
       '2 Added Passive Skills are Jewel Sockets',

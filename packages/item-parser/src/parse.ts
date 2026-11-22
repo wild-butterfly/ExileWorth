@@ -270,6 +270,11 @@ function scanSections(
       state.requirements = parseRequirementsSection(section.slice(1));
       continue;
     }
+    // A shop's asking price is listing metadata, never part of the item.
+    if (first !== undefined && /^Asking Price:/i.test(first.trim())) {
+      state.unknownLines.push(...section.map((line) => line.trim()).filter(Boolean));
+      continue;
+    }
 
     let sectionHadStructure = false;
     const freeLines: string[] = [];
@@ -314,6 +319,11 @@ function scanSections(
         switch (kv.key) {
           case 'Item Level':
             state.itemLevel = parseInteger(kv.value) ?? undefined;
+            break;
+          case 'Note':
+            // A stash or shop price note ("~b/o 1 chaos") describes the
+            // listing, not the item, so it is never searched as a modifier.
+            state.unknownLines.push(trimmed);
             break;
           case 'Quality':
             state.quality = parsePercent(kv.value) ?? undefined;
