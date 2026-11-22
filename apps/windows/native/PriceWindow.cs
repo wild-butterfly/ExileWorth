@@ -86,7 +86,11 @@ internal sealed class PriceWindow : Form
         overlay = new GamePriceOverlay((id, selected, minimums) => _ = SelectCurrencyAsync(id, selected, minimums),
             (selected, minimums) => _ = RunAsync(() => CheckAsync(null, currentFilters.Length == 0 ? null : selected, minimums)), () => preferences);
 
+        // Docking runs last-added first: the rail takes the left edge, the
+        // banner the top of what remains, and the page fills the rest.
+        Startup.Repair();
         Controls.Add(pageHost);
+        Controls.Add(BuildStartupBanner());
         Controls.Add(BuildRail());
         ShowPage(pricePage);
 
@@ -332,6 +336,61 @@ internal sealed class PriceWindow : Form
         statusDot.Invalidate();
         statusTitle.Text = running ? "Overlay armed" : "Waiting for the game";
         statusMeta.Text = $"{preferences.Shortcut} on hover";
+    }
+
+    /// <summary>
+    /// Asked once. ExileWorth cannot start itself when Path of Exile opens, so
+    /// starting quietly at sign-in is how the shortcut is always ready.
+    /// </summary>
+    private Control BuildStartupBanner()
+    {
+        int S(int value) => value * DeviceDpi / 96;
+        var host = new Panel
+        {
+            Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = WindowTheme.Background, Padding = new Padding(S(24), S(16), S(24), 0),
+            Visible = preferences.StartupPromptAnswered != true && !Startup.IsEnabled(),
+        };
+        var card = new Card { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(S(16), S(12), S(12), S(12)), Margin = Padding.Empty };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 3, Margin = Padding.Empty };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        var text = Ui.Stack();
+        text.Add(Ui.Label("Start ExileWorth when your computer starts?", WindowTheme.Sans(10f, FontStyle.Bold), WindowTheme.Foreground)).Margin = Padding.Empty;
+        var hint = text.Add(Ui.Label(
+            "It waits quietly in the notification area, so the price-check shortcut is ready whenever Path of Exile is in front. " +
+            "You can change this any time in Settings.", WindowTheme.Sans(8.5f), WindowTheme.Muted, wrap: true));
+        hint.Margin = new Padding(0, S(2), S(12), 0);
+        var turnOn = new FlatButton(ButtonKind.Primary, "Turn on") { Anchor = AnchorStyles.Right };
+        var notNow = new FlatButton(ButtonKind.Ghost, "Not now") { Anchor = AnchorStyles.Right, Margin = Padding.Empty };
+        layout.Controls.Add(text, 0, 0);
+        layout.Controls.Add(turnOn, 1, 0);
+        layout.Controls.Add(notNow, 2, 0);
+        card.Controls.Add(layout);
+        host.Controls.Add(card);
+
+        void Answer(bool enable)
+        {
+            if (enable)
+            {
+                try { Startup.SetEnabled(true); }
+                catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+                {
+                    hint.Text = "Windows did not allow it. Try Start with Windows in Settings.";
+                    hint.ForeColor = WindowTheme.Down;
+                    return;
+                }
+            }
+            try { SavePreferences(preferences with { StartupPromptAnswered = true }); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+            pages.SyncStartup(preferences);
+            // Hide after the click returns; never dispose a button inside its handler.
+            BeginInvoke(() => host.Visible = false);
+        }
+        turnOn.Click += (_, _) => Answer(true);
+        notNow.Click += (_, _) => Answer(false);
+        return host;
     }
 
     private void SavePreferences(DesktopPreferences updated)
