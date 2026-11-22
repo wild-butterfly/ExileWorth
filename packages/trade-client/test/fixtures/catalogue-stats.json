@@ -37,6 +37,11 @@
           "id": "implicit.stat_3602667353",
           "text": "#% chance to inflict Fire Exposure on Hit",
           "type": "implicit"
+        },
+        {
+          "id": "implicit.stat_2450413567",
+          "text": "#% chance for a Coin Shower on Kill",
+          "type": "implicit"
         }
       ]
     }

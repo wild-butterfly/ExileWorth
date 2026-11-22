@@ -32,6 +32,21 @@
           "id": "explicit.stat_2643685329",
           "text": "Added Small Passive Skills also grant: +# to Maximum Energy Shield",
           "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_1811604576",
+          "text": "Added Small Passive Skills also grant: +#% to Chaos Resistance",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_724930776",
+          "text": "Added Small Passive Skills also grant: +# to Intelligence",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_478147593",
+          "text": "1 Added Passive Skill is Sage",
+          "type": "explicit"
         }
       ]
     },
@@ -66,6 +81,11 @@
         {
           "id": "enchant.stat_3948993189|33",
           "text": "Added Small Passive Skills grant: 12% increased Trap Damage\nAdded Small Passive Skills grant: 12% increased Mine Damage",
+          "type": "enchant"
+        },
+        {
+          "id": "enchant.stat_3948993189|39",
+          "text": "Added Small Passive Skills grant: 4% increased maximum Life",
           "type": "enchant"
         }
       ]

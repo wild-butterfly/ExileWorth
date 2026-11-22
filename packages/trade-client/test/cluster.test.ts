@@ -251,6 +251,34 @@ describe('cluster jewel modifier searches', () => {
     expect(filters[2]).toEqual({ id: 'enchant.stat_3948993189', value: { option: 30 } });
   });
 
+  it('searches a notable copied with the advanced "Unscalable Value" marker', () => {
+    const source = readFileSync(
+      join(
+        __dirname,
+        '../../item-parser/test/fixtures/cluster-jewel-small-unscalable.txt',
+      ),
+      'utf8',
+    );
+    const item = parsed(source);
+    if (item.kind !== 'equipment') throw new Error('Expected equipment');
+    expect(item.modifiers.map((mod) => mod.text)).toContain(
+      '1 Added Passive Skill is Sage',
+    );
+    const filters = queryFilters(buildQuery(item, buildPriceFilters(item, stats)));
+    expect(filters).toContainEqual({ id: 'explicit.stat_478147593' });
+    expect(filters).toContainEqual({ id: 'explicit.stat_1811604576', value: { min: 3 } });
+    expect(filters).toContainEqual({ id: 'explicit.stat_724930776', value: { min: 2 } });
+    expect(filters[0]).toEqual({
+      id: 'enchant.stat_3086156145',
+      value: { min: 2, max: 2 },
+    });
+    // The plain copy of the same jewel sends the identical search.
+    const plain = parsed(source.replace(' — Unscalable Value', ''));
+    expect(buildQuery(plain, buildPriceFilters(plain, stats))).toEqual(
+      buildQuery(item, buildPriceFilters(item, stats)),
+    );
+  });
+
   it('presets lower rolls while preserving counts, passive type and notable', () => {
     const item = parsed();
     const rows = applyMinimumPreset(buildPriceFilters(item, stats), 20);

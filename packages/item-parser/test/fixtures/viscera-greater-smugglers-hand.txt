@@ -1,0 +1,10 @@
+Item Class: Viscera
+Greater Smuggler's Hand
+--------
+Upper Limb
+--------
+Item Level: 83
+--------
+2% chance for a Coin Shower on Kill (implicit)
+--------
+Take this to the Wickerman in a town or hideout to attach it.

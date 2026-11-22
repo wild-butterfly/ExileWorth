@@ -69,6 +69,8 @@ export class TradeClient {
   private readonly cache = new Map<string, CacheEntry>();
   private statIndex: StatIndex | null = null;
   private baseTypeIndex: BaseTypeIndex | null = null;
+  /** Search id → exact lowercased name, for free-text term searches. */
+  private readonly termSearches = new Map<string, string>();
   private currencyIcons: Map<string, string> | null = null;
   private staticData: Promise<unknown> | null = null;
   private exchangeItems: ExchangeItemIndex | null = null;
@@ -290,7 +292,10 @@ export class TradeClient {
     const body = JSON.stringify(query);
     const key = `search:${league}:${body}`;
     const hit = this.cached<SearchResponse>(key);
-    if (hit !== null) return hit;
+    if (hit !== null) {
+      this.rememberTerm(hit.id, query);
+      return hit;
+    }
 
     const response = await this.request(
       `${BASE}/search/${encodeURIComponent(league)}`,
@@ -299,7 +304,19 @@ export class TradeClient {
     );
     const parsed = parseSearchResponse(response);
     this.store(key, parsed);
+    this.rememberTerm(parsed.id, query);
     return parsed;
+  }
+
+  /** Term searches are free text; their listings must match the name exactly. */
+  private rememberTerm(queryId: string, query: TradeQuery): void {
+    const term = query.query.term;
+    if (term === undefined) return;
+    this.termSearches.set(queryId, term.toLowerCase());
+    if (this.termSearches.size > 50) {
+      const oldest = this.termSearches.keys().next().value;
+      if (oldest !== undefined) this.termSearches.delete(oldest);
+    }
   }
 
   /**
@@ -407,8 +424,12 @@ export class TradeClient {
       undefined,
       this.fetchPolicy,
     );
+    const term = this.termSearches.get(queryId);
     const results = parseFetchResponse(body).result.filter(
-      (entry): entry is FetchResult => entry !== null,
+      (entry): entry is FetchResult =>
+        entry !== null &&
+        (term === undefined ||
+          (entry.item.baseType ?? entry.item.typeLine ?? '').toLowerCase() === term),
     );
     this.store(key, results);
     return results;

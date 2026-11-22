@@ -1,0 +1,24 @@
+Item Class: Jewels
+Rarity: Rare
+Oblivion Prism
+Small Cluster Jewel
+--------
+Requirements:
+Level: 54
+--------
+Item Level: 75
+--------
+{ Enchant Modifier }
+Adds 2 Passive Skills (enchant)
+(Added Passive Skills are never considered to be in Radius by other Jewels)
+{ Enchant Modifier }
+Added Small Passive Skills grant: 4% increased maximum Life (enchant)
+--------
+{ Prefix Modifier "Fervent" (Tier: 1) }
+1 Added Passive Skill is Sage — Unscalable Value
+{ Suffix Modifier "of the Gale" (Tier: 3) — Elemental, Chaos, Resistance }
+Added Small Passive Skills also grant: +3% to Chaos Resistance
+{ Suffix Modifier "of the Wise" (Tier: 2) — Attribute }
+Added Small Passive Skills also grant: +2 to Intelligence
+--------
+Place into an allocated Small, Medium or Large Jewel Socket on the Passive Skill Tree. Added passives do not interact with jewel radiuses. Right click to remove from the Socket.
