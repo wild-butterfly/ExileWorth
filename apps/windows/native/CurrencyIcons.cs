@@ -28,6 +28,17 @@ internal static class CurrencyIcons
         return null;
     }
 
+    /// <summary>An icon by its GGG CDN URL (market items carry their own URLs).</summary>
+    public static Image? GetUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return null;
+        if (Images.TryGetValue(url, out var image)) return image;
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps &&
+            uri.Host == "web.poecdn.com")
+            _ = DownloadAsync(url, url);
+        return null;
+    }
+
     /// <summary>Loads the id → URL catalog once. Safe to call repeatedly; failures retry next call.</summary>
     public static Task LoadAsync(Worker worker, IEnumerable<string>? warm = null)
     {

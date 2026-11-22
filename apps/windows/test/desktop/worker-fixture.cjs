@@ -17,6 +17,15 @@ lines.on('line', (line) => {
     console.log(JSON.stringify({ result: {} }));
     return;
   }
+  // A sample of real Covens market data, captured once, for deterministic screenshots.
+  if (request.action === 'market' || request.action === 'itemHistory') {
+    const fixture = JSON.parse(
+      readFileSync(join(__dirname, 'market-fixture.json'), 'utf8'),
+    );
+    const result = request.action === 'market' ? fixture.market : fixture.itemHistory;
+    console.log(JSON.stringify({ result }));
+    return;
+  }
   if (request.action === 'check' && process.env.EXILEWORTH_TEST_EXCHANGE === '1') {
     console.log(
       JSON.stringify({

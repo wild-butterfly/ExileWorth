@@ -18,13 +18,20 @@ usage. See the [website privacy notice](https://wild-butterfly.github.io/ExileWo
 
 ## Network requests
 
-ExileWorth talks only to official Path of Exile services:
+ExileWorth talks to official Path of Exile services, plus one community data file for item names:
 
-| Request          | When                                                | What is sent                                                                                                                                          |
-| ---------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| League list      | On launch and on manual refresh                     | Nothing personal — a plain GET request.                                                                                                               |
-| Trade search     | Only when you run a price check search              | The item filters you confirmed (base type, modifiers, ranges) and the selected league.                                                                |
-| Currency history | When you open Currency or change its history period | Completed-hour timestamps requested from GGG's public `web.poecdn.com/api/currency-exchange` feed. Currency and league selection are applied locally. |
+| Request          | When                                                | What is sent                                                                                                                                                               |
+| ---------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| League list      | On launch and on manual refresh                     | Nothing personal — a plain GET request.                                                                                                                                    |
+| Trade search     | Only when you run a price check search              | The item filters you confirmed (base type, modifiers, ranges) and the selected league.                                                                                     |
+| Currency history | When you open Currency or change its history period | Completed-hour timestamps requested from GGG's public `web.poecdn.com/api/currency-exchange` feed. Currency and league selection are applied locally.                      |
+| Item names       | The first time you open Currency in a session       | A plain GET for `repoe-fork.github.io/base_items.min.json`, the community RePoE table of item names extracted from the game (data owned by GGG). Nothing personal is sent. |
+
+The Currency page prices every Currency Exchange item from completed trades in
+GGG's hourly digests: the price is the volume-weighted average over the last 24
+hours, and Divine-side trades are converted at the same hours' Divine price. The
+item name table is downloaded at runtime rather than shipped with the app, so no
+GGG-owned data is redistributed.
 
 Currency history uses completed trades from GGG's hourly digests. Digests are
 cached in memory and reused when you change currency pairs. The 7-day and 30-day

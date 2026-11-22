@@ -5,6 +5,12 @@ import {
   TradeClient,
   CurrencyHistoryClient,
   TradeError,
+  CHAOS_ID,
+  loadItemHistory,
+  loadMarket,
+  loadMarketCatalog,
+  type MarketCatalog,
+  type MarketPeriod,
   type HistoryPeriod,
   type CurrencyRate,
 } from '@vaaluation/trade-client';
@@ -31,6 +37,26 @@ const historyClient = new CurrencyHistoryClient({
   fetch: (url, options) =>
     fetch(url, { ...options, signal: AbortSignal.timeout(15_000) }),
 });
+// Item names (RePoE, GGG-owned game data) and GGG's catalogue load once per
+// worker, only when the Currency page asks for them.
+let catalog: Promise<MarketCatalog> | null = null;
+function marketCatalog(): Promise<MarketCatalog> {
+  catalog ??= loadMarketCatalog(
+    (url, options) => fetch(url, { ...options, signal: AbortSignal.timeout(20_000) }),
+    'ExileWorth/0.1.24 (+https://github.com/wild-butterfly/ExileWorth)',
+    client.getStaticData(),
+  ).catch((error: unknown) => {
+    catalog = null;
+    throw error;
+  });
+  return catalog;
+}
+const isPeriod = (value: unknown): value is MarketPeriod =>
+  value === '24h' || value === '7d' || value === '30d';
+/** GGG item ids look like Metadata/Items/…; nothing else is accepted. */
+const isItemId = (value: unknown): value is string =>
+  typeof value === 'string' && /^Metadata\/[A-Za-z0-9/_]+$/.test(value);
+
 const historyCurrencies = [
   { id: 'chaos', label: 'Chaos Orb' },
   ...TRACKED_CURRENCIES.map(({ id, label }) => ({ id, label })),
@@ -78,7 +104,59 @@ async function run() {
         lines?: string[];
         thanks?: string;
         replies?: string[];
+        item?: unknown;
+        unit?: unknown;
       };
+      if (request.action === 'market') {
+        const { selected } = await engine.leagues(request.preferred);
+        if (!selected) throw new Error('No PC trade league is available.');
+        const period = request.period ?? '24h';
+        if (!isPeriod(period)) throw new Error('Unsupported market period.');
+        const items = await marketCatalog();
+        const snapshot = await loadMarket(historyClient, items, selected, period);
+        process.stdout.write(
+          JSON.stringify({
+            result: {
+              league: snapshot.league,
+              period: snapshot.period,
+              latestHour: snapshot.latestHour,
+              failedHours: snapshot.failedHours,
+              chaosIcon: items.item(CHAOS_ID).icon,
+              rows: snapshot.rows.map((row) => ({
+                id: row.item.id,
+                name: row.item.name,
+                category: row.item.category,
+                icon: row.item.icon,
+                chaos: row.chaos,
+                volume: row.volume,
+                series: row.series,
+                change: row.change,
+              })),
+            },
+          }) + '\n',
+        );
+        continue;
+      }
+      if (request.action === 'itemHistory') {
+        const { selected } = await engine.leagues(request.preferred);
+        if (!selected) throw new Error('No PC trade league is available.');
+        const period = request.period ?? '7d';
+        if (!isPeriod(period)) throw new Error('Unsupported history period.');
+        if (!isItemId(request.item) || !isItemId(request.unit))
+          throw new Error('Unsupported item.');
+        process.stdout.write(
+          JSON.stringify({
+            result: await loadItemHistory(
+              historyClient,
+              selected,
+              request.item,
+              request.unit,
+              period,
+            ),
+          }) + '\n',
+        );
+        continue;
+      }
       if (request.action === 'historyCurrencies') {
         process.stdout.write(JSON.stringify({ result: historyCurrencies }) + '\n');
         continue;

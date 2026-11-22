@@ -75,3 +75,25 @@ export {
   historyPoint,
 } from './history';
 export type { HistoryPeriod, HistoryPoint, CurrencyHistory } from './history';
+export {
+  CHAOS_ID,
+  DIVINE_ID,
+  MARKET_CATEGORIES,
+  REPOE_BASE_ITEMS_URL,
+  MarketCatalog,
+  inUnit,
+  loadItemHistory,
+  loadMarket,
+  loadMarketCatalog,
+  percentChange,
+  periodBuckets,
+  priceHours,
+} from './market';
+export type {
+  ItemHistoryPoint,
+  MarketItem,
+  MarketPeriod,
+  MarketRow,
+  MarketSnapshot,
+} from './market';
+export type { Market } from './history';

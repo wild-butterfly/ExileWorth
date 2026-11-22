@@ -46,8 +46,10 @@ jobs:
             $app = (Get-ChildItem "dist/run-$name" -Recurse -Filter ExileWorth.exe).DirectoryName
             # Deterministic league and results; no network calls from the app.
             Copy-Item apps/windows/test/desktop/worker-fixture.cjs "$app/worker.cjs"
+            Copy-Item apps/windows/test/desktop/market-fixture.json "$app/market-fixture.json"
             dotnet run --project apps/windows/test/desktop/DesktopTest.csproj -c Release --no-build -- `
-              --capture "$app/ExileWorth.exe" "$($out.FullName)/desktop-$name.png"
+              --capture "$app/ExileWorth.exe" "$($out.FullName)/desktop-$name.png" `
+              $(if ($name -eq 'branch') { "$($out.FullName)/currency-branch.png"; "$($out.FullName)/currency-detail-branch.png" })
             if ($LASTEXITCODE -ne 0) { throw "Capture failed for $name" }
           }
           $branch = (Get-ChildItem dist/run-branch -Recurse -Filter ExileWorth.exe).FullName

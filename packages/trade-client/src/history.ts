@@ -12,7 +12,7 @@ export interface CurrencyHistory {
   readonly points: HistoryPoint[];
   readonly failedHours: number;
 }
-interface Market {
+export interface Market {
   readonly league: string;
   readonly volume: Readonly<Record<string, number>>;
 }
@@ -124,13 +124,24 @@ export class CurrencyHistoryClient {
       // An unpublished latest hour can be retried later; never cache it as permanent history.
       if (body.next_change_id === hour / 1000 + 3600) {
         this.cache.set(hour, markets);
-        if (this.cache.size > 64) this.cache.delete(this.cache.keys().next().value!);
+        // 24 hourly digests plus the 7-day samples fit with room to spare.
+        if (this.cache.size > 160) this.cache.delete(this.cache.keys().next().value!);
       }
       return markets;
     })();
     this.pending.set(hour, request);
     void request.finally(() => this.pending.delete(hour)).catch(() => {});
     return request;
+  }
+
+  /** Every market traded in one completed hour, across all leagues. */
+  markets(hour: number): Promise<Market[]> {
+    return this.digest(hour);
+  }
+
+  /** The latest completed hour, the newest digest GGG publishes. */
+  latestHour(): number {
+    return Math.floor((this.options.now ?? Date.now)() / HOUR) * HOUR - HOUR;
   }
 
   async history(
