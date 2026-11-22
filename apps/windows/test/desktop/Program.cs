@@ -243,10 +243,14 @@ internal static class Program
             }
             if (pages.Length > 1)
             {
-                // Open the first item in the table and capture its detail page.
-                var first = new WindowPoint { X = 640, Y = 215 };
-                ClientToScreen(desktop, ref first);
-                Click(new Point(first.X, first.Y));
+                // Locate the table after layout: the startup banner can move
+                // it down, so fixed window coordinates can hit a sort header.
+                var table = AutomationElement.FromHandle(desktop).FindFirst(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.NameProperty, "Currency market"))
+                    ?? throw new InvalidOperationException("Missing Currency market table.");
+                var bounds = table.Current.BoundingRectangle;
+                Click(new Point((int)bounds.Left + 120, (int)bounds.Top + 60));
+                await Until(() => FindButton(desktop, "←  All items") is not null, "Currency item detail page");
                 await Task.Delay(2500);
                 CaptureOverlay(desktop, pages[1]);
                 Console.WriteLine($"Captured an item detail page to {pages[1]}.");
