@@ -66,7 +66,10 @@ internal sealed class PriceWindow : Form
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.None;
         int S(int value) => value * DeviceDpi / 96;
-        ClientSize = new Size(S(980), S(680));
+        // Wide enough for every Currency column (name, price, volume, sparkline,
+        // change), but never larger than the screen it opens on.
+        var area = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, S(1280), S(800));
+        ClientSize = new Size(Math.Min(S(1180), area.Width * 9 / 10), Math.Min(S(720), area.Height * 9 / 10));
         MinimumSize = new Size(S(780), S(540));
         BackColor = WindowTheme.Background;
         ForeColor = WindowTheme.Foreground;

@@ -98,7 +98,7 @@ internal sealed class MarketPage : UserControl
 
         // List: categories on the left; search and the table on the right.
         var list = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Margin = new Padding(0, S(14), 0, 0) };
-        list.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, S(210)));
+        list.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, S(190)));
         list.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         list.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var categoryCard = new Card { Dock = DockStyle.Fill, Padding = new Padding(S(8)), Margin = new Padding(0, 0, S(12), 0) };
@@ -409,17 +409,29 @@ internal sealed class MarketTable : ScrollList
     protected override int HeaderHeight => this.Px(30);
     protected override bool IsClickable(int index, Point local) => true;
 
+    /// <summary>
+    /// Fixed columns on the right; the name takes the rest. When the window is
+    /// too narrow to keep a readable name, the sparkline goes first, then the
+    /// volume, rather than squeezing the item name out of view.
+    /// </summary>
     private (Rectangle Icon, Rectangle Name, Rectangle Price, Rectangle Volume, Rectangle Spark, Rectangle Change) Columns(Rectangle row)
     {
-        int pad = this.Px(8);
-        int change = this.Px(70), spark = this.Px(112), volume = this.Px(84), price = this.Px(118), icon = this.Px(30);
+        int pad = this.Px(8), gap = this.Px(10);
+        int change = this.Px(64), price = this.Px(104), icon = this.Px(30);
+        int volume = this.Px(78), spark = this.Px(104), minName = this.Px(170);
+        int fixedWidth = pad * 2 + icon + this.Px(12) + price + gap + change;
+        bool showVolume = row.Width - fixedWidth - (volume + gap) >= minName;
+        bool showSpark = showVolume && row.Width - fixedWidth - (volume + gap) - (spark + gap) >= minName;
         int right = row.Right - pad;
         var changeBox = new Rectangle(right - change, row.Top, change, row.Height);
-        var sparkBox = new Rectangle(changeBox.Left - spark - this.Px(10), row.Top, spark, row.Height);
-        var volumeBox = new Rectangle(sparkBox.Left - volume - this.Px(14), row.Top, volume, row.Height);
-        var priceBox = new Rectangle(volumeBox.Left - price - this.Px(8), row.Top, price, row.Height);
+        int x = changeBox.Left - gap;
+        var sparkBox = showSpark ? new Rectangle(x - spark, row.Top, spark, row.Height) : Rectangle.Empty;
+        if (showSpark) x = sparkBox.Left - gap;
+        var volumeBox = showVolume ? new Rectangle(x - volume, row.Top, volume, row.Height) : Rectangle.Empty;
+        if (showVolume) x = volumeBox.Left - gap;
+        var priceBox = new Rectangle(x - price, row.Top, price, row.Height);
         var iconBox = new Rectangle(row.Left + pad, row.Top, icon, row.Height);
-        var nameBox = Rectangle.FromLTRB(iconBox.Right + this.Px(12), row.Top, priceBox.Left - this.Px(10), row.Bottom);
+        var nameBox = Rectangle.FromLTRB(iconBox.Right + this.Px(12), row.Top, priceBox.Left - gap, row.Bottom);
         return (iconBox, nameBox, priceBox, volumeBox, sparkBox, changeBox);
     }
 
@@ -434,8 +446,8 @@ internal sealed class MarketTable : ScrollList
         }
         Head("ITEM", name, Sort.Name, TextFormatFlags.Left);
         Head("PRICE", price, Sort.Price, TextFormatFlags.Right);
-        Head("TRADED 24H", volume, Sort.Volume, TextFormatFlags.Right);
-        Head(period == "7d" ? "7 DAYS" : "24 HOURS", spark, null, TextFormatFlags.HorizontalCenter);
+        if (!volume.IsEmpty) Head("TRADED 24H", volume, Sort.Volume, TextFormatFlags.Right);
+        if (!spark.IsEmpty) Head(period == "7d" ? "7 DAYS" : "24 HOURS", spark, null, TextFormatFlags.HorizontalCenter);
         Head("CHANGE", change, Sort.Change, TextFormatFlags.Right);
         using var line = new Pen(WindowTheme.Hairline);
         g.DrawLine(line, 0, bounds.Bottom - 1, Width - this.Px(8), bounds.Bottom - 1);
@@ -447,7 +459,7 @@ internal sealed class MarketTable : ScrollList
         {
             var (_, name, price, volume, _, change) = Columns(new Rectangle(0, 0, Width - this.Px(8), HeaderHeight));
             Sort? key = name.Contains(e.Location) ? Sort.Name : price.Contains(e.Location) ? Sort.Price
-                : volume.Contains(e.Location) ? Sort.Volume : change.Contains(e.Location) ? Sort.Change : null;
+                : !volume.IsEmpty && volume.Contains(e.Location) ? Sort.Volume : change.Contains(e.Location) ? Sort.Change : null;
             if (key is { } chosen)
             {
                 descending = chosen == sort ? !descending : chosen != Sort.Name;
@@ -500,9 +512,11 @@ internal sealed class MarketTable : ScrollList
             WindowTheme.Text(g, "—", WindowTheme.Mono(10f), price, WindowTheme.Faint, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
         }
 
-        WindowTheme.Text(g, row.Volume >= 10_000 ? (row.Volume / 1000).ToString("0.#") + "K" : row.Volume.ToString("N0"),
-            WindowTheme.Mono(8.5f), volume, WindowTheme.Secondary, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
-        Sparkline.Draw(g, Rectangle.Inflate(spark, 0, -this.Px(10)), row.Series, row.Change, DeviceDpi);
+        if (!volume.IsEmpty)
+            WindowTheme.Text(g, row.Volume >= 10_000 ? (row.Volume / 1000).ToString("0.#") + "K" : row.Volume.ToString("N0"),
+                WindowTheme.Mono(8.5f), volume, WindowTheme.Secondary, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+        if (!spark.IsEmpty)
+            Sparkline.Draw(g, Rectangle.Inflate(spark, 0, -this.Px(10)), row.Series, row.Change, DeviceDpi);
         string delta = row.Change is { } pct ? $"{(pct >= 0 ? "+" : "")}{pct:0.#}%" : "—";
         WindowTheme.Text(g, delta, WindowTheme.Mono(8.5f, FontStyle.Bold), change,
             row.Change is null ? WindowTheme.Faint : row.Change >= 0 ? WindowTheme.UpText : WindowTheme.Down,
