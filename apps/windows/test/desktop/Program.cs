@@ -94,6 +94,19 @@ internal static class Program
                 {
                     await Task.Delay(350);
                     CaptureOverlay(overlay, args[1]);
+                    string screenshots = Path.GetDirectoryName(args[1])!;
+                    InvokeButton(overlay, "Listing currency");
+                    await Task.Delay(250);
+                    CaptureOverlay(overlay, Path.Combine(screenshots, "windows-overlay-currency-open.png"));
+                    InvokeButton(overlay, "Exact  ▾");
+                    await Task.Delay(250);
+                    CaptureOverlay(overlay, Path.Combine(screenshots, "windows-overlay-preset-open.png"));
+                    // Close the menu before continuing the interaction checks.
+                    InvokeButton(overlay, "Exact  ▾");
+                    // UI Automation invocation can activate its target window;
+                    // restore the fixture before testing real mouse focus.
+                    Foreground(game.Handle);
+                    await Until(() => GetForegroundWindow() == game.Handle, "game focus after menu captures");
                 }
 
                 if (exchangeCapture)

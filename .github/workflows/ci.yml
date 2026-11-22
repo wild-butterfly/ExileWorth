@@ -85,6 +85,7 @@ jobs:
           name: Windows-overlay-screenshot
           path: |
             dist/windows-overlay.png
+            dist/windows-overlay-*-open.png
             dist/windows-desktop.png
             dist/windows-exchange-overlay.png
             dist/windows-exchange-desktop.png
