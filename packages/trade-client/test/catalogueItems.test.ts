@@ -253,3 +253,32 @@ describe('catalogue item names and rolled modifiers', () => {
     expect(searches[1]!.query.name).toBeUndefined();
   });
 });
+
+describe('stash and shop price notes', () => {
+  it.each([
+    ['viscera-flaming-furnace-noted.txt', 'Flaming Furnace'],
+    ['viscera-golden-ankh-noted.txt', 'Golden Ankh'],
+  ])('searches %s by name and implicit without the price note', (name, type) => {
+    const source = fixture(name);
+    const item = parsed(source);
+    if (item.kind !== 'catalogue') throw new Error('Expected catalogue item');
+    expect(item.modifiers.some((modifier) => modifier.text.startsWith('Note:'))).toBe(
+      false,
+    );
+    expect(item.unknownLines.some((line) => line.startsWith('Note: ~'))).toBe(true);
+    const sent = query(source).query;
+    expect(sent.type).toBe(type);
+    const filters = sent.stats[0]!.filters;
+    expect(filters).toHaveLength(1);
+    expect(filters[0]!.id).toMatch(/^implicit\./);
+    // The same item without its note sends the identical search.
+    expect(query(source.replace(/\n--------\nNote: .*\n?$/, '\n'))).toEqual(
+      query(source),
+    );
+  });
+
+  it('treats a shop asking-price section as listing metadata', () => {
+    const source = `${ankh.trimEnd()}\n--------\nAsking Price:\n1x Chaos Orb\n`;
+    expect(query(source)).toEqual(query(ankh));
+  });
+});

@@ -1,0 +1,11 @@
+Item Class: Viscera
+Flaming Furnace
+--------
+Torso
+--------
+15% chance to inflict Fire Exposure on Hit (implicit)
+(Fire Exposure applies -10% to Fire Resistance for 4 seconds) (implicit)
+--------
+Take this to the Wickerman in a town or hideout to attach it.
+--------
+Note: ~b/o 1 chaos

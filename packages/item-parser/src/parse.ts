@@ -26,7 +26,7 @@ import {
   splitSections,
 } from './sections';
 import { isAnnotationLine, parseAnnotation, stripRanges } from './advanced';
-import { isModifierReminder } from './reminders';
+import { separateReminders } from './reminders';
 
 const RARITIES: Record<string, ItemRarity | 'currency' | 'gem' | 'divination'> = {
   Normal: 'normal',
@@ -105,6 +105,9 @@ function classifyModLine(line: string, annotation?: ModifierAnnotation): Modifie
   };
 }
 
+/** A cluster grant heading whose description follows on the next line. */
+const CLUSTER_GRANT_HEADING = /(?:^|\n)Added Small Passive Skills (?:also )?grant:$/;
+
 /**
  * Converts a run of free-text lines into modifiers, attaching any advanced
  * mod-description annotation to the modifier it introduces.
@@ -126,6 +129,24 @@ function toModifiers(lines: readonly string[]): Modifier[] {
     }
     const modifier = classifyModLine(line, pending ?? declaredGroup);
     const previous = modifiers.at(-1);
+    // "Added Small Passive Skills grant:" can be copied with its description
+    // on the next line. The two lines are one modifier; the description line
+    // may carry the type suffix, so the more specific type wins.
+    if (previous && CLUSTER_GRANT_HEADING.test(previous.text)) {
+      modifiers[modifiers.length - 1] = {
+        ...previous,
+        ...(previous.type === 'explicit' ? { type: modifier.type } : {}),
+        ...(previous.annotation === undefined && modifier.annotation !== undefined
+          ? { annotation: modifier.annotation }
+          : {}),
+        ...(previous.range === undefined && modifier.range !== undefined
+          ? { range: modifier.range }
+          : {}),
+        text: `${previous.text} ${modifier.text}`,
+      };
+      pending = undefined;
+      continue;
+    }
     // Some cluster passive types span two copied lines (bows, traps/mines).
     // They are one categorical trade filter, not two independent rolls.
     if (
@@ -249,20 +270,24 @@ function scanSections(
       state.requirements = parseRequirementsSection(section.slice(1));
       continue;
     }
+    // A shop's asking price is listing metadata, never part of the item.
+    if (first !== undefined && /^Asking Price:/i.test(first.trim())) {
+      state.unknownLines.push(...section.map((line) => line.trim()).filter(Boolean));
+      continue;
+    }
 
     let sectionHadStructure = false;
     const freeLines: string[] = [];
 
-    for (const line of section) {
-      const trimmed = line.trim();
-      if (trimmed === '') continue;
+    // Explanatory text is copied alongside modifiers but is never a stat.
+    // It is kept (as unknown text), not searched, and never mistaken for a
+    // modifier the trade site does not support.
+    const { modifiers: lines, reminders } = separateReminders(
+      section.map((line) => line.trim()).filter((line) => line !== ''),
+    );
+    state.unknownLines.push(...reminders);
 
-      // Known skill explanations are copied with modifiers, but are not stats.
-      if (isModifierReminder(trimmed)) {
-        state.unknownLines.push(trimmed);
-        continue;
-      }
-
+    for (const trimmed of lines) {
       if (FLAG_LINES.has(trimmed)) {
         sectionHadStructure = true;
         if (trimmed === 'Corrupted') state.corrupted = true;
@@ -294,6 +319,11 @@ function scanSections(
         switch (kv.key) {
           case 'Item Level':
             state.itemLevel = parseInteger(kv.value) ?? undefined;
+            break;
+          case 'Note':
+            // A stash or shop price note ("~b/o 1 chaos") describes the
+            // listing, not the item, so it is never searched as a modifier.
+            state.unknownLines.push(trimmed);
             break;
           case 'Quality':
             state.quality = parsePercent(kv.value) ?? undefined;
