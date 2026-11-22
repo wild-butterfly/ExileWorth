@@ -6,7 +6,9 @@ namespace ExileWorth.Windows;
 internal sealed record Shortcut(uint Modifiers, Keys Key)
 {
     public static readonly Shortcut Default = new(6, Keys.D);
-    public static readonly uint[] ModifierOptions = [3, 6, 5, 7];
+    // 1 = Alt alone (the easiest to press); 3 = Ctrl + Alt; 6 = Ctrl + Shift; 5 = Alt + Shift; 7 = all three.
+    // Shift alone is never offered: it would fire while typing capitals in chat.
+    public static readonly uint[] ModifierOptions = [1, 3, 6, 5, 7];
     public static readonly Keys[] KeyOptions = [
         ..Enumerable.Range((int)Keys.A, 26).Select(key => (Keys)key).Where(key => key != Keys.C),
         ..Enumerable.Range((int)Keys.F1, 12).Select(key => (Keys)key),
@@ -14,11 +16,18 @@ internal sealed record Shortcut(uint Modifiers, Keys Key)
 
     public static string FormatModifiers(uint value) => value switch
     {
+        1 => "Alt",
         3 => "Ctrl + Alt",
         6 => "Ctrl + Shift",
         5 => "Alt + Shift",
         _ => "Ctrl + Alt + Shift",
     };
+
+    /// <summary>Alt + F4 closes the game, so it can never be the price-check shortcut.</summary>
+    public static bool IsAllowed(uint modifiers, Keys key) =>
+        ModifierOptions.Contains(modifiers) && KeyOptions.Contains(key) && !(modifiers == 1 && key == Keys.F4);
+
+    public bool IsAllowed() => IsAllowed(Modifiers, Key);
 
     public override string ToString() => $"{FormatModifiers(Modifiers)} + {Key}";
 }
@@ -59,8 +68,7 @@ internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, st
         try
         {
             var saved = JsonSerializer.Deserialize<DesktopPreferences>(File.ReadAllText(FilePath));
-            if (saved?.Shortcut is { } shortcut && Shortcut.ModifierOptions.Contains(shortcut.Modifiers)
-                && Shortcut.KeyOptions.Contains(shortcut.Key))
+            if (saved?.Shortcut is { } shortcut && shortcut.IsAllowed())
             {
                 // Older settings had an opt-in to plain copy. Adopt the new
                 // default once, while retaining custom shortcuts and preferences.
