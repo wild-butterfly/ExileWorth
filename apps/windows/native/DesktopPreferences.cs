@@ -24,7 +24,8 @@ internal sealed record Shortcut(uint Modifiers, Keys Key)
 }
 
 internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, string? ThanksMessage = null,
-    string[]? QuickReplies = null, string? Theme = null, bool? AdvancedItemCopy = null)
+    string[]? QuickReplies = null, string? Theme = null, bool? AdvancedItemCopy = null,
+    bool? StartupPromptAnswered = null)
 {
     public const string DefaultThanks = "Thanks, have a nice day!";
 
@@ -43,9 +44,10 @@ internal sealed record DesktopPreferences(Shortcut Shortcut, bool NearCursor, st
     public bool Equals(DesktopPreferences? other) =>
         other is not null && Shortcut == other.Shortcut && NearCursor == other.NearCursor &&
         ThanksMessage == other.ThanksMessage && Theme == other.Theme && AdvancedItemCopy == other.AdvancedItemCopy &&
+        StartupPromptAnswered == other.StartupPromptAnswered &&
         Replies.SequenceEqual(other.Replies);
 
-    public override int GetHashCode() => HashCode.Combine(Shortcut, NearCursor, ThanksMessage, Theme, AdvancedItemCopy);
+    public override int GetHashCode() => HashCode.Combine(Shortcut, NearCursor, ThanksMessage, Theme, AdvancedItemCopy, StartupPromptAnswered);
     [JsonIgnore]
     public string Thanks => string.IsNullOrWhiteSpace(ThanksMessage) ? DefaultThanks : ThanksMessage.Trim();
 

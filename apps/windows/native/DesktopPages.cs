@@ -6,7 +6,6 @@ namespace ExileWorth.Windows;
 internal sealed class DesktopPages : IDisposable
 {
     private const string RepositoryUrl = "https://github.com/wild-butterfly/ExileWorth";
-    private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private static readonly (string Id, string Label)[] Denominations =
         [("chaos", "Chaos"), ("divine", "Divine"), ("exalted", "Exalted")];
 
@@ -39,6 +38,18 @@ internal sealed class DesktopPages : IDisposable
     private readonly FlowLayoutPanel leagueChips = Ui.Row();
     private readonly Label feedback = Ui.Label("", WindowTheme.Sans(9f), WindowTheme.UpText);
     private string? selectedLeague;
+
+    private readonly Toggle startup = new() { AccessibleName = "Start with Windows" };
+    private bool syncingStartup;
+
+    /// <summary>Reflects a change made elsewhere (the first-run banner) without re-saving.</summary>
+    public void SyncStartup(DesktopPreferences updated)
+    {
+        current = updated;
+        syncingStartup = true;
+        try { startup.Checked = Startup.IsEnabled(); }
+        finally { syncingStartup = false; }
+    }
 
     public Worker Worker { get; } = new();
     public Control Settings { get; }
@@ -382,12 +393,14 @@ internal sealed class DesktopPages : IDisposable
                 "Drag its top bar to move it.", WindowTheme.Sans(8.5f), WindowTheme.Dim, wrap: true)));
 
         // Startup.
-        var startup = new Toggle { Checked = StartsWithWindows(), AccessibleName = "Start with Windows" };
+        startup.Checked = Startup.IsEnabled();
         startup.CheckedChanged += (_, _) =>
         {
+            if (syncingStartup) return;
             try
             {
-                SetStartsWithWindows(startup.Checked);
+                Startup.SetEnabled(startup.Checked);
+                Apply(current with { StartupPromptAnswered = true });
                 ShowFeedback(startup.Checked ? "ExileWorth will start in the tray when you sign in." : "Start with Windows turned off.");
             }
             catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
@@ -396,7 +409,7 @@ internal sealed class DesktopPages : IDisposable
             }
         };
         stack.Add(Ui.Section("Startup", null,
-            SwitchRow(startup, "Start with Windows", "Opens quietly in the notification area, ready for the shortcut.")));
+            SwitchRow(startup, "Start with Windows", "Opens quietly in the notification area when you sign in, so the shortcut is ready whenever Path of Exile is in front.")));
 
         var advancedCopy = new Toggle { Checked = current.AdvancedItemCopy == true, AccessibleName = "Use advanced item copy" };
         advancedCopy.CheckedChanged += (_, _) => Apply(current with { AdvancedItemCopy = advancedCopy.Checked });
@@ -469,23 +482,6 @@ internal sealed class DesktopPages : IDisposable
     {
         feedback.Text = text;
         feedback.ForeColor = error ? WindowTheme.Down : WindowTheme.UpText;
-    }
-
-    private static bool StartsWithWindows()
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            return key?.GetValue("ExileWorth") is string;
-        }
-        catch (Exception error) when (error is System.Security.SecurityException or UnauthorizedAccessException) { return false; }
-    }
-
-    private static void SetStartsWithWindows(bool enabled)
-    {
-        using var key = Registry.CurrentUser.CreateSubKey(RunKey);
-        if (enabled) key.SetValue("ExileWorth", $"\"{Application.ExecutablePath}\" --tray");
-        else key.DeleteValue("ExileWorth", throwOnMissingValue: false);
     }
 
     // ── League ───────────────────────────────────────────────────────────

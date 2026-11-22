@@ -53,6 +53,8 @@ export interface AppSettings {
   readonly debugLogging: boolean;
   /** Whether the user has completed onboarding. */
   readonly onboardingCompleted: boolean;
+  /** Whether the one-time "open at login?" question has been answered. */
+  readonly startupPromptAnswered: boolean;
   /** Settings schema version for future migrations. */
   readonly schemaVersion: 1;
 }
@@ -102,5 +104,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   overlayUnlocked: false,
   debugLogging: false,
   onboardingCompleted: false,
+  startupPromptAnswered: false,
   schemaVersion: 1,
 };

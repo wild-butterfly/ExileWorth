@@ -1,5 +1,6 @@
 import Foundation
 import React
+import ServiceManagement
 
 @objc(VLSettings)
 final class VLSettingsModule: NSObject {
@@ -34,5 +35,51 @@ final class VLSettingsModule: NSObject {
       AppDelegate.syncLogWatcher()
     }
     resolve(nil)
+  }
+
+  /// Whether macOS opens ExileWorth at login: "enabled", "disabled", or
+  /// "requiresApproval" when the user must allow it in System Settings.
+  @objc(getOpenAtLogin:rejecter:)
+  func getOpenAtLogin(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter _: @escaping RCTPromiseRejectBlock
+  ) {
+    resolve(Self.loginItemStatus())
+  }
+
+  @objc(setOpenAtLogin:resolver:rejecter:)
+  func setOpenAtLogin(
+    _ enabled: Bool,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      // The app itself is the login item; no helper bundle is needed.
+      if enabled {
+        try SMAppService.mainApp.register()
+      } else {
+        try SMAppService.mainApp.unregister()
+      }
+      resolve(Self.loginItemStatus())
+    } catch {
+      reject("login_item", error.localizedDescription, error)
+    }
+  }
+
+  @objc(openLoginItemsSettings:rejecter:)
+  func openLoginItemsSettings(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter _: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.main.async { SMAppService.openSystemSettingsLoginItems() }
+    resolve(nil)
+  }
+
+  private static func loginItemStatus() -> String {
+    switch SMAppService.mainApp.status {
+    case .enabled: return "enabled"
+    case .requiresApproval: return "requiresApproval"
+    default: return "disabled"
+    }
   }
 }

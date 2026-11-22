@@ -24,6 +24,16 @@ describe('settingsFromJSON', () => {
     expect(result.onboardingCompleted).toBe(false);
   });
 
+  it('asks about opening at login once, including for settings saved before the question existed', () => {
+    const older = JSON.stringify({ onboardingCompleted: true, leagueId: 'Standard' });
+    expect(settingsFromJSON(older).startupPromptAnswered).toBe(false);
+    const answered = JSON.stringify({
+      onboardingCompleted: true,
+      startupPromptAnswered: true,
+    });
+    expect(settingsFromJSON(answered).startupPromptAnswered).toBe(true);
+  });
+
   it('round-trips through JSON', () => {
     const settings = { ...DEFAULT_SETTINGS, onboardingCompleted: true };
     expect(settingsFromJSON(JSON.stringify(settings))).toEqual(settings);
