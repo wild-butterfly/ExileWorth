@@ -142,6 +142,11 @@ h1 span {
   background-clip: text;
   color: transparent;
 }
+.hero h1 span {
+  margin-top: 0.3em;
+  font-size: 0.68em;
+  line-height: 1.15;
+}
 .lede {
   margin: 1.7rem 0 0;
   color: var(--muted);

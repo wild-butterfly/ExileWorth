@@ -4,7 +4,7 @@
 
 ExileWorth was formerly called Vaaluation.
 
-[Website](https://wild-butterfly.github.io/ExileWorth/) · [Guides](https://wild-butterfly.github.io/ExileWorth/guides/) · [Release notes](https://github.com/wild-butterfly/ExileWorth/releases) · [Report an issue](https://github.com/wild-butterfly/ExileWorth/issues/new/choose)
+[ExileWorth — PoE price checker for Mac and Windows](https://wild-butterfly.github.io/ExileWorth/) · [Guides](https://wild-butterfly.github.io/ExileWorth/guides/) · [Release notes](https://github.com/wild-butterfly/ExileWorth/releases) · [Report an issue](https://github.com/wild-butterfly/ExileWorth/issues/new/choose)
 
 ## Download
 

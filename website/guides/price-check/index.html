@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <script defer src="../../analytics.js?v=2"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>How to check PoE 1 item prices on Mac | ExileWorth</title>
+    <title>PoE price check guide for Mac and Windows | ExileWorth</title>
     <meta
       name="description"
-      content="Check Path of Exile 1 item prices in game on macOS with ExileWorth. Learn the shortcut, compare live asking prices, and filter by item modifiers."
+      content="Learn how to price check items in Path of Exile 1 with ExileWorth on Mac and Windows. Compare trade listings, edit stat filters and check currency exchange prices."
     />
     <meta name="author" content="wild-butterfly" />
     <meta
@@ -27,11 +27,11 @@
     <meta property="og:site_name" content="ExileWorth" />
     <meta
       property="og:title"
-      content="How to check PoE 1 item prices on Mac | ExileWorth"
+      content="PoE price check guide for Mac and Windows | ExileWorth"
     />
     <meta
       property="og:description"
-      content="Check Path of Exile 1 item prices in game on macOS with ExileWorth. Learn the shortcut, compare live asking prices, and filter by item modifiers."
+      content="Learn how to price check items in Path of Exile 1 with ExileWorth on Mac and Windows. Compare trade listings, edit stat filters and check currency exchange prices."
     />
     <meta
       property="og:url"
@@ -50,11 +50,11 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="How to check PoE 1 item prices on Mac | ExileWorth"
+      content="PoE price check guide for Mac and Windows | ExileWorth"
     />
     <meta
       name="twitter:description"
-      content="Check Path of Exile 1 item prices in game on macOS with ExileWorth. Learn the shortcut, compare live asking prices, and filter by item modifiers."
+      content="Learn how to price check items in Path of Exile 1 with ExileWorth on Mac and Windows. Compare trade listings, edit stat filters and check currency exchange prices."
     />
     <meta
       name="twitter:image"
@@ -81,7 +81,7 @@
           {
             "@type": "ListItem",
             "position": 3,
-            "name": "How to check PoE 1 item prices on Mac",
+            "name": "PoE price check guide for Mac and Windows",
             "item": "https://wild-butterfly.github.io/ExileWorth/guides/price-check/"
           }
         ]
@@ -117,16 +117,17 @@
     <main id="main" class="shell guide">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <a href="../../">Home</a> / <a href="../">Guides</a> /
-        <span>How to check PoE 1 item prices on Mac</span>
+        <span>PoE price check guide for Mac and Windows</span>
       </nav>
       <article>
         <header class="guide-heading">
           <p class="eyebrow">ExileWorth guide</p>
-          <h1>How to check PoE 1 item prices on Mac</h1>
+          <h1>PoE price check guide for Mac and Windows</h1>
           <p class="lede">
-            Hover over an item in Path of Exile 1 and press Control + D to open the price
-            checker on Mac. The overlay shows asking prices for comparable items in your
-            league while you stay in the game.
+            Use ExileWorth to price check items in Path of Exile 1 while you stay in the
+            game. Press Alt + D on Windows or Control + D on Mac to compare current asking
+            prices for similar items in your league. This guide explains how to use item
+            stats and trade listings to choose a useful comparison.
           </p>
         </header>
         <nav class="guide-toc" aria-label="On this page">
@@ -144,14 +145,18 @@
         <section id="start">
           <h2>Check an item from the game</h2>
           <p>
-            First <a href="../install/">install ExileWorth and enable Accessibility</a>.
-            With Path of Exile in Windowed or Windowed Fullscreen mode, hover an inventory
-            item and press <kbd>Ctrl</kbd> + <kbd>D</kbd>.
+            Download the <a href="../../#install">ExileWorth PoE price checker</a>. Follow
+            the <a href="../install/">Mac installation guide</a> or
+            <a href="../windows/">Windows setup guide</a>, then open the English PoE 1
+            client in Windowed or Windowed Fullscreen mode. Hover an item and press
+            <kbd>Alt</kbd> + <kbd>D</kbd> on Windows or <kbd>Control</kbd> + <kbd>D</kbd>
+            on Mac. Confirm the selected league matches your character.
           </p>
           <p>
-            ExileWorth copies the advanced item description, parses it locally and
-            searches the official Path of Exile trade service. The current parser expects
-            English item text.
+            ExileWorth copies the item description, parses it locally and searches the
+            official Path of Exile trade service. On Windows, standard copy is the
+            default; advanced item copy can be enabled in Settings. On Mac, grant
+            Accessibility permission so ExileWorth can send the item-copy shortcut.
           </p>
         </section>
         <section id="league">
@@ -192,10 +197,10 @@
         <section id="filters">
           <h2>Refine the modifiers that matter</h2>
           <p>
-            Press <kbd>Ctrl</kbd> + <kbd>Option</kbd> + <kbd>D</kbd> to keep the panel
-            open. Select relevant modifiers and edit the minimum input beside each one to
-            find closer comparisons. ExileWorth selects a few strong modifiers initially;
-            those selections are a starting point.
+            On Mac, <kbd>Control</kbd> + <kbd>Option</kbd> + <kbd>D</kbd> keeps the panel
+            open. On Windows, interact with the overlay to adjust its filters. Select
+            relevant modifiers and edit the minimum input beside each one to find closer
+            comparisons. The initial selections are a starting point.
           </p>
           <p>
             For example, when comparing energy-shield boots, an energy-shield total can be
@@ -219,17 +224,19 @@
         <section id="currency-history">
           <h2>Follow currency price history</h2>
           <p>
-            Open Currency in the desktop app. Both history selectors are searchable across
-            the 27 supported currencies. Change either side to inspect another pair, then
-            choose 24h, 7d or 30d and inspect a chart point for its date, rate and traded
-            quantities.
+            Open Currency in the desktop app to browse Currency Exchange items. Search by
+            name, choose a category, and select the currency used to display prices. The
+            table shows completed-trade prices and 24-hour volume; open an item to inspect
+            its 24h, 7d or 30d history chart.
           </p>
           <p>
-            The chart uses GGG’s completed-hour exchange trades, not the current asking
-            prices listed below it. The 24-hour view samples every completed hour. Longer
-            views sample hourly digests daily and include the latest completed hour. Gaps
-            mean no recorded data; the percentage change is between the available samples.
-            A rarely traded pair may have no history.
+            Currency charts use GGG’s completed-hour exchange trades. Item price-check
+            results instead show current seller asking prices, while Exchange-labelled
+            overlay quotes show bulk offers. These are different price sources. The
+            24-hour view samples every completed hour. Longer views sample hourly digests
+            daily and include the latest completed hour. Gaps mean no recorded data; the
+            percentage change is between the available samples. A rarely traded pair may
+            have no history.
           </p>
         </section>
         <section id="example">
@@ -258,27 +265,30 @@
           </ol>
           <p>
             These steps help you choose an asking price; ExileWorth does not confirm
-            completed trades. For Windows shortcuts and setup, use the
+            completed item sales. For Windows setup, use the
             <a href="../windows/">Windows guide</a>.
           </p>
         </section>
         <section id="shortcuts">
           <h2>Useful default shortcuts</h2>
           <dl>
-            <dt>Ctrl + D</dt>
+            <dt>Alt + D on Windows</dt>
+            <dd>Price-check the hovered item with the Windows overlay.</dd>
+            <dt>Control + D on Mac</dt>
             <dd>
               Price-check the hovered item. The panel closes when you click elsewhere.
             </dd>
-            <dt>Ctrl + Option + D</dt>
+            <dt>Control + Option + D on Mac</dt>
             <dd>Price-check and keep the panel open for filter changes.</dd>
-            <dt>Shift + Space</dt>
+            <dt>Shift + Space on Mac</dt>
             <dd>Show or hide the panel.</dd>
-            <dt>Esc</dt>
+            <dt>Esc on Mac</dt>
             <dd>Close the panel.</dd>
           </dl>
           <p>
-            Shortcuts work only while Path of Exile is the foreground app. You can rebind
-            shortcuts in Settings. If a shortcut fails or results do not load, follow the
+            Price-check shortcuts work while Path of Exile is the foreground app. You can
+            rebind shortcuts in Settings. If a shortcut fails or results do not load,
+            follow the
             <a href="../troubleshooting/">troubleshooting guide</a>.
           </p>
         </section>
@@ -299,7 +309,7 @@
             <img src="../../assets/app-icon.png" alt="" width="34" height="34" />
             <span>ExileWorth</span>
           </a>
-          <p>Path of Exile price checking for macOS.</p>
+          <p>Path of Exile price checking for Mac and Windows.</p>
         </div>
         <div class="footer-links">
           <a href="../../privacy/">Website privacy</a>

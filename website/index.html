@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <script defer src="./analytics.js?v=2"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PoE Price Checker for Mac &amp; Windows (Path of Exile 1) | ExileWorth</title>
+    <title>ExileWorth — Free PoE Price Checker for Mac &amp; Windows</title>
     <meta
       name="description"
-      content="Free, open-source PoE price checker for Mac and Windows. Hover a Path of Exile 1 item, press a shortcut and compare live trade prices and currency rates."
+      content="ExileWorth is a free PoE 1 price checker and trade overlay for Mac and Windows. Compare item modifiers, live trade listings and currency exchange prices in game."
     />
     <meta name="author" content="wild-butterfly" />
     <meta
@@ -24,11 +24,11 @@
     <meta property="og:site_name" content="ExileWorth" />
     <meta
       property="og:title"
-      content="PoE Price Checker for Mac &amp; Windows (Path of Exile 1) | ExileWorth"
+      content="ExileWorth — Free PoE Price Checker for Mac &amp; Windows"
     />
     <meta
       property="og:description"
-      content="Free, open-source PoE price checker for Mac and Windows. Hover a Path of Exile 1 item, press a shortcut and compare live trade prices and currency rates."
+      content="ExileWorth is a free PoE 1 price checker and trade overlay for Mac and Windows. Compare item modifiers, live trade listings and currency exchange prices in game."
     />
     <meta property="og:url" content="https://wild-butterfly.github.io/ExileWorth/" />
     <meta
@@ -44,11 +44,11 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="PoE Price Checker for Mac &amp; Windows (Path of Exile 1) | ExileWorth"
+      content="ExileWorth — Free PoE Price Checker for Mac &amp; Windows"
     />
     <meta
       name="twitter:description"
-      content="Free, open-source PoE price checker for Mac and Windows. Hover a Path of Exile 1 item, press a shortcut and compare live trade prices and currency rates."
+      content="ExileWorth is a free PoE 1 price checker and trade overlay for Mac and Windows. Compare item modifiers, live trade listings and currency exchange prices in game."
     />
     <meta
       name="twitter:image"
@@ -66,11 +66,27 @@
             "url": "https://wild-butterfly.github.io/ExileWorth/"
           },
           {
+            "@type": "WebPage",
+            "@id": "https://wild-butterfly.github.io/ExileWorth/#webpage",
+            "url": "https://wild-butterfly.github.io/ExileWorth/",
+            "name": "ExileWorth — Free PoE Price Checker for Mac & Windows",
+            "description": "ExileWorth is a free PoE 1 price checker and trade overlay for Mac and Windows. Compare item modifiers, live trade listings and currency exchange prices in game.",
+            "isPartOf": {
+              "@id": "https://wild-butterfly.github.io/ExileWorth/#website"
+            },
+            "mainEntity": {
+              "@id": "https://wild-butterfly.github.io/ExileWorth/#app"
+            },
+            "about": {
+              "@id": "https://wild-butterfly.github.io/ExileWorth/#app"
+            }
+          },
+          {
             "@type": "SoftwareApplication",
             "@id": "https://wild-butterfly.github.io/ExileWorth/#app",
             "name": "ExileWorth",
             "url": "https://wild-butterfly.github.io/ExileWorth/",
-            "description": "Free, open-source PoE price checker for Mac and Windows. Hover a Path of Exile 1 item, press a shortcut and compare live trade prices and currency rates.",
+            "description": "ExileWorth is a free PoE 1 price checker and trade overlay for Mac and Windows. Compare item modifiers, live trade listings and currency exchange prices in game.",
             "applicationCategory": "GameApplication",
             "isAccessibleForFree": true,
             "sameAs": "https://github.com/wild-butterfly/ExileWorth",
@@ -84,7 +100,19 @@
               "@type": "Offer",
               "price": 0,
               "priceCurrency": "USD"
-            }
+            },
+            "installUrl": "https://wild-butterfly.github.io/ExileWorth/#install",
+            "softwareHelp": {
+              "@type": "CreativeWork",
+              "url": "https://wild-butterfly.github.io/ExileWorth/guides/price-check/"
+            },
+            "license": "https://github.com/wild-butterfly/ExileWorth/blob/main/LICENSE",
+            "featureList": [
+              "In-game PoE 1 item price checks",
+              "Editable item modifier filters",
+              "Currency Exchange prices and history",
+              "Trade whisper overlay"
+            ]
           },
           {
             "@type": "FAQPage",
@@ -92,10 +120,26 @@
             "mainEntity": [
               {
                 "@type": "Question",
+                "name": "What is ExileWorth?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "ExileWorth is a free, open-source Path of Exile 1 price checker and trade overlay for Mac and Windows. It compares official trade listings, lets you edit item stat filters, and shows Currency Exchange prices and history."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I run a PoE price check?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "With the English Path of Exile 1 client in front, hover an item and press Alt + D on Windows or Control + D on Mac. Select your league, compare several asking prices, and adjust the selected modifiers before searching again."
+                }
+              },
+              {
+                "@type": "Question",
                 "name": "Does ExileWorth work on Mac and Windows?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes. ExileWorth runs natively on Apple silicon and Intel Macs with macOS 14 Sonoma or later, where Control + D over an item opens the price overlay. A preview is available for Windows 11 x64, where Alt + D is the default shortcut and can be changed in Settings."
+                  "text": "Yes. ExileWorth runs natively on Apple silicon and Intel Macs with macOS 14 Sonoma or later. Press Control + D over an item to open the overlay while Path of Exile stays in focus. A preview is available for Windows 11 x64. See the Mac setup guide or the Windows setup guide ."
                 }
               },
               {
@@ -103,7 +147,7 @@
                 "name": "Where do ExileWorth item prices come from?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "ExileWorth compares current asking prices from the official Path of Exile trade service for your selected league, and you can filter by modifiers to find similar items. Prices shown are seller listings, so final sale prices can differ."
+                  "text": "ExileWorth compares current asking prices from the official Path of Exile trade service for your selected league. Filter by modifiers to find similar items. The prices shown are seller listings, and final sale prices can differ. Exchange quotes are separately labelled bulk asking rates, not live in-game exchange orders. See how to compare PoE 1 item prices ."
                 }
               },
               {
@@ -124,10 +168,18 @@
               },
               {
                 "@type": "Question",
+                "name": "What does ExileWorth send to the game and trade site?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "It reads the public trade API within GGG's published rate limits. In game it sends the item-copy shortcut once per price check, and each trade button types one chat command. It never automates anything on its own."
+                }
+              },
+              {
+                "@type": "Question",
                 "name": "Does it support Path of Exile 2?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "ExileWorth supports the English Path of Exile 1 client. Path of Exile 2 is unsupported."
+                  "text": "ExileWorth supports the English Path of Exile 1 client, including Covens of Umbra. Path of Exile 2 is unsupported."
                 }
               }
             ]
@@ -172,13 +224,14 @@
             Free &amp; open source · Path of Exile 1 · Covens of Umbra
           </p>
           <h1>
-            PoE price checker
-            <span>for Mac and Windows.</span>
+            ExileWorth
+            <span>PoE price checker for Mac and Windows.</span>
           </h1>
           <p class="lede">
-            ExileWorth brings in-game price checks to Path of Exile 1 with a native Mac
-            app and a Windows preview. Hover an item and press the shortcut to see a
-            typical asking price and compare live trade listings.
+            ExileWorth is a free, open-source Path of Exile 1 price checker and trade
+            overlay. Hover an item, press Alt + D on Windows or Control + D on Mac, and
+            compare live asking prices from the official PoE trade service. Select item
+            modifiers to find comparable listings in your league.
           </p>
           <div class="hero-actions">
             <a
@@ -262,8 +315,11 @@
       <section class="section shell" id="features">
         <div class="section-heading">
           <p class="eyebrow">Built for trading</p>
-          <h2>Everything you need for a quick, confident price check</h2>
-          <p>The useful information, with none of the account setup or tracking.</p>
+          <h2>In-game PoE price checks with item stat filters</h2>
+          <p>
+            Compare Path of Exile item prices by base type and modifiers, check currency
+            exchange rates, and manage trade whispers without leaving the game.
+          </p>
         </div>
         <div class="feature-grid">
           <article class="card feature">
@@ -540,7 +596,9 @@
           </article>
           <article class="card">
             <h3>
-              <a href="./guides/price-check/">How to check PoE 1 item prices on Mac</a>
+              <a href="./guides/price-check/"
+                >PoE price check guide for Mac and Windows</a
+              >
             </h3>
             <p>Use comparable listings and the right modifiers for a better price.</p>
           </article>
@@ -562,6 +620,24 @@
           <h2>ExileWorth FAQ</h2>
         </div>
         <div class="faq-list">
+          <details>
+            <summary>What is ExileWorth?</summary>
+            <p>
+              ExileWorth is a free, open-source Path of Exile 1 price checker and trade
+              overlay for Mac and Windows. It compares official trade listings, lets you
+              edit item stat filters, and shows Currency Exchange prices and history.
+            </p>
+          </details>
+          <details>
+            <summary>How do I run a PoE price check?</summary>
+            <p>
+              With the English Path of Exile 1 client in front, hover an item and press
+              Alt + D on Windows or Control + D on Mac. Select your league, compare
+              several asking prices, and adjust the selected modifiers before searching
+              again.
+            </p>
+          </details>
+
           <details>
             <summary>Does ExileWorth work on Mac and Windows?</summary>
             <p>
